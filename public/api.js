@@ -236,8 +236,13 @@ class PROPOApi {
   }
 
   // ========== DASHBOARD STATS ==========
-  async getDashboardStats() {
-    return this.request('GET', '/stats/dashboard');
+  async getDashboardStats(filters = {}) {
+    const p = new URLSearchParams();
+    if (filters.from) p.append('from', filters.from);
+    if (filters.to) p.append('to', filters.to);
+    if (filters.status) p.append('status', filters.status);
+    const qs = p.toString();
+    return this.request('GET', '/stats/dashboard' + (qs ? '?' + qs : ''));
   }
 
   // ========== HEALTH CHECK ==========

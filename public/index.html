@@ -134,6 +134,14 @@
     .dash-top-item .amt { font-weight:600; color:#0F6E56; white-space:nowrap; }
     .dash-empty { color:#9ca3af; font-size:13px; text-align:center; padding:18px; }
     @media (max-width:900px){ .dash-metrics{grid-template-columns:repeat(2,1fr);} }
+    .dash-metrics-5 { grid-template-columns:repeat(5,1fr); }
+    .dash-mc { border-top:3px solid #e8eaed; }
+    .bt-purple{border-top-color:#6366f1;} .bt-blue{border-top-color:#3b82f6;} .bt-green{border-top-color:#16a34a;} .bt-amber{border-top-color:#d97706;} .bt-red{border-top-color:#e11d48;}
+    .dash-mc-val.red{color:#e11d48;}
+    .dash-filter { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:16px; background:#fff; border:1px solid #e8eaed; border-radius:12px; padding:12px 14px; }
+    .dash-filter input, .dash-filter select { width:auto; padding:8px 12px; border:1px solid var(--line); border-radius:8px; font-size:13px; }
+    .dash-filter .btn { padding:8px 18px; }
+    @media (max-width:1100px){ .dash-metrics-5{grid-template-columns:repeat(3,1fr);} }
   </style>
 </head>
 <body>
@@ -179,31 +187,62 @@
         <h1>Dashboard</h1>
         <p class="subtitle">ภาพรวมระบบการจัดซื้อ</p>
 
+        <!-- Filter -->
+        <div class="dash-filter">
+          <span style="font-size:12px;color:var(--muted)">ช่วงวันที่:</span>
+          <input type="date" id="f-from">
+          <span style="color:var(--muted)">ถึง</span>
+          <input type="date" id="f-to">
+          <select id="f-status">
+            <option value="">ทุกสถานะ</option>
+            <optgroup label="PR">
+              <option value="Pending">PR: รออนุมัติ</option>
+              <option value="Approved">PR: อนุมัติแล้ว</option>
+              <option value="Rejected">PR: ปฏิเสธ</option>
+            </optgroup>
+            <optgroup label="PO">
+              <option value="Active">PO: Active</option>
+              <option value="Completed">PO: เสร็จสิ้น</option>
+              <option value="Cancelled">PO: ยกเลิก</option>
+            </optgroup>
+          </select>
+          <button class="btn" onclick="applyDashFilter()">กรอง</button>
+          <button class="btn secondary" onclick="resetDashFilter()">ล้าง</button>
+        </div>
+
         <div class="dash-section">📄 ใบขอซื้อ (PR)</div>
-        <div class="dash-metrics">
-          <div class="dash-mc"><div class="dash-mc-label">PR ทั้งหมด</div><div class="dash-mc-val" id="pr-total-count">0</div></div>
-          <div class="dash-mc"><div class="dash-mc-label">มูลค่ารวม (บาท)</div><div class="dash-mc-val teal" id="pr-total-amount">0</div></div>
-          <div class="dash-mc"><div class="dash-mc-label">รออนุมัติ</div><div class="dash-mc-val amber" id="pr-pending">0</div></div>
-          <div class="dash-mc"><div class="dash-mc-label">อนุมัติแล้ว</div><div class="dash-mc-val green" id="pr-approved">0</div></div>
+        <div class="dash-metrics dash-metrics-5">
+          <div class="dash-mc bt-purple"><div class="dash-mc-label">PR ทั้งหมด</div><div class="dash-mc-val" id="pr-total-count">0</div></div>
+          <div class="dash-mc bt-blue"><div class="dash-mc-label">มูลค่ารวม (บาท)</div><div class="dash-mc-val teal" id="pr-total-amount">0</div></div>
+          <div class="dash-mc bt-green"><div class="dash-mc-label">อนุมัติแล้ว</div><div class="dash-mc-val green" id="pr-approved">0</div></div>
+          <div class="dash-mc bt-amber"><div class="dash-mc-label">รออนุมัติ</div><div class="dash-mc-val amber" id="pr-pending">0</div></div>
+          <div class="dash-mc bt-red"><div class="dash-mc-label">ปฏิเสธ</div><div class="dash-mc-val red" id="pr-rejected">0</div></div>
         </div>
         <div class="dash-row">
-          <div class="pr-card" style="flex:2; min-width:280px;"><div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> PR รายวัน (14 วันล่าสุด)</div></div><div class="pr-card-body"><div style="height:210px;"><canvas id="pr-chart"></canvas></div></div></div>
-          <div class="pr-card" style="flex:1; min-width:240px;"><div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> Top แผนก (ตามมูลค่า)</div></div><div class="pr-card-body" id="pr-top"></div></div>
+          <div class="pr-card" style="flex:2; min-width:280px;"><div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> PR รายวัน</div></div><div class="pr-card-body"><div style="height:210px;"><canvas id="pr-chart"></canvas></div></div></div>
+          <div class="pr-card" style="flex:1; min-width:230px;"><div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> สถานะ PR</div></div><div class="pr-card-body"><div style="height:210px;"><canvas id="pr-donut"></canvas></div></div></div>
         </div>
-        <div class="pr-card"><div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> PR ล่าสุด</div></div><div class="pr-card-body"><table class="pr-items"><thead><tr><th>PR No</th><th>วันที่</th><th>แผนก</th><th style="text-align:right">มูลค่า</th><th>สถานะ</th></tr></thead><tbody id="pr-recent"></tbody></table></div></div>
+        <div class="dash-row">
+          <div class="pr-card" style="flex:1; min-width:280px;"><div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> Top แผนก (มูลค่า)</div></div><div class="pr-card-body"><div style="height:200px;"><canvas id="pr-top"></canvas></div></div></div>
+          <div class="pr-card" style="flex:1.3; min-width:300px;"><div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> PR ล่าสุด</div></div><div class="pr-card-body"><table class="pr-items"><thead><tr><th>PR No</th><th>แผนก</th><th style="text-align:right">มูลค่า</th><th>สถานะ</th></tr></thead><tbody id="pr-recent"></tbody></table></div></div>
+        </div>
 
         <div class="dash-section">🛒 ใบสั่งซื้อ (PO)</div>
-        <div class="dash-metrics">
-          <div class="dash-mc"><div class="dash-mc-label">PO ทั้งหมด</div><div class="dash-mc-val" id="po-total-count">0</div></div>
-          <div class="dash-mc"><div class="dash-mc-label">มูลค่ารวม (บาท)</div><div class="dash-mc-val teal" id="po-total-amount">0</div></div>
-          <div class="dash-mc"><div class="dash-mc-label">Active</div><div class="dash-mc-val green" id="po-active">0</div></div>
-          <div class="dash-mc"><div class="dash-mc-label">เสร็จสิ้น</div><div class="dash-mc-val" id="po-completed">0</div></div>
+        <div class="dash-metrics dash-metrics-5">
+          <div class="dash-mc bt-purple"><div class="dash-mc-label">PO ทั้งหมด</div><div class="dash-mc-val" id="po-total-count">0</div></div>
+          <div class="dash-mc bt-blue"><div class="dash-mc-label">มูลค่ารวม (บาท)</div><div class="dash-mc-val teal" id="po-total-amount">0</div></div>
+          <div class="dash-mc bt-green"><div class="dash-mc-label">Active</div><div class="dash-mc-val green" id="po-active">0</div></div>
+          <div class="dash-mc bt-blue"><div class="dash-mc-label">เสร็จสิ้น</div><div class="dash-mc-val" id="po-completed">0</div></div>
+          <div class="dash-mc bt-red"><div class="dash-mc-label">ยกเลิก</div><div class="dash-mc-val red" id="po-cancelled">0</div></div>
         </div>
         <div class="dash-row">
-          <div class="pr-card" style="flex:2; min-width:280px;"><div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> PO รายวัน (14 วันล่าสุด)</div></div><div class="pr-card-body"><div style="height:210px;"><canvas id="po-chart"></canvas></div></div></div>
-          <div class="pr-card" style="flex:1; min-width:240px;"><div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> Top ผู้ขาย (ตามมูลค่า)</div></div><div class="pr-card-body" id="po-top"></div></div>
+          <div class="pr-card" style="flex:2; min-width:280px;"><div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> PO รายวัน</div></div><div class="pr-card-body"><div style="height:210px;"><canvas id="po-chart"></canvas></div></div></div>
+          <div class="pr-card" style="flex:1; min-width:230px;"><div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> สถานะ PO</div></div><div class="pr-card-body"><div style="height:210px;"><canvas id="po-donut"></canvas></div></div></div>
         </div>
-        <div class="pr-card"><div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> PO ล่าสุด</div></div><div class="pr-card-body"><table class="pr-items"><thead><tr><th>PO No</th><th>วันที่</th><th>ผู้ขาย</th><th style="text-align:right">มูลค่า</th><th>สถานะ</th></tr></thead><tbody id="po-recent"></tbody></table></div></div>
+        <div class="dash-row">
+          <div class="pr-card" style="flex:1; min-width:280px;"><div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> Top ผู้ขาย (มูลค่า)</div></div><div class="pr-card-body"><div style="height:200px;"><canvas id="po-top"></canvas></div></div></div>
+          <div class="pr-card" style="flex:1.3; min-width:300px;"><div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> PO ล่าสุด</div></div><div class="pr-card-body"><table class="pr-items"><thead><tr><th>PO No</th><th>ผู้ขาย</th><th style="text-align:right">มูลค่า</th><th>สถานะ</th></tr></thead><tbody id="po-recent"></tbody></table></div></div>
+        </div>
 
         <div class="panel" style="margin-top:14px;"><div class="status" id="api-status">✅ API Connected</div></div>
       </div>
@@ -473,57 +512,96 @@
     let dashCharts = {};
     async function loadDashboard() {
       try {
-        const s = await api.getDashboardStats();
+        const filters = {
+          from: document.getElementById('f-from')?.value || '',
+          to: document.getElementById('f-to')?.value || '',
+          status: document.getElementById('f-status')?.value || '',
+        };
+        const s = await api.getDashboardStats(filters);
         const money = v => Number(v || 0).toLocaleString('th-TH');
         // PR
         document.getElementById('pr-total-count').textContent = s.pr.total_count;
         document.getElementById('pr-total-amount').textContent = money(Math.round(s.pr.total_amount));
-        document.getElementById('pr-pending').textContent = s.pr.status.Pending || 0;
         document.getElementById('pr-approved').textContent = s.pr.status.Approved || 0;
-        renderDashTop('pr-top', s.pr.top_departments);
-        renderDashRecent('pr-recent', s.pr.recent, 'pr_no', 'department_name');
+        document.getElementById('pr-pending').textContent = s.pr.status.Pending || 0;
+        document.getElementById('pr-rejected').textContent = s.pr.status.Rejected || 0;
         drawDayChart('pr-chart', s.pr.by_day, '#6366f1');
+        drawDonut('pr-donut', [['รออนุมัติ', s.pr.status.Pending || 0, '#d97706'], ['อนุมัติแล้ว', s.pr.status.Approved || 0, '#16a34a'], ['ปฏิเสธ', s.pr.status.Rejected || 0, '#e11d48']]);
+        drawTopBar('pr-top', s.pr.top, '#6366f1');
+        renderDashRecent('pr-recent', s.pr.recent);
         // PO
         document.getElementById('po-total-count').textContent = s.po.total_count;
         document.getElementById('po-total-amount').textContent = money(Math.round(s.po.total_amount));
         document.getElementById('po-active').textContent = s.po.status.Active || 0;
         document.getElementById('po-completed').textContent = s.po.status.Completed || 0;
-        renderDashTop('po-top', s.po.top_suppliers);
-        renderDashRecent('po-recent', s.po.recent, 'po_no', 'supplier_name');
+        document.getElementById('po-cancelled').textContent = s.po.status.Cancelled || 0;
         drawDayChart('po-chart', s.po.by_day, '#1D9E75');
+        drawDonut('po-donut', [['Active', s.po.status.Active || 0, '#16a34a'], ['เสร็จสิ้น', s.po.status.Completed || 0, '#3b82f6'], ['ยกเลิก', s.po.status.Cancelled || 0, '#e11d48']]);
+        drawTopBar('po-top', s.po.top, '#9333ea');
+        renderDashRecent('po-recent', s.po.recent);
       } catch (e) {
         toast('โหลด Dashboard ไม่สำเร็จ: ' + e.message, true);
       }
     }
     window.loadDashboard = loadDashboard;
-
-    function renderDashTop(id, rows) {
-      const el = document.getElementById(id);
-      el.innerHTML = (rows && rows.length)
-        ? rows.map(r => `<div class="dash-top-item"><span>${r.name} <span style="color:#cbd5e1">(${r.c})</span></span><span class="amt">฿${Number(r.a || 0).toLocaleString('th-TH')}</span></div>`).join('')
-        : '<div class="dash-empty">ยังไม่มีข้อมูล</div>';
+    function applyDashFilter() { loadDashboard(); }
+    function resetDashFilter() {
+      document.getElementById('f-from').value = '';
+      document.getElementById('f-to').value = '';
+      document.getElementById('f-status').value = '';
+      loadDashboard();
     }
+    window.applyDashFilter = applyDashFilter;
+    window.resetDashFilter = resetDashFilter;
 
-    function renderDashRecent(id, rows, noKey, nameKey) {
+    function renderDashRecent(id, rows) {
       const tb = document.getElementById(id);
-      if (!rows || !rows.length) { tb.innerHTML = '<tr><td colspan="5" class="dash-empty">ยังไม่มีข้อมูล</td></tr>'; return; }
-      const tagOf = st => st === 'Pending' ? 'pending' : (st === 'Approved' || st === 'Active') ? 'approved' : st === 'Rejected' ? 'rejected' : 'approved';
-      tb.innerHTML = rows.map(r => `<tr><td><b>${r[noKey]}</b></td><td>${nz(r.date)}</td><td>${nz(r[nameKey])}</td><td style="text-align:right">${Number(r.total_amount || 0).toLocaleString()}</td><td><span class="tag ${tagOf(r.status)}">${r.status}</span></td></tr>`).join('');
+      if (!rows || !rows.length) { tb.innerHTML = '<tr><td colspan="4" class="dash-empty">ยังไม่มีข้อมูล</td></tr>'; return; }
+      const tagOf = st => st === 'Pending' ? 'pending' : (st === 'Approved' || st === 'Active') ? 'approved' : (st === 'Rejected' || st === 'Cancelled') ? 'rejected' : 'approved';
+      tb.innerHTML = rows.map(r => `<tr><td><b>${r.no}</b></td><td>${nz(r.party)}</td><td style="text-align:right">${Number(r.total_amount || 0).toLocaleString()}</td><td><span class="tag ${tagOf(r.status)}">${r.status}</span></td></tr>`).join('');
     }
 
     function drawDayChart(canvasId, byDay, color) {
       const canvas = document.getElementById(canvasId);
       if (!canvas || typeof Chart === 'undefined') return;
-      const days = [];
-      for (let i = 13; i >= 0; i--) { const d = new Date(); d.setDate(d.getDate() - i); days.push(d.toISOString().slice(0, 10)); }
-      const map = {}; (byDay || []).forEach(r => { map[r.d] = r.c; });
-      const data = days.map(d => map[d] || 0);
-      const labels = days.map(d => d.slice(5));
+      // Use the dates present (filtered range), else fall back to last 14 days
+      let labels, data;
+      const list = byDay || [];
+      if (list.length) {
+        labels = list.map(r => r.d.slice(5));
+        data = list.map(r => r.c);
+      } else {
+        labels = []; data = [];
+      }
       if (dashCharts[canvasId]) dashCharts[canvasId].destroy();
       dashCharts[canvasId] = new Chart(canvas.getContext('2d'), {
         type: 'bar',
         data: { labels, datasets: [{ data, backgroundColor: color, borderRadius: 4 }] },
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+      });
+    }
+
+    function drawDonut(canvasId, items) {
+      const canvas = document.getElementById(canvasId);
+      if (!canvas || typeof Chart === 'undefined') return;
+      if (dashCharts[canvasId]) dashCharts[canvasId].destroy();
+      const labels = items.map(i => i[0]), data = items.map(i => i[1]), colors = items.map(i => i[2]);
+      dashCharts[canvasId] = new Chart(canvas.getContext('2d'), {
+        type: 'doughnut',
+        data: { labels, datasets: [{ data, backgroundColor: colors, borderWidth: 0 }] },
+        options: { responsive: true, maintainAspectRatio: false, cutout: '62%', plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } } }
+      });
+    }
+
+    function drawTopBar(canvasId, rows, color) {
+      const canvas = document.getElementById(canvasId);
+      if (!canvas || typeof Chart === 'undefined') return;
+      if (dashCharts[canvasId]) dashCharts[canvasId].destroy();
+      const labels = (rows || []).map(r => r.name), data = (rows || []).map(r => r.a);
+      dashCharts[canvasId] = new Chart(canvas.getContext('2d'), {
+        type: 'bar',
+        data: { labels, datasets: [{ data, backgroundColor: color, borderRadius: 4 }] },
+        options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true } } }
       });
     }
 
