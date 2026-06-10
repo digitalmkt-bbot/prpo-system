@@ -65,6 +65,12 @@
     .logout-btn { display: block; width: 100%; margin-top: 10px; padding: 8px; border: 1px solid var(--line);
       background: #fff; color: var(--ink); border-radius: 6px; cursor: pointer; font-size: 12px; }
     .logout-btn:hover { background: #f1f5f9; }
+    /* Modal */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(15,23,42,.5); display: none;
+      align-items: center; justify-content: center; z-index: 900; }
+    .modal-card { background: #fff; width: 420px; max-width: 92vw; border-radius: 14px; padding: 24px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.3); max-height: 88vh; overflow: auto; }
+    .modal-card h3 { margin: 0 0 12px; }
   </style>
 </head>
 <body>
@@ -89,7 +95,9 @@
       <div class="logo">🚀 PR/PO System</div>
       <ul class="nav">
         <li><a class="active" data-page="dashboard">Dashboard</a></li>
+        <li><a data-page="create">+ สร้าง PR</a></li>
         <li><a data-page="prs">PR List</a></li>
+        <li><a data-page="pos">PO List</a></li>
         <li><a data-page="approvals">My Approvals</a></li>
         <li><a data-page="suppliers">Suppliers</a></li>
         <li><a data-page="departments">Departments</a></li>
@@ -115,6 +123,58 @@
         <div class="panel">
           <b>Status</b>
           <div class="status" id="api-status">✅ API Connected</div>
+        </div>
+      </div>
+
+      <!-- CREATE PR -->
+      <div class="page" id="page-create">
+        <h1>สร้างใบขอซื้อ (PR)</h1>
+        <p class="subtitle">กรอกข้อมูลและรายการสินค้า</p>
+        <div class="panel">
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+            <div>
+              <label>แผนก</label>
+              <select id="cr-dept"></select>
+            </div>
+            <div>
+              <label>ซัพพลายเออร์</label>
+              <select id="cr-supplier"></select>
+            </div>
+          </div>
+          <label style="margin-top:16px;">รายการสินค้า</label>
+          <table>
+            <thead>
+              <tr><th>สินค้า</th><th style="width:90px;">จำนวน</th><th style="width:130px;">ราคา/หน่วย</th><th style="width:130px;">รวม</th><th style="width:44px;"></th></tr>
+            </thead>
+            <tbody id="cr-items"></tbody>
+          </table>
+          <button class="btn secondary" style="margin-top:10px;" onclick="addPrItem()">+ เพิ่มรายการ</button>
+          <div style="margin-top:18px; display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
+            <label style="margin:0; display:flex; align-items:center; gap:6px;"><input type="checkbox" id="cr-vat" style="width:auto;" onchange="recalcPR()"> มี VAT 7%</label>
+            <div style="margin-left:auto; text-align:right;">
+              <div style="font-size:18px; font-weight:700;">ยอดรวม (ฐานอนุมัติ): <span id="cr-total">0.00</span> บาท</div>
+              <div style="font-size:12px; color:var(--muted);" id="cr-vat-hint"></div>
+            </div>
+          </div>
+          <button class="btn" style="margin-top:18px;" onclick="submitPR()">บันทึก PR</button>
+        </div>
+      </div>
+
+      <!-- PO LIST -->
+      <div class="page" id="page-pos">
+        <h1>PO List</h1>
+        <p class="subtitle">รายการใบสั่งซื้อที่ออกแล้ว</p>
+        <div class="toolbar">
+          <button class="btn" onclick="loadPOs()">Refresh</button>
+        </div>
+        <div class="panel">
+          <table>
+            <thead>
+              <tr><th>PO No</th><th>Date</th><th>Supplier</th><th>Amount</th><th>Status</th></tr>
+            </thead>
+            <tbody id="po-table"></tbody>
+          </table>
+          <div class="empty" id="po-empty" style="display:none;">ยังไม่มี PO</div>
         </div>
       </div>
 
@@ -208,6 +268,18 @@
 
   <div class="toast" id="toast"></div>
 
+  <!-- Generic Modal -->
+  <div class="modal-overlay" id="modal-overlay">
+    <div class="modal-card">
+      <h3 id="modal-title"></h3>
+      <div id="modal-body"></div>
+      <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:18px;">
+        <button class="btn secondary" onclick="closeModal()">ยกเลิก</button>
+        <button class="btn" id="modal-save-btn" onclick="modalSave()">บันทึก</button>
+      </div>
+    </div>
+  </div>
+
   <script src="api.js"></script>
   <script>
     let currentUser = null;
@@ -221,7 +293,9 @@
         const page = e.target.dataset.page;
         document.getElementById(`page-${page}`).classList.add('active');
 
+        if (page === 'create') loadCreateForm();
         if (page === 'prs') loadPRs();
+        if (page === 'pos') loadPOs();
         if (page === 'approvals') loadApprovals();
         if (page === 'suppliers') loadSuppliers();
         if (page === 'departments') loadDepartments();
@@ -342,14 +416,157 @@
       }
     }
 
-    // Modals
-    function showSupplierModal() {
-      toast('Supplier modal - feature coming soon');
+    // ===== Generic modal =====
+    function val(id) { const el = document.getElementById(id); return el ? el.value.trim() : ''; }
+    function openModal(title, bodyHtml, onSave) {
+      document.getElementById('modal-title').textContent = title;
+      document.getElementById('modal-body').innerHTML = bodyHtml;
+      document.getElementById('modal-overlay').style.display = 'flex';
+      window._modalSave = onSave;
     }
+    function closeModal() {
+      document.getElementById('modal-overlay').style.display = 'none';
+      window._modalSave = null;
+    }
+    async function modalSave() {
+      const btn = document.getElementById('modal-save-btn');
+      if (!window._modalSave) return;
+      btn.disabled = true;
+      try { await window._modalSave(); }
+      finally { btn.disabled = false; }
+    }
+    window.closeModal = closeModal;
+    window.modalSave = modalSave;
+
+    // ===== PO List =====
+    async function loadPOs() {
+      try {
+        const pos = await api.getPOs();
+        const tbody = document.getElementById('po-table');
+        tbody.innerHTML = pos.map(p => `
+          <tr>
+            <td><b>${p.po_no}</b></td>
+            <td>${p.date ? String(p.date).slice(0,10) : '-'}</td>
+            <td>${p.supplier_name || '-'}</td>
+            <td>${Number(p.total_amount).toLocaleString()}</td>
+            <td><span class="tag approved">${p.status}</span></td>
+          </tr>`).join('');
+        document.getElementById('po-empty').style.display = pos.length ? 'none' : 'block';
+      } catch (e) {
+        toast('โหลด PO ไม่สำเร็จ: ' + e.message, true);
+      }
+    }
+    window.loadPOs = loadPOs;
+
+    // ===== Create PR =====
+    async function loadCreateForm() {
+      try {
+        const [depts, sups] = await Promise.all([api.getDepartments(), api.getSuppliers()]);
+        document.getElementById('cr-dept').innerHTML = depts.length
+          ? depts.map(d => `<option value="${d.id}">${d.code} - ${d.name}</option>`).join('')
+          : '<option value="">— ยังไม่มีแผนก —</option>';
+        document.getElementById('cr-supplier').innerHTML = sups.length
+          ? sups.map(s => `<option value="${s.id}">${s.name}</option>`).join('')
+          : '<option value="">— ยังไม่มีซัพพลายเออร์ (เพิ่มที่เมนู Suppliers) —</option>';
+        document.getElementById('cr-items').innerHTML = '';
+        addPrItem();
+        recalcPR();
+      } catch (e) {
+        toast('โหลดฟอร์มไม่สำเร็จ: ' + e.message, true);
+      }
+    }
+    window.loadCreateForm = loadCreateForm;
+
+    function addPrItem() {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><input class="it-name" placeholder="ชื่อสินค้า"></td>
+        <td><input class="it-qty" type="number" min="0" step="1" value="1" oninput="recalcPR()"></td>
+        <td><input class="it-price" type="number" min="0" step="0.01" value="0" oninput="recalcPR()"></td>
+        <td class="it-line">0.00</td>
+        <td><button class="btn secondary" style="padding:4px 8px;" onclick="this.closest('tr').remove();recalcPR()">✕</button></td>`;
+      document.getElementById('cr-items').appendChild(tr);
+    }
+    window.addPrItem = addPrItem;
+
+    function recalcPR() {
+      let subtotal = 0;
+      document.querySelectorAll('#cr-items tr').forEach(tr => {
+        const q = parseFloat(tr.querySelector('.it-qty').value) || 0;
+        const p = parseFloat(tr.querySelector('.it-price').value) || 0;
+        const line = q * p;
+        subtotal += line;
+        tr.querySelector('.it-line').textContent = line.toFixed(2);
+      });
+      document.getElementById('cr-total').textContent = subtotal.toFixed(2);
+      const vat = document.getElementById('cr-vat').checked;
+      document.getElementById('cr-vat-hint').textContent = vat
+        ? `รวม VAT 7% = ${(subtotal * 1.07).toFixed(2)} บาท`
+        : '';
+    }
+    window.recalcPR = recalcPR;
+
+    async function submitPR() {
+      try {
+        const department_id = document.getElementById('cr-dept').value;
+        const supplier_id = document.getElementById('cr-supplier').value;
+        if (!department_id) return toast('กรุณาเลือกแผนก', true);
+        if (!supplier_id) return toast('กรุณาเพิ่มซัพพลายเออร์ก่อน (เมนู Suppliers)', true);
+        const items = [...document.querySelectorAll('#cr-items tr')].map(tr => ({
+          product_name: tr.querySelector('.it-name').value.trim(),
+          quantity: parseFloat(tr.querySelector('.it-qty').value) || 0,
+          unit_price: parseFloat(tr.querySelector('.it-price').value) || 0,
+        })).filter(i => i.product_name && i.quantity > 0);
+        if (!items.length) return toast('กรุณาเพิ่มรายการสินค้าอย่างน้อย 1 รายการ', true);
+
+        const res = await api.savePR({
+          date: new Date().toISOString().slice(0, 10),
+          supplier_id, department_id, items,
+          has_vat: document.getElementById('cr-vat').checked,
+          requested_by: currentUser.email,
+        });
+        toast(`สร้าง PR สำเร็จ: ${res.pr_no} (รออนุมัติ ${res.totalSteps} ขั้น)`);
+        document.querySelector('.nav a[data-page="prs"]').click();
+      } catch (e) {
+        toast('สร้าง PR ไม่สำเร็จ: ' + e.message, true);
+      }
+    }
+    window.submitPR = submitPR;
+
+    // ===== Supplier / Department modals =====
+    function showSupplierModal() {
+      openModal('เพิ่มซัพพลายเออร์', `
+        <label>รหัส *</label><input id="sp-code" placeholder="เช่น SUP001">
+        <label style="margin-top:8px;">ชื่อ *</label><input id="sp-name">
+        <label style="margin-top:8px;">อีเมล</label><input id="sp-email">
+        <label style="margin-top:8px;">เบอร์โทร</label><input id="sp-phone">
+        <label style="margin-top:8px;">ที่อยู่</label><input id="sp-address">
+      `, async () => {
+        const s = { code: val('sp-code'), name: val('sp-name'), email: val('sp-email'), phone: val('sp-phone'), address: val('sp-address') };
+        if (!s.code || !s.name) return toast('กรุณากรอกรหัสและชื่อ', true);
+        await api.saveSupplier(s);
+        toast('บันทึกซัพพลายเออร์แล้ว');
+        closeModal();
+        loadSuppliers();
+      });
+    }
+    window.showSupplierModal = showSupplierModal;
 
     function showDeptModal() {
-      toast('Department modal - feature coming soon');
+      openModal('เพิ่มแผนก', `
+        <label>รหัส *</label><input id="dp-code">
+        <label style="margin-top:8px;">ชื่อ *</label><input id="dp-name">
+        <label style="margin-top:8px;">อีเมลหัวหน้าแผนก</label><input id="dp-manager" placeholder="manager@loveandaman.com">
+      `, async () => {
+        const d = { code: val('dp-code'), name: val('dp-name'), manager_email: val('dp-manager') };
+        if (!d.code || !d.name) return toast('กรุณากรอกรหัสและชื่อ', true);
+        await api.saveDepartment(d);
+        toast('บันทึกแผนกแล้ว');
+        closeModal();
+        loadDepartments();
+      });
     }
+    window.showDeptModal = showDeptModal;
 
     // ===== Auth gating =====
     function showLogin() {
