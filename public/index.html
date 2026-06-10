@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PR/PO Procurement System - Railway</title>
+  <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --brand:#6366f1; --panel:#ffffff; --ink:#0f172a; --muted:#64748b;
+      --line:#e9e9f5; --green:#16a34a; --amber:#d97706; --red:#e11d48;
+      --font:"Segoe UI", Roboto, sans-serif;
+    }
+    * { box-sizing: border-box; font-family: var(--font); }
+    body { margin: 0; background: #f8f9fa; color: var(--ink); font-size: 14px; }
+    .container { display: flex; min-height: 100vh; }
+    .sidebar { width: 250px; background: #fff; border-right: 1px solid var(--line); padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,.05); }
+    .logo { font-size: 18px; font-weight: 700; color: var(--brand); margin-bottom: 30px; }
+    .nav { list-style: none; margin: 0; padding: 0; }
+    .nav li { margin-bottom: 5px; }
+    .nav a { display: block; padding: 10px 12px; border-radius: 6px; color: #475569; text-decoration: none; cursor: pointer; }
+    .nav a:hover { background: #f1f5f9; }
+    .nav a.active { background: linear-gradient(135deg, var(--brand), #4f46e5); color: #fff; }
+    .main { flex: 1; padding: 30px; overflow: auto; }
+    h1 { margin: 0 0 8px; font-size: 28px; }
+    .subtitle { color: var(--muted); margin-bottom: 20px; }
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 30px; }
+    .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,.05); }
+    .card-label { color: var(--muted); font-size: 12px; margin-bottom: 8px; }
+    .card-value { font-size: 32px; font-weight: 700; color: var(--brand); }
+    .card.green .card-value { color: var(--green); }
+    .card.amber .card-value { color: var(--amber); }
+    .card.red .card-value { color: var(--red); }
+    .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,.05); }
+    .page { display: none; }
+    .page.active { display: block; }
+    .toolbar { display: flex; gap: 12px; margin-bottom: 16px; }
+    .btn { padding: 8px 16px; border: none; border-radius: 6px; background: var(--brand); color: #fff; cursor: pointer; font-weight: 600; }
+    .btn:hover { opacity: 0.9; }
+    .btn.secondary { background: var(--panel); color: var(--ink); border: 1px solid var(--line); }
+    table { width: 100%; border-collapse: collapse; }
+    th { text-align: left; padding: 12px; background: #f1f5f9; color: var(--muted); font-weight: 600; font-size: 12px; border-bottom: 1px solid var(--line); }
+    td { padding: 12px; border-bottom: 1px solid var(--line); }
+    tbody tr:hover { background: #f9fafb; }
+    .tag { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; }
+    .tag.pending { background: #fef3c7; color: #92400e; }
+    .tag.approved { background: #dcfce7; color: #166534; }
+    .tag.rejected { background: #fee2e2; color: #991b1b; }
+    input, select { width: 100%; padding: 8px 12px; border: 1px solid var(--line); border-radius: 6px; font-size: 14px; }
+    label { display: block; font-size: 12px; color: var(--muted); margin: 10px 0 4px; }
+    .toast { position: fixed; bottom: 20px; right: 20px; background: #111; color: #fff; padding: 12px 16px; border-radius: 6px; display: none; z-index: 999; }
+    .toast.show { display: block; }
+    .toast.error { background: var(--red); }
+    .empty { text-align: center; color: var(--muted); padding: 40px 20px; }
+    .status { padding: 12px; background: #f0f4f8; border-left: 3px solid var(--brand); border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="sidebar">
+      <div class="logo">🚀 PR/PO System</div>
+      <ul class="nav">
+        <li><a class="active" data-page="dashboard">Dashboard</a></li>
+        <li><a data-page="prs">PR List</a></li>
+        <li><a data-page="approvals">My Approvals</a></li>
+        <li><a data-page="suppliers">Suppliers</a></li>
+        <li><a data-page="departments">Departments</a></li>
+        <li><a data-page="settings">Settings</a></li>
+      </ul>
+      <div style="margin-top: 40px; padding: 12px; background: #f1f5f9; border-radius: 6px; font-size: 12px; color: var(--muted);">
+        <b>User</b><br>user@example.com
+      </div>
+    </div>
+
+    <div class="main">
+      <!-- DASHBOARD -->
+      <div class="page active" id="page-dashboard">
+        <h1>Dashboard</h1>
+        <p class="subtitle">ภาพรวมระบบการจัดซื้อ</p>
+        <div class="cards">
+          <div class="card"><div class="card-label">Total PR</div><div class="card-value" id="d-total">0</div></div>
+          <div class="card green"><div class="card-label">Approved</div><div class="card-value" id="d-approved">0</div></div>
+          <div class="card amber"><div class="card-label">Pending</div><div class="card-value" id="d-pending">0</div></div>
+          <div class="card red"><div class="card-label">Rejected</div><div class="card-value" id="d-rejected">0</div></div>
+        </div>
+        <div class="panel">
+          <b>Status</b>
+          <div class="status" id="api-status">✅ API Connected</div>
+        </div>
+      </div>
+
+      <!-- PR LIST -->
+      <div class="page" id="page-prs">
+        <h1>PR List</h1>
+        <p class="subtitle">รายการใบขอซื้อทั้งหมด</p>
+        <div class="toolbar">
+          <input type="text" placeholder="Search PR..." id="pr-search">
+          <button class="btn" onclick="loadPRs()">Refresh</button>
+        </div>
+        <div class="panel">
+          <table>
+            <thead>
+              <tr><th>PR No</th><th>Date</th><th>Supplier</th><th>Amount</th><th>Status</th><th>Step</th></tr>
+            </thead>
+            <tbody id="pr-table"></tbody>
+          </table>
+          <div class="empty" id="pr-empty" style="display:none;">No PR found</div>
+        </div>
+      </div>
+
+      <!-- APPROVALS -->
+      <div class="page" id="page-approvals">
+        <h1>My Approvals</h1>
+        <p class="subtitle">รายการรออนุมัติของฉัน</p>
+        <div class="panel">
+          <table>
+            <thead>
+              <tr><th>PR No</th><th>Supplier</th><th>Amount</th><th>Current Step</th><th>Action</th></tr>
+            </thead>
+            <tbody id="approval-table"></tbody>
+          </table>
+          <div class="empty" id="approval-empty">ไม่มีการรอการอนุมัติ</div>
+        </div>
+      </div>
+
+      <!-- SUPPLIERS -->
+      <div class="page" id="page-suppliers">
+        <h1>Suppliers</h1>
+        <p class="subtitle">จัดการผู้ขาย</p>
+        <button class="btn" onclick="showSupplierModal()">+ New Supplier</button>
+        <div class="panel" style="margin-top: 20px;">
+          <table>
+            <thead>
+              <tr><th>Code</th><th>Name</th><th>Email</th><th>Phone</th></tr>
+            </thead>
+            <tbody id="supplier-table"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- DEPARTMENTS -->
+      <div class="page" id="page-departments">
+        <h1>Departments</h1>
+        <p class="subtitle">จัดการแผนก</p>
+        <button class="btn" onclick="showDeptModal()">+ New Department</button>
+        <div class="panel" style="margin-top: 20px;">
+          <table>
+            <thead>
+              <tr><th>Code</th><th>Name</th><th>Manager Email</th><th>Status</th></tr>
+            </thead>
+            <tbody id="dept-table"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- SETTINGS -->
+      <div class="page" id="page-settings">
+        <h1>Settings</h1>
+        <p class="subtitle">ตั้งค่าระบบ</p>
+        <div class="panel">
+          <label>Company Name</label>
+          <input type="text" id="company-name" placeholder="บริษัท...">
+          <label style="margin-top: 10px;">Tax ID</label>
+          <input type="text" id="company-tax">
+          <button class="btn" style="margin-top: 16px;" onclick="saveCompany()">Save</button>
+        </div>
+        <div class="panel" style="margin-top: 20px; background: #f0f4f8;">
+          <b>API Information</b>
+          <div style="margin-top: 10px; font-size: 13px; color: var(--muted);">
+            <p>✅ <strong>Backend:</strong> Node.js + Express</p>
+            <p>✅ <strong>Database:</strong> PostgreSQL (Railway)</p>
+            <p>✅ <strong>API Endpoints:</strong> 25+ endpoints</p>
+            <p>✅ <strong>Environment:</strong> Production</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="api.js"></script>
+  <script>
+    // Navigation
+    document.querySelectorAll('.nav a').forEach(link => {
+      link.addEventListener('click', (e) => {
+        document.querySelectorAll('.nav a').forEach(l => l.classList.remove('active'));
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        e.target.classList.add('active');
+        const page = e.target.dataset.page;
+        document.getElementById(`page-${page}`).classList.add('active');
+
+        if (page === 'prs') loadPRs();
+        if (page === 'approvals') loadApprovals();
+        if (page === 'suppliers') loadSuppliers();
+        if (page === 'departments') loadDepartments();
+      });
+    });
+
+    // Toast notification
+    function toast(msg, error = false) {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.className = 'toast show' + (error ? ' error' : '');
+      setTimeout(() => el.classList.remove('show'), 3000);
+    }
+
+    // Initialize
+    async function init() {
+      try {
+        const prs = await api.getPRs();
+        document.getElementById('d-total').textContent = prs.length;
+        document.getElementById('d-approved').textContent = prs.filter(p => p.status === 'Approved').length;
+        document.getElementById('d-pending').textContent = prs.filter(p => p.status === 'Pending').length;
+        document.getElementById('d-rejected').textContent = prs.filter(p => p.status === 'Rejected').length;
+      } catch (e) {
+        toast('Error loading dashboard: ' + e.message, true);
+      }
+    }
+
+    // Load PRs
+    async function loadPRs() {
+      try {
+        const prs = await api.getPRs();
+        const tbody = document.getElementById('pr-table');
+        tbody.innerHTML = prs.length ? prs.map(p => `
+          <tr>
+            <td><b>${p.pr_no}</b></td>
+            <td>${p.date}</td>
+            <td>${p.supplier_name}</td>
+            <td>${p.total_amount}</td>
+            <td><span class="tag ${p.status === 'Pending' ? 'pending' : p.status === 'Approved' ? 'approved' : 'rejected'}">${p.status}</span></td>
+            <td>${p.current_approval_step || 1}/${p.total_approval_steps || 1}</td>
+          </tr>
+        `).join('') : '';
+        document.getElementById('pr-empty').style.display = prs.length ? 'none' : 'block';
+      } catch (e) {
+        toast('Error loading PRs: ' + e.message, true);
+      }
+    }
+
+    // Load Approvals
+    async function loadApprovals() {
+      try {
+        const approvals = await api.getMyApprovalsNeeded('user@example.com');
+        const tbody = document.getElementById('approval-table');
+        tbody.innerHTML = approvals.length ? approvals.map(a => `
+          <tr>
+            <td><b>${a.pr_no}</b></td>
+            <td>${a.supplier_name}</td>
+            <td>${a.total_amount}</td>
+            <td>Step ${a.current_approval_step} / ${a.total_approval_steps}</td>
+            <td><button class="btn" style="padding: 4px 8px;" onclick="approve('${a.pr_no}')">Approve</button></td>
+          </tr>
+        `).join('') : '';
+        document.getElementById('approval-empty').style.display = approvals.length ? 'none' : 'block';
+      } catch (e) {
+        toast('Error loading approvals: ' + e.message, true);
+      }
+    }
+
+    // Load Suppliers
+    async function loadSuppliers() {
+      try {
+        const suppliers = await api.getSuppliers();
+        const tbody = document.getElementById('supplier-table');
+        tbody.innerHTML = suppliers.map(s => `
+          <tr><td>${s.code}</td><td>${s.name}</td><td>${s.email}</td><td>${s.phone}</td></tr>
+        `).join('');
+      } catch (e) {
+        toast('Error loading suppliers: ' + e.message, true);
+      }
+    }
+
+    // Load Departments
+    async function loadDepartments() {
+      try {
+        const depts = await api.getDepartments();
+        const tbody = document.getElementById('dept-table');
+        tbody.innerHTML = depts.map(d => `
+          <tr><td>${d.code}</td><td>${d.name}</td><td>${d.manager_email}</td><td>${d.status}</td></tr>
+        `).join('');
+      } catch (e) {
+        toast('Error loading departments: ' + e.message, true);
+      }
+    }
+
+    // Approve PR
+    async function approve(prNo) {
+      try {
+        await api.approvePR(prNo, 'user@example.com', 'User Name', 'Approved');
+        toast('PR approved successfully');
+        loadApprovals();
+        loadPRs();
+      } catch (e) {
+        toast('Error approving PR: ' + e.message, true);
+      }
+    }
+
+    // Save Company
+    async function saveCompany() {
+      try {
+        const company = {
+          name: document.getElementById('company-name').value,
+          tax_id: document.getElementById('company-tax').value
+        };
+        await api.saveCompanyInfo(company);
+        toast('Company saved');
+      } catch (e) {
+        toast('Error saving company: ' + e.message, true);
+      }
+    }
+
+    // Modals
+    function showSupplierModal() {
+      toast('Supplier modal - feature coming soon');
+    }
+
+    function showDeptModal() {
+      toast('Department modal - feature coming soon');
+    }
+
+    // Initialize on load
+    window.addEventListener('load', init);
+  </script>
+</body>
+</html>
