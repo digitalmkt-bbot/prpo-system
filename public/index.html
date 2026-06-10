@@ -566,63 +566,46 @@
       tb.innerHTML = rows.map(r => `<tr><td><b>${r.no}</b></td><td>${nz(r.party)}</td><td style="text-align:right">${Number(r.total_amount || 0).toLocaleString()}</td><td><span class="tag ${tagOf(r.status)}">${r.status}</span></td></tr>`).join('');
     }
 
-    // Size the canvas to its fixed-size box (no Chart.js ResizeObserver => no resize loop)
+    // Size canvas to its fixed-size box once (no ResizeObserver => no resize loop)
     function sizeCanvas(canvas) {
       const box = canvas.parentElement;
       const w = box.clientWidth || 300, h = box.clientHeight || 200;
       canvas.width = w; canvas.height = h;
-      canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
     }
     const NO_RESIZE = { animation: false, responsive: false, maintainAspectRatio: false };
 
-    function drawDayChart(canvasId, byDay, color) {
+    // Create the chart once; on later calls just swap data + update (no destroy/recreate)
+    function upsertChart(canvasId, type, data, options) {
       const canvas = document.getElementById(canvasId);
       if (!canvas || typeof Chart === 'undefined') return;
+      if (dashCharts[canvasId]) {
+        dashCharts[canvasId].data = data;
+        dashCharts[canvasId].update('none');
+      } else {
+        sizeCanvas(canvas);
+        dashCharts[canvasId] = new Chart(canvas.getContext('2d'), { type, data, options });
+      }
+    }
+
+    function drawDayChart(canvasId, byDay, color) {
       const list = byDay || [];
-      const labels = list.map(r => r.d.slice(5));
-      const data = list.map(r => r.c);
-      if (dashCharts[canvasId]) dashCharts[canvasId].destroy();
-      sizeCanvas(canvas);
-      dashCharts[canvasId] = new Chart(canvas.getContext('2d'), {
-        type: 'bar',
-        data: { labels, datasets: [{ data, backgroundColor: color, borderRadius: 4 }] },
-        options: { ...NO_RESIZE, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
-      });
+      upsertChart(canvasId, 'bar',
+        { labels: list.map(r => r.d.slice(5)), datasets: [{ data: list.map(r => r.c), backgroundColor: color, borderRadius: 4 }] },
+        { ...NO_RESIZE, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } });
     }
 
     function drawDonut(canvasId, items) {
-      const canvas = document.getElementById(canvasId);
-      if (!canvas || typeof Chart === 'undefined') return;
-      if (dashCharts[canvasId]) dashCharts[canvasId].destroy();
-      sizeCanvas(canvas);
-      const labels = items.map(i => i[0]), data = items.map(i => i[1]), colors = items.map(i => i[2]);
-      dashCharts[canvasId] = new Chart(canvas.getContext('2d'), {
-        type: 'doughnut',
-        data: { labels, datasets: [{ data, backgroundColor: colors, borderWidth: 0 }] },
-        options: { ...NO_RESIZE, cutout: '62%', plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } } }
-      });
+      upsertChart(canvasId, 'doughnut',
+        { labels: items.map(i => i[0]), datasets: [{ data: items.map(i => i[1]), backgroundColor: items.map(i => i[2]), borderWidth: 0 }] },
+        { ...NO_RESIZE, cutout: '62%', plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } } });
     }
 
     function drawTopBar(canvasId, rows, color) {
-      const canvas = document.getElementById(canvasId);
-      if (!canvas || typeof Chart === 'undefined') return;
-      if (dashCharts[canvasId]) dashCharts[canvasId].destroy();
-      sizeCanvas(canvas);
-      const labels = (rows || []).map(r => r.name), data = (rows || []).map(r => r.a);
-      dashCharts[canvasId] = new Chart(canvas.getContext('2d'), {
-        type: 'bar',
-        data: { labels, datasets: [{ data, backgroundColor: color, borderRadius: 4 }] },
-        options: { ...NO_RESIZE, indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true } } }
-      });
+      const list = rows || [];
+      upsertChart(canvasId, 'bar',
+        { labels: list.map(r => r.name), datasets: [{ data: list.map(r => r.a), backgroundColor: color, borderRadius: 4 }] },
+        { ...NO_RESIZE, indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true } } });
     }
-
-    // Manual debounced re-render on window resize (no Chart observers active)
-    let _dashResizeT;
-    window.addEventListener('resize', () => {
-      if (!document.getElementById('page-dashboard').classList.contains('active')) return;
-      clearTimeout(_dashResizeT);
-      _dashResizeT = setTimeout(() => loadDashboard(), 300);
-    });
 
     // Load PRs
     async function loadPRs() {
