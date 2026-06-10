@@ -295,7 +295,7 @@
         <div class="panel">
           <table>
             <thead>
-              <tr><th>PR No</th><th>Supplier</th><th>Amount</th><th>Current Step</th><th>Action</th></tr>
+              <tr><th>PR No</th><th>Amount</th><th>Current Step</th><th>Action</th></tr>
             </thead>
             <tbody id="approval-table"></tbody>
           </table>
@@ -455,8 +455,7 @@
         tbody.innerHTML = approvals.length ? approvals.map(a => `
           <tr>
             <td><b>${a.pr_no}</b></td>
-            <td>${a.supplier_name}</td>
-            <td>${a.total_amount}</td>
+            <td>${Number(a.total_amount || 0).toLocaleString()}</td>
             <td>Step ${a.current_approval_step} / ${a.total_approval_steps}</td>
             <td><button class="btn" style="padding: 4px 8px;" onclick="approve('${a.pr_no}')">Approve</button></td>
           </tr>
