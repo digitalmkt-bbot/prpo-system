@@ -15,7 +15,7 @@ export default function(pool) {
       let query = `
         SELECT
           pr.id, pr.pr_no, pr.date, pr.status,
-          pr.total_amount, pr.has_vat, pr.requested_by,
+          pr.total_amount, pr.has_vat, pr.requested_by, pr.po_no,
           pr.current_approval_step, pr.total_approval_steps,
           s.name as supplier_name, d.name as department_name,
           json_agg(json_build_object(
@@ -96,7 +96,11 @@ export default function(pool) {
     try {
       await client.query('BEGIN');
 
-      const { date, supplier_id, department_id, items, has_vat, requested_by } = req.body;
+      const {
+        date, supplier_id = null, department_id, items, has_vat,
+        requested_by, requester_name = null, needed_date = null,
+        purchase_type = null, purpose = null,
+      } = req.body;
       const pr_id = uuid();
 
       // Generate PR Number
@@ -133,24 +137,26 @@ export default function(pool) {
 
       const totalSteps = approvalResult.rows[0]?.step_count || 0;
 
-      // Create PR
+      // Create PR (supplier chosen later at the PO stage)
       await client.query(`
         INSERT INTO purchase_requests
         (id, pr_no, date, supplier_id, department_id, status, total_amount, has_vat,
-         requested_by, current_approval_step, total_approval_steps, approval_chain)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+         requested_by, current_approval_step, total_approval_steps, approval_chain,
+         requester_name, needed_date, purchase_type, purpose)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
       `, [
         pr_id, pr_no, date, supplier_id, department_id, 'Pending',
-        total, has_vat, requested_by, 1, totalSteps, '[]'
+        total, has_vat, requested_by, 1, totalSteps, '[]',
+        requester_name, needed_date || null, purchase_type, purpose
       ]);
 
-      // Add items
+      // Add items (total_price is a generated column — do not insert it)
       for (const item of items) {
         await client.query(`
           INSERT INTO pr_items
-          (pr_id, product_name, quantity, unit_price)
-          VALUES ($1, $2, $3, $4)
-        `, [pr_id, item.product_name, item.quantity, item.unit_price]);
+          (pr_id, product_name, description, unit, quantity, unit_price)
+          VALUES ($1, $2, $3, $4, $5, $6)
+        `, [pr_id, item.product_name, item.description || null, item.unit || null, item.quantity, item.unit_price]);
       }
 
       await client.query('COMMIT');

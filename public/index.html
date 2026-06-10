@@ -79,6 +79,47 @@
     .typeahead-results > div { padding: 8px 12px; cursor: pointer; }
     .typeahead-results > div:hover { background: #f1f5f9; }
     .typeahead-results .code { color: var(--muted); font-size: 11px; }
+    /* ===== New PR form (teal) ===== */
+    .pr-form { --teal:#1D9E75; --teal-dark:#0F6E56; }
+    .pr-card { background:#fff; border:1px solid #e8eaed; border-radius:16px; margin-bottom:16px; overflow:hidden; }
+    .pr-card-head { display:flex; align-items:center; justify-content:space-between; padding:14px 18px; border-bottom:1px solid #f0f2f5; }
+    .pr-card-title { font-size:14px; font-weight:600; color:#1a1a2e; display:flex; align-items:center; gap:8px; }
+    .pr-card-title .dot { width:8px; height:8px; border-radius:50%; background:var(--teal); }
+    .pr-card-body { padding:18px; }
+    .pr-wf { display:flex; background:#fff; border:1px solid #e8eaed; border-radius:16px; overflow:hidden; margin-bottom:16px; }
+    .pr-wf-step { flex:1; padding:12px 14px; display:flex; align-items:center; gap:10px; border-right:1px solid #f0f2f5; }
+    .pr-wf-step:last-child { border-right:none; }
+    .pr-wf-step.active { background:#f8fffe; }
+    .pr-wf-dot { width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:600; border:1.5px solid #e8eaed; background:#f0f2f5; color:#9ca3af; flex-shrink:0; }
+    .pr-wf-step.active .pr-wf-dot { background:var(--teal); color:#fff; border-color:var(--teal); }
+    .pr-wf-name { font-size:12px; font-weight:600; color:#374151; }
+    .pr-wf-state { font-size:11px; color:#9ca3af; }
+    .pr-wf-step.active .pr-wf-name { color:var(--teal-dark); }
+    .pr-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+    .pr-field { display:flex; flex-direction:column; gap:5px; }
+    .pr-field.full { grid-column:1/-1; }
+    .pr-field label { font-size:12px; color:#6b7280; font-weight:500; margin:0; }
+    .pr-field input, .pr-field select, .pr-field textarea { background:#f8fafc; border:1.5px solid #e8eaed; border-radius:10px; padding:8px 12px; font-size:13px; width:100%; }
+    .pr-field input:focus, .pr-field select:focus, .pr-field textarea:focus { border-color:var(--teal); background:#fff; outline:none; }
+    .pr-field input[readonly] { color:#9ca3af; background:#f0f2f5; }
+    .pr-field textarea { resize:vertical; min-height:60px; }
+    table.pr-items { width:100%; border-collapse:collapse; font-size:12px; }
+    table.pr-items th { background:#fafafa; color:#9ca3af; font-weight:500; font-size:11px; text-align:left; padding:8px; border-bottom:1.5px solid #f0f2f5; }
+    table.pr-items td { padding:6px; border-bottom:1px solid #f8fafc; }
+    table.pr-items td input, table.pr-items td select { background:#fff; border:1.5px solid #e8eaed; border-radius:8px; padding:6px 8px; font-size:12px; width:100%; }
+    .pr-add { margin-top:12px; background:none; border:1.5px dashed #d1d5db; border-radius:12px; padding:9px; font-size:12px; color:#9ca3af; cursor:pointer; width:100%; }
+    .pr-add:hover { border-color:var(--teal); color:var(--teal); background:#f8fffe; }
+    .pr-sum { display:flex; justify-content:flex-end; margin-top:16px; }
+    .pr-sum-box { background:linear-gradient(135deg,#e8faf4,#f0fff8); border:1.5px solid #a7f3d0; border-radius:14px; padding:12px 24px; text-align:right; }
+    .pr-sum-label { font-size:11px; color:var(--teal-dark); font-weight:600; }
+    .pr-sum-val { font-size:22px; font-weight:700; color:#065f46; }
+    .pr-submit { background:var(--teal); color:#fff; border:none; border-radius:10px; padding:11px 22px; font-weight:600; cursor:pointer; font-size:14px; }
+    .pr-submit:hover { background:var(--teal-dark); }
+    .pr-sig { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; }
+    .pr-sig-box { border:1.5px solid #e8eaed; border-radius:14px; padding:14px; text-align:center; background:#fafafa; }
+    .pr-sig-role { font-size:11px; color:#9ca3af; font-weight:600; }
+    .pr-sig-line { border-top:1px dashed #d1d5db; margin-top:24px; padding-top:8px; font-size:11px; color:#9ca3af; }
+    .btn-issue { background:var(--green); color:#fff; border:none; border-radius:6px; padding:4px 10px; font-size:12px; cursor:pointer; }
   </style>
 </head>
 <body>
@@ -135,39 +176,79 @@
       </div>
 
       <!-- CREATE PR -->
-      <div class="page" id="page-create">
-        <h1>สร้างใบขอซื้อ (PR)</h1>
-        <p class="subtitle">กรอกข้อมูลและรายการสินค้า</p>
-        <div class="panel">
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
-            <div>
-              <label>แผนก</label>
-              <select id="cr-dept"></select>
-            </div>
-            <div class="typeahead">
-              <label>ซัพพลายเออร์</label>
-              <input id="cr-supplier-search" placeholder="พิมพ์ชื่อหรือรหัส แล้วเลือกจากรายการ" autocomplete="off" oninput="filterSupplierTypeahead()" onfocus="filterSupplierTypeahead()">
-              <input type="hidden" id="cr-supplier">
-              <div class="typeahead-results" id="cr-supplier-results"></div>
-            </div>
-          </div>
-          <label style="margin-top:16px;">รายการสินค้า</label>
-          <table>
-            <thead>
-              <tr><th>สินค้า</th><th style="width:90px;">จำนวน</th><th style="width:130px;">ราคา/หน่วย</th><th style="width:130px;">รวม</th><th style="width:44px;"></th></tr>
-            </thead>
-            <tbody id="cr-items"></tbody>
-          </table>
-          <button class="btn secondary" style="margin-top:10px;" onclick="addPrItem()">+ เพิ่มรายการ</button>
-          <div style="margin-top:18px; display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
-            <label style="margin:0; display:flex; align-items:center; gap:6px;"><input type="checkbox" id="cr-vat" style="width:auto;" onchange="recalcPR()"> มี VAT 7%</label>
-            <div style="margin-left:auto; text-align:right;">
-              <div style="font-size:18px; font-weight:700;">ยอดรวม (ฐานอนุมัติ): <span id="cr-total">0.00</span> บาท</div>
-              <div style="font-size:12px; color:var(--muted);" id="cr-vat-hint"></div>
-            </div>
-          </div>
-          <button class="btn" style="margin-top:18px;" onclick="submitPR()">บันทึก PR</button>
+      <div class="page pr-form" id="page-create">
+        <h1>สร้างใบขอซื้อใหม่</h1>
+        <p class="subtitle">กรอกข้อมูลให้ครบถ้วนก่อนส่งอนุมัติ (ผู้ขายจะเลือกตอนออก PO)</p>
+
+        <div class="pr-wf">
+          <div class="pr-wf-step active"><div class="pr-wf-dot">1</div><div><div class="pr-wf-name">สร้าง PR</div><div class="pr-wf-state">กำลังดำเนินการ</div></div></div>
+          <div class="pr-wf-step"><div class="pr-wf-dot">2</div><div><div class="pr-wf-name">อนุมัติ</div><div class="pr-wf-state">รอดำเนินการ</div></div></div>
+          <div class="pr-wf-step"><div class="pr-wf-dot">3</div><div><div class="pr-wf-name">ออก PO</div><div class="pr-wf-state">รอดำเนินการ</div></div></div>
+          <div class="pr-wf-step"><div class="pr-wf-dot">4</div><div><div class="pr-wf-name">เสร็จสิ้น</div><div class="pr-wf-state">รอดำเนินการ</div></div></div>
         </div>
+
+        <div class="pr-card">
+          <div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> ข้อมูลทั่วไป</div><span style="font-size:12px;color:#9ca3af;">เลขที่ออกเมื่อบันทึก</span></div>
+          <div class="pr-card-body">
+            <div class="pr-grid">
+              <div class="pr-field"><label>วันที่ขอซื้อ</label><input type="date" id="cr-date"></div>
+              <div class="pr-field"><label>ผู้ขอซื้อ</label><input type="text" id="cr-requester" placeholder="ชื่อ-นามสกุล"></div>
+              <div class="pr-field"><label>แผนก / ฝ่าย</label><select id="cr-dept"></select></div>
+              <div class="pr-field"><label>วันที่ต้องการ</label><input type="date" id="cr-needed"></div>
+              <div class="pr-field"><label>ประเภทการจัดซื้อ</label>
+                <select id="cr-type">
+                  <option>ซื้อทั่วไป</option><option>บริการ / จ้างเหมา</option><option>วัสดุสิ้นเปลือง</option><option>ครุภัณฑ์</option>
+                </select>
+              </div>
+              <div class="pr-field"><label>VAT</label>
+                <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#374151;margin-top:6px;"><input type="checkbox" id="cr-vat" style="width:auto;" onchange="recalcPR()"> มี VAT 7%</label>
+              </div>
+              <div class="pr-field full"><label>วัตถุประสงค์ / เหตุผลในการขอซื้อ</label><textarea id="cr-purpose" placeholder="ระบุเหตุผลและความจำเป็น..."></textarea></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="pr-card">
+          <div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> รายการสินค้า / บริการ</div></div>
+          <div class="pr-card-body">
+            <table class="pr-items">
+              <thead>
+                <tr>
+                  <th style="width:28px;text-align:center">#</th>
+                  <th style="width:26%">รายการ</th>
+                  <th style="width:22%">รายละเอียด</th>
+                  <th style="width:80px;text-align:center">จำนวน</th>
+                  <th style="width:110px">หน่วย</th>
+                  <th style="width:120px">ราคา/หน่วย</th>
+                  <th style="width:110px;text-align:right">รวม</th>
+                  <th style="width:36px"></th>
+                </tr>
+              </thead>
+              <tbody id="cr-items"></tbody>
+            </table>
+            <button class="pr-add" onclick="addPrItem()">+ เพิ่มรายการ</button>
+            <div class="pr-sum">
+              <div class="pr-sum-box">
+                <div class="pr-sum-label">ยอดรวม (ฐานอนุมัติ)</div>
+                <div class="pr-sum-val">฿<span id="cr-total">0.00</span></div>
+                <div style="font-size:11px;color:var(--muted);" id="cr-vat-hint"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="pr-card">
+          <div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> ลายมือชื่ออนุมัติ</div></div>
+          <div class="pr-card-body">
+            <div class="pr-sig">
+              <div class="pr-sig-box"><div class="pr-sig-role">ผู้ขอซื้อ / Requester</div><div class="pr-sig-line">ลงชื่อ ............ <br>วันที่ ............</div></div>
+              <div class="pr-sig-box"><div class="pr-sig-role">ผู้จัดการ / Manager</div><div class="pr-sig-line">ลงชื่อ ............ <br>วันที่ ............</div></div>
+              <div class="pr-sig-box"><div class="pr-sig-role">ฝ่ายจัดซื้อ / Purchasing</div><div class="pr-sig-line">ลงชื่อ ............ <br>วันที่ ............</div></div>
+            </div>
+          </div>
+        </div>
+
+        <button class="pr-submit" onclick="submitPR()">ส่งอนุมัติ (บันทึก PR)</button>
       </div>
 
       <!-- PO LIST -->
@@ -199,7 +280,7 @@
         <div class="panel">
           <table>
             <thead>
-              <tr><th>PR No</th><th>Date</th><th>Supplier</th><th>Amount</th><th>Status</th><th>Step</th></tr>
+              <tr><th>PR No</th><th>Date</th><th>แผนก</th><th>Amount</th><th>Status</th><th>Step</th><th>Action</th></tr>
             </thead>
             <tbody id="pr-table"></tbody>
           </table>
@@ -345,16 +426,21 @@
       try {
         const prs = await api.getPRs();
         const tbody = document.getElementById('pr-table');
-        tbody.innerHTML = prs.length ? prs.map(p => `
-          <tr>
+        tbody.innerHTML = prs.length ? prs.map(p => {
+          const tagClass = p.status === 'Pending' ? 'pending' : p.status === 'Approved' ? 'approved' : 'rejected';
+          let action = '-';
+          if (p.status === 'Approved' && !p.po_no) action = `<button class="btn-issue" onclick="showIssuePO('${p.pr_no}')">ออก PO</button>`;
+          else if (p.po_no) action = `<span style="color:var(--green);font-weight:600">${p.po_no}</span>`;
+          return `<tr>
             <td><b>${p.pr_no}</b></td>
-            <td>${p.date}</td>
-            <td>${p.supplier_name}</td>
-            <td>${p.total_amount}</td>
-            <td><span class="tag ${p.status === 'Pending' ? 'pending' : p.status === 'Approved' ? 'approved' : 'rejected'}">${p.status}</span></td>
+            <td>${nz(p.date && String(p.date).slice(0,10))}</td>
+            <td>${nz(p.department_name)}</td>
+            <td>${Number(p.total_amount || 0).toLocaleString()}</td>
+            <td><span class="tag ${tagClass}">${p.status}</span></td>
             <td>${p.current_approval_step || 1}/${p.total_approval_steps || 1}</td>
-          </tr>
-        `).join('') : '';
+            <td>${action}</td>
+          </tr>`;
+        }).join('') : '';
         document.getElementById('pr-empty').style.display = prs.length ? 'none' : 'block';
       } catch (e) {
         toast('Error loading PRs: ' + e.message, true);
@@ -431,11 +517,10 @@
     }
     window.pickSupplier = pickSupplier;
 
-    // hide typeahead when clicking outside
+    // hide any open typeahead when clicking outside
     document.addEventListener('click', (e) => {
       if (!e.target.closest('.typeahead')) {
-        const box = document.getElementById('cr-supplier-results');
-        if (box) box.style.display = 'none';
+        document.querySelectorAll('.typeahead-results').forEach(b => b.style.display = 'none');
       }
     });
 
@@ -523,14 +608,15 @@
     // ===== Create PR =====
     async function loadCreateForm() {
       try {
-        const [depts] = await Promise.all([api.getDepartments(), ensureSuppliers()]);
+        const depts = await api.getDepartments();
         document.getElementById('cr-dept').innerHTML = depts.length
           ? depts.map(d => `<option value="${d.id}">${d.code} - ${d.name}</option>`).join('')
           : '<option value="">— ยังไม่มีแผนก —</option>';
-        // reset supplier typeahead
-        document.getElementById('cr-supplier-search').value = '';
-        document.getElementById('cr-supplier').value = '';
-        document.getElementById('cr-supplier-results').style.display = 'none';
+        document.getElementById('cr-date').value = new Date().toISOString().slice(0, 10);
+        document.getElementById('cr-requester').value = currentUser ? (currentUser.name || '') : '';
+        document.getElementById('cr-needed').value = '';
+        document.getElementById('cr-purpose').value = '';
+        document.getElementById('cr-vat').checked = false;
         document.getElementById('cr-items').innerHTML = '';
         addPrItem();
         recalcPR();
@@ -543,50 +629,58 @@
     function addPrItem() {
       const tr = document.createElement('tr');
       tr.innerHTML = `
+        <td class="it-no" style="text-align:center;color:#cbd5e1"></td>
         <td><input class="it-name" placeholder="ชื่อสินค้า"></td>
-        <td><input class="it-qty" type="number" min="0" step="1" value="1" oninput="recalcPR()"></td>
+        <td><input class="it-desc" placeholder="รายละเอียด"></td>
+        <td><input class="it-qty" type="number" min="0" step="1" value="1" style="text-align:center" oninput="recalcPR()"></td>
+        <td><select class="it-unit"><option>ชิ้น</option><option>กล่อง</option><option>ชุด</option><option>แพ็ค</option><option>ม้วน</option><option>ลิตร</option><option>กิโลกรัม</option><option>เดือน</option><option>ครั้ง</option></select></td>
         <td><input class="it-price" type="number" min="0" step="0.01" value="0" oninput="recalcPR()"></td>
-        <td class="it-line">0.00</td>
-        <td><button class="btn secondary" style="padding:4px 8px;" onclick="this.closest('tr').remove();recalcPR()">✕</button></td>`;
+        <td class="it-line" style="text-align:right;font-weight:600">0.00</td>
+        <td style="text-align:center"><button style="background:none;border:none;color:#fca5a5;cursor:pointer;font-size:15px" onclick="this.closest('tr').remove();recalcPR()">🗑</button></td>`;
       document.getElementById('cr-items').appendChild(tr);
+      recalcPR();
     }
     window.addPrItem = addPrItem;
 
     function recalcPR() {
-      let subtotal = 0;
+      let subtotal = 0, n = 0;
       document.querySelectorAll('#cr-items tr').forEach(tr => {
+        n++;
+        tr.querySelector('.it-no').textContent = n;
         const q = parseFloat(tr.querySelector('.it-qty').value) || 0;
         const p = parseFloat(tr.querySelector('.it-price').value) || 0;
         const line = q * p;
         subtotal += line;
-        tr.querySelector('.it-line').textContent = line.toFixed(2);
+        tr.querySelector('.it-line').textContent = line.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
       });
-      document.getElementById('cr-total').textContent = subtotal.toFixed(2);
+      document.getElementById('cr-total').textContent = subtotal.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
       const vat = document.getElementById('cr-vat').checked;
-      document.getElementById('cr-vat-hint').textContent = vat
-        ? `รวม VAT 7% = ${(subtotal * 1.07).toFixed(2)} บาท`
-        : '';
+      document.getElementById('cr-vat-hint').textContent = vat ? `รวม VAT 7% = ฿${(subtotal * 1.07).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '';
     }
     window.recalcPR = recalcPR;
 
     async function submitPR() {
       try {
         const department_id = document.getElementById('cr-dept').value;
-        const supplier_id = document.getElementById('cr-supplier').value;
         if (!department_id) return toast('กรุณาเลือกแผนก', true);
-        if (!supplier_id) return toast('กรุณาเลือกซัพพลายเออร์จากรายการค้นหา', true);
         const items = [...document.querySelectorAll('#cr-items tr')].map(tr => ({
           product_name: tr.querySelector('.it-name').value.trim(),
+          description: tr.querySelector('.it-desc').value.trim(),
+          unit: tr.querySelector('.it-unit').value,
           quantity: parseFloat(tr.querySelector('.it-qty').value) || 0,
           unit_price: parseFloat(tr.querySelector('.it-price').value) || 0,
         })).filter(i => i.product_name && i.quantity > 0);
         if (!items.length) return toast('กรุณาเพิ่มรายการสินค้าอย่างน้อย 1 รายการ', true);
 
         const res = await api.savePR({
-          date: new Date().toISOString().slice(0, 10),
-          supplier_id, department_id, items,
+          date: document.getElementById('cr-date').value || new Date().toISOString().slice(0, 10),
+          department_id, items,
           has_vat: document.getElementById('cr-vat').checked,
           requested_by: currentUser.email,
+          requester_name: document.getElementById('cr-requester').value.trim(),
+          needed_date: document.getElementById('cr-needed').value || null,
+          purchase_type: document.getElementById('cr-type').value,
+          purpose: document.getElementById('cr-purpose').value.trim(),
         });
         toast(`สร้าง PR สำเร็จ: ${res.pr_no} (รออนุมัติ ${res.totalSteps} ขั้น)`);
         document.querySelector('.nav a[data-page="prs"]').click();
@@ -595,6 +689,45 @@
       }
     }
     window.submitPR = submitPR;
+
+    // ===== Issue PO (choose supplier here) =====
+    function supplierPickerHTML() {
+      return `<div class="typeahead">
+        <input id="issue-supplier-search" placeholder="พิมพ์ชื่อ/รหัสผู้ขาย..." autocomplete="off" oninput="filterIssueSupplier()">
+        <input type="hidden" id="issue-supplier">
+        <div class="typeahead-results" id="issue-supplier-results"></div>
+      </div>`;
+    }
+    function filterIssueSupplier() {
+      const q = document.getElementById('issue-supplier-search').value.toLowerCase().trim();
+      const box = document.getElementById('issue-supplier-results');
+      if (!q) { box.style.display = 'none'; return; }
+      const m = SUPPLIERS.filter(s => (s.name || '').toLowerCase().includes(q) || (s.code || '').toLowerCase().includes(q)).slice(0, 20);
+      box.innerHTML = m.length
+        ? m.map(s => `<div onclick="pickIssueSupplier('${s.id}', this)" data-label="${(s.name || '').replace(/"/g, '&quot;')}"><div>${s.name}</div><div class="code">${s.code}</div></div>`).join('')
+        : '<div style="color:var(--muted)">ไม่พบ</div>';
+      box.style.display = 'block';
+    }
+    window.filterIssueSupplier = filterIssueSupplier;
+    function pickIssueSupplier(id, el) {
+      document.getElementById('issue-supplier').value = id;
+      document.getElementById('issue-supplier-search').value = el.getAttribute('data-label');
+      document.getElementById('issue-supplier-results').style.display = 'none';
+    }
+    window.pickIssueSupplier = pickIssueSupplier;
+
+    async function showIssuePO(prNo) {
+      await ensureSuppliers();
+      openModal('ออก PO — ' + prNo, `<label style="font-size:12px;color:var(--muted)">เลือกผู้ขาย (Supplier)</label>${supplierPickerHTML()}`, async () => {
+        const sid = document.getElementById('issue-supplier').value;
+        if (!sid) return toast('กรุณาเลือกผู้ขาย', true);
+        const res = await api.issuePO(prNo, sid);
+        toast('ออก PO สำเร็จ: ' + res.po_no);
+        closeModal();
+        loadPRs();
+      });
+    }
+    window.showIssuePO = showIssuePO;
 
     // ===== Supplier / Department modals =====
     function showSupplierModal() {

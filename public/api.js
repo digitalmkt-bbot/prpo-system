@@ -202,6 +202,10 @@ class PROPOApi {
     return this.request('GET', `/pos/${poNo}`);
   }
 
+  async issuePO(pr_no, supplier_id) {
+    return this.request('POST', '/pos/issue', { pr_no, supplier_id });
+  }
+
   async updatePOStatus(id, status) {
     return this.request('PUT', `/pos/${id}`, { status });
   }

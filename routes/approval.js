@@ -165,23 +165,13 @@ export default function(pool) {
       const isFinalApproval = nextStep > pr.total_approval_steps;
 
       if (isFinalApproval) {
-        // Auto-generate PO
-        const poNum = await generatePONumber(client);
-
+        // Mark approved. PO is issued separately by Purchasing (supplier chosen at that step).
         await client.query(`
           UPDATE purchase_requests
-          SET status = $1, approved_by = $2, po_no = $3,
-              current_approval_step = $4, approval_chain = $5, updated_at = NOW()
-          WHERE pr_no = $6
-        `, ['Approved', approverEmail, poNum, nextStep, JSON.stringify(approvalChain), prNo]);
-
-        // Create PO
-        await client.query(`
-          INSERT INTO purchase_orders
-          (id, po_no, date, pr_id, supplier_id, status, total_amount, has_vat)
-          SELECT $1, $2, CURRENT_DATE, id, supplier_id, $3, total_amount, has_vat
-          FROM purchase_requests WHERE pr_no = $4
-        `, [uuid(), poNum, 'Active', prNo]);
+          SET status = $1, approved_by = $2,
+              current_approval_step = $3, approval_chain = $4, updated_at = NOW()
+          WHERE pr_no = $5
+        `, ['Approved', approverEmail, nextStep, JSON.stringify(approvalChain), prNo]);
 
         // Log approval history
         await client.query(`
@@ -195,8 +185,8 @@ export default function(pool) {
         await client.query('COMMIT');
         res.json({
           ok: true,
-          message: 'PR approved! PO created.',
-          poNo: poNum
+          message: 'PR อนุมัติครบแล้ว — พร้อมออก PO',
+          status: 'Approved'
         });
       } else {
         await client.query(`
