@@ -53,10 +53,38 @@
     .toast.error { background: var(--red); }
     .empty { text-align: center; color: var(--muted); padding: 40px 20px; }
     .status { padding: 12px; background: #f0f4f8; border-left: 3px solid var(--brand); border-radius: 4px; }
+    /* Login */
+    .login-wrap { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+      background: linear-gradient(135deg, #6366f1, #4f46e5); z-index: 1000; }
+    .login-card { background: #fff; width: 360px; max-width: 90vw; border-radius: 14px; padding: 32px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.25); }
+    .login-card h2 { margin: 0 0 4px; font-size: 22px; }
+    .login-card .sub { color: var(--muted); font-size: 13px; margin-bottom: 20px; }
+    .login-card .btn { width: 100%; margin-top: 18px; padding: 11px; font-size: 15px; }
+    .login-err { color: var(--red); font-size: 13px; margin-top: 12px; min-height: 18px; }
+    .logout-btn { display: block; width: 100%; margin-top: 10px; padding: 8px; border: 1px solid var(--line);
+      background: #fff; color: var(--ink); border-radius: 6px; cursor: pointer; font-size: 12px; }
+    .logout-btn:hover { background: #f1f5f9; }
   </style>
 </head>
 <body>
-  <div class="container">
+  <!-- LOGIN -->
+  <div class="login-wrap" id="login-wrap" style="display:none;">
+    <div class="login-card">
+      <h2>🚀 PR/PO System</h2>
+      <div class="sub">Love Andaman — เข้าสู่ระบบเพื่อใช้งาน</div>
+      <form id="login-form" autocomplete="on">
+        <label>อีเมล</label>
+        <input type="email" id="login-email" placeholder="you@loveandaman.com" required>
+        <label style="margin-top:10px;">รหัสผ่าน</label>
+        <input type="password" id="login-password" placeholder="••••••••" required>
+        <button class="btn" type="submit" id="login-btn">เข้าสู่ระบบ</button>
+        <div class="login-err" id="login-err"></div>
+      </form>
+    </div>
+  </div>
+
+  <div class="container" id="app-container" style="display:none;">
     <div class="sidebar">
       <div class="logo">🚀 PR/PO System</div>
       <ul class="nav">
@@ -68,7 +96,8 @@
         <li><a data-page="settings">Settings</a></li>
       </ul>
       <div style="margin-top: 40px; padding: 12px; background: #f1f5f9; border-radius: 6px; font-size: 12px; color: var(--muted);">
-        <b>User</b><br>user@example.com
+        <b id="sidebar-username">User</b><br><span id="sidebar-email">-</span>
+        <button class="logout-btn" onclick="doLogout()">ออกจากระบบ</button>
       </div>
     </div>
 
@@ -181,6 +210,8 @@
 
   <script src="api.js"></script>
   <script>
+    let currentUser = null;
+
     // Navigation
     document.querySelectorAll('.nav a').forEach(link => {
       link.addEventListener('click', (e) => {
@@ -242,7 +273,7 @@
     // Load Approvals
     async function loadApprovals() {
       try {
-        const approvals = await api.getMyApprovalsNeeded('user@example.com');
+        const approvals = await api.getMyApprovalsNeeded(currentUser.email);
         const tbody = document.getElementById('approval-table');
         tbody.innerHTML = approvals.length ? approvals.map(a => `
           <tr>
@@ -288,7 +319,7 @@
     // Approve PR
     async function approve(prNo) {
       try {
-        await api.approvePR(prNo, 'user@example.com', 'User Name', 'Approved');
+        await api.approvePR(prNo, currentUser.email, currentUser.name, 'Approved');
         toast('PR approved successfully');
         loadApprovals();
         loadPRs();
@@ -320,8 +351,60 @@
       toast('Department modal - feature coming soon');
     }
 
-    // Initialize on load
-    window.addEventListener('load', init);
+    // ===== Auth gating =====
+    function showLogin() {
+      currentUser = null;
+      document.getElementById('login-wrap').style.display = 'flex';
+      document.getElementById('app-container').style.display = 'none';
+    }
+    window.showLogin = showLogin;
+
+    function showApp(user) {
+      currentUser = user;
+      document.getElementById('sidebar-username').textContent = user.name || user.email;
+      document.getElementById('sidebar-email').textContent = user.email;
+      document.getElementById('login-wrap').style.display = 'none';
+      document.getElementById('app-container').style.display = 'flex';
+      init();
+    }
+
+    function doLogout() {
+      api.logout();
+      showLogin();
+    }
+    window.doLogout = doLogout;
+
+    // Login form submit
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('login-btn');
+      const err = document.getElementById('login-err');
+      err.textContent = '';
+      btn.disabled = true; btn.textContent = 'กำลังเข้าสู่ระบบ...';
+      try {
+        const email = document.getElementById('login-email').value.trim();
+        const password = document.getElementById('login-password').value;
+        const user = await api.login(email, password);
+        showApp(user);
+      } catch (ex) {
+        err.textContent = ex.message || 'เข้าสู่ระบบไม่สำเร็จ';
+      } finally {
+        btn.disabled = false; btn.textContent = 'เข้าสู่ระบบ';
+      }
+    });
+
+    // Bootstrap: validate existing token, else show login
+    async function bootstrap() {
+      if (!api.getToken()) return showLogin();
+      try {
+        const user = await api.me();
+        showApp(user);
+      } catch {
+        showLogin();
+      }
+    }
+
+    window.addEventListener('load', bootstrap);
   </script>
 </body>
 </html>

@@ -13,29 +13,69 @@ class PROPOApi {
    * @param {string} endpoint - API endpoint path
    * @param {object} data - Request body (optional)
    */
-  async request(method, endpoint, data = null) {
-    const options = {
-      method,
-      headers: { 'Content-Type': 'application/json' },
-    };
+  // ---- Auth token helpers ----
+  getToken() {
+    return localStorage.getItem('prpo_token');
+  }
+  setToken(t) {
+    if (t) localStorage.setItem('prpo_token', t);
+    else localStorage.removeItem('prpo_token');
+  }
+  getStoredUser() {
+    try { return JSON.parse(localStorage.getItem('prpo_user') || 'null'); }
+    catch { return null; }
+  }
 
-    if (data) {
-      options.body = JSON.stringify(data);
-    }
+  async request(method, endpoint, data = null) {
+    const headers = { 'Content-Type': 'application/json' };
+    const token = this.getToken();
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    const options = { method, headers };
+    if (data) options.body = JSON.stringify(data);
 
     try {
       const response = await fetch(`${API_BASE}${endpoint}`, options);
-      const result = await response.json();
 
+      // Token missing/expired -> force re-login
+      if (response.status === 401) {
+        this.setToken(null);
+        localStorage.removeItem('prpo_user');
+        if (typeof window.showLogin === 'function') window.showLogin();
+        throw new Error('กรุณาเข้าสู่ระบบใหม่');
+      }
+
+      const result = await response.json();
       if (!response.ok) {
         throw new Error(result.error || `HTTP ${response.status}`);
       }
-
       return result;
     } catch (error) {
       console.error(`API Error [${method} ${endpoint}]:`, error);
       throw error;
     }
+  }
+
+  // ========== AUTH ==========
+  async login(email, password) {
+    const res = await this.request('POST', '/auth/login', { email, password });
+    this.setToken(res.token);
+    localStorage.setItem('prpo_user', JSON.stringify(res.user));
+    return res.user;
+  }
+
+  async me() {
+    const res = await this.request('GET', '/auth/me');
+    return res.user;
+  }
+
+  async changePassword(currentPassword, newPassword) {
+    return this.request('POST', '/auth/change-password', { currentPassword, newPassword });
+  }
+
+  logout() {
+    this.setToken(null);
+    localStorage.removeItem('prpo_user');
   }
 
   // ========== PURCHASE REQUESTS ==========

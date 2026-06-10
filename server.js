@@ -54,15 +54,20 @@ pool.on('error', (err) => {
 // Routes and Server Setup (async IIFE)
 (async () => {
   try {
-    app.use('/api/company', (await import('./routes/company.js')).default(pool));
-    app.use('/api/users', (await import('./routes/users.js')).default(pool));
-    app.use('/api/departments', (await import('./routes/departments.js')).default(pool));
-    app.use('/api/suppliers', (await import('./routes/suppliers.js')).default(pool));
-    app.use('/api/products', (await import('./routes/products.js')).default(pool));
-    app.use('/api/approval-matrix', (await import('./routes/approvalMatrix.js')).default(pool));
-    app.use('/api/prs', (await import('./routes/purchaseRequests.js')).default(pool));
-    app.use('/api/pos', (await import('./routes/purchaseOrders.js')).default(pool));
-    app.use('/api/approval', (await import('./routes/approval.js')).default(pool));
+    // Auth middleware + public auth routes
+    const { requireAuth } = await import('./middleware/auth.js');
+    app.use('/api/auth', (await import('./routes/auth.js')).default(pool));
+
+    // Protected data routes (require a valid Bearer token)
+    app.use('/api/company', requireAuth, (await import('./routes/company.js')).default(pool));
+    app.use('/api/users', requireAuth, (await import('./routes/users.js')).default(pool));
+    app.use('/api/departments', requireAuth, (await import('./routes/departments.js')).default(pool));
+    app.use('/api/suppliers', requireAuth, (await import('./routes/suppliers.js')).default(pool));
+    app.use('/api/products', requireAuth, (await import('./routes/products.js')).default(pool));
+    app.use('/api/approval-matrix', requireAuth, (await import('./routes/approvalMatrix.js')).default(pool));
+    app.use('/api/prs', requireAuth, (await import('./routes/purchaseRequests.js')).default(pool));
+    app.use('/api/pos', requireAuth, (await import('./routes/purchaseOrders.js')).default(pool));
+    app.use('/api/approval', requireAuth, (await import('./routes/approval.js')).default(pool));
 
     // Static files
     app.use(express.static('public'));
