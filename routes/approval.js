@@ -4,6 +4,7 @@ import { v4 as uuid } from 'uuid';
 
 export default function(pool) {
   const router = Router();
+  const APPROVER_ROLES = ['Admin', 'Manager']; // เฉพาะ Manager ขึ้นไปที่อนุมัติได้
 
   // Get approval steps for a PR
   router.get('/steps/:prNo', async (req, res) => {
@@ -83,24 +84,20 @@ export default function(pool) {
   // Get my approvals needed (PRs waiting for current user)
   router.get('/my-approvals/:userEmail', async (req, res) => {
     try {
-      const { userEmail } = req.params;
-
+      // Role-based: only Manager and above see pending approvals
+      if (!APPROVER_ROLES.includes(req.user?.role)) {
+        return res.json([]);
+      }
       const result = await pool.query(`
         SELECT
           pr.pr_no, pr.date, pr.status, pr.total_amount,
           pr.current_approval_step, pr.total_approval_steps,
-          s.name as supplier_name,
-          am.approval_step
+          d.name as department_name
         FROM purchase_requests pr
-        LEFT JOIN suppliers s ON pr.supplier_id = s.id
-        LEFT JOIN approval_matrix am ON pr.department_id = am.department_id
+        LEFT JOIN departments d ON pr.department_id = d.id
         WHERE pr.status = 'Pending'
-        AND pr.total_amount BETWEEN am.min_amount AND am.max_amount
-        AND am.approval_step = pr.current_approval_step
-        AND am.approver_email = $1
         ORDER BY pr.created_at ASC
-      `, [userEmail]);
-
+      `);
       res.json(result.rows);
     } catch (err) {
       res.status(500).json({ error: err.message });
@@ -114,7 +111,15 @@ export default function(pool) {
       await client.query('BEGIN');
 
       const { prNo } = req.params;
-      const { approverEmail, approverName, comment } = req.body;
+      const { comment } = req.body;
+      const approverEmail = req.user.email;
+      const approverName = req.user.name || req.user.email;
+
+      // Only Manager and above can approve
+      if (!APPROVER_ROLES.includes(req.user.role)) {
+        await client.query('ROLLBACK');
+        return res.status(403).json({ error: 'คุณไม่มีสิทธิ์อนุมัติ (ต้องเป็น Manager ขึ้นไป)' });
+      }
 
       // Get PR and validation
       const prResult = await client.query(
@@ -132,21 +137,6 @@ export default function(pool) {
       if (pr.status !== 'Pending') {
         await client.query('ROLLBACK');
         return res.status(400).json({ error: 'PR is not pending' });
-      }
-
-      // Verify approver
-      const approverCheck = await client.query(`
-        SELECT * FROM approval_matrix
-        WHERE department_id = $1
-        AND approval_step = $2
-        AND approver_email = $3
-        AND min_amount <= $4
-        AND max_amount >= $4
-      `, [pr.department_id, pr.current_approval_step, approverEmail, pr.total_amount]);
-
-      if (approverCheck.rows.length === 0) {
-        await client.query('ROLLBACK');
-        return res.status(403).json({ error: 'Not authorized to approve this PR at this step' });
       }
 
       // Update approval chain
@@ -225,7 +215,15 @@ export default function(pool) {
       await client.query('BEGIN');
 
       const { prNo } = req.params;
-      const { approverEmail, approverName, comment } = req.body;
+      const { comment } = req.body;
+      const approverEmail = req.user.email;
+      const approverName = req.user.name || req.user.email;
+
+      // Only Manager and above can reject
+      if (!APPROVER_ROLES.includes(req.user.role)) {
+        await client.query('ROLLBACK');
+        return res.status(403).json({ error: 'คุณไม่มีสิทธิ์ปฏิเสธ (ต้องเป็น Manager ขึ้นไป)' });
+      }
 
       // Get PR
       const prResult = await client.query(

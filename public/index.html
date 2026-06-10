@@ -158,12 +158,13 @@
       <div class="logo">🚀 PR/PO System</div>
       <ul class="nav">
         <li><a class="active" data-page="dashboard">Dashboard</a></li>
-        <li><a data-page="create">+ สร้าง PR</a></li>
+        <li><a data-page="create">+ Create PR</a></li>
         <li><a data-page="prs">PR List</a></li>
         <li><a data-page="pos">PO List</a></li>
         <li><a data-page="approvals">My Approvals</a></li>
         <li><a data-page="suppliers">Suppliers</a></li>
         <li><a data-page="departments">Departments</a></li>
+        <li id="nav-users"><a data-page="users">Users &amp; Roles</a></li>
         <li><a data-page="settings">Settings</a></li>
       </ul>
       <div style="margin-top: 40px; padding: 12px; background: #f1f5f9; border-radius: 6px; font-size: 12px; color: var(--muted);">
@@ -369,6 +370,30 @@
         </div>
       </div>
 
+      <!-- USERS & ROLES -->
+      <div class="page" id="page-users">
+        <h1>Users &amp; Roles</h1>
+        <p class="subtitle">จัดการผู้ใช้และกำหนดสิทธิ์ (Role) — เฉพาะ Manager ขึ้นไปอนุมัติ PR ได้</p>
+        <button class="btn" onclick="showUserModal()">+ เพิ่มผู้ใช้</button>
+        <div class="panel" style="margin-top:16px;">
+          <table>
+            <thead>
+              <tr><th>ชื่อ</th><th>อีเมล</th><th>Role</th><th>สถานะ</th><th>จัดการ</th></tr>
+            </thead>
+            <tbody id="user-table"></tbody>
+          </table>
+        </div>
+        <div class="panel" style="margin-top:16px; background:#f0f4f8;">
+          <b>คำอธิบาย Role</b>
+          <div style="margin-top:8px; font-size:13px; color:var(--muted); line-height:1.9;">
+            <b>Admin</b> — เข้าถึงทุกส่วน + อนุมัติได้<br>
+            <b>Manager</b> — อนุมัติ PR ได้ (Manager ขึ้นไป)<br>
+            <b>Purchasing</b> — ฝ่ายจัดซื้อ สร้าง PR/ออก PO (อนุมัติไม่ได้)<br>
+            <b>Approver / Viewer</b> — ดู/ใช้งานทั่วไป (อนุมัติไม่ได้)
+          </div>
+        </div>
+      </div>
+
       <!-- SETTINGS -->
       <div class="page" id="page-settings">
         <h1>Settings</h1>
@@ -427,6 +452,7 @@
         if (page === 'approvals') loadApprovals();
         if (page === 'suppliers') loadSuppliers();
         if (page === 'departments') loadDepartments();
+        if (page === 'users') loadUsers();
       });
     });
 
@@ -529,18 +555,30 @@
 
     // Load Approvals
     async function loadApprovals() {
+      const tbody = document.getElementById('approval-table');
+      const empty = document.getElementById('approval-empty');
+      // Only Manager and above can approve
+      if (!APPROVER_ROLES.includes(currentUser.role)) {
+        tbody.innerHTML = '';
+        empty.textContent = 'คุณไม่มีสิทธิ์อนุมัติ — เฉพาะ Manager ขึ้นไปเท่านั้น';
+        empty.style.display = 'block';
+        return;
+      }
       try {
         const approvals = await api.getMyApprovalsNeeded(currentUser.email);
-        const tbody = document.getElementById('approval-table');
         tbody.innerHTML = approvals.length ? approvals.map(a => `
           <tr>
             <td><b>${a.pr_no}</b></td>
             <td>${Number(a.total_amount || 0).toLocaleString()}</td>
             <td>Step ${a.current_approval_step} / ${a.total_approval_steps}</td>
-            <td><button class="btn" style="padding: 4px 8px;" onclick="approve('${a.pr_no}')">Approve</button></td>
+            <td>
+              <button class="btn" style="padding: 4px 8px;" onclick="approve('${a.pr_no}')">Approve</button>
+              <button class="btn secondary" style="padding: 4px 8px;" onclick="rejectPR('${a.pr_no}')">Reject</button>
+            </td>
           </tr>
         `).join('') : '';
-        document.getElementById('approval-empty').style.display = approvals.length ? 'none' : 'block';
+        empty.textContent = 'ไม่มีการรอการอนุมัติ';
+        empty.style.display = approvals.length ? 'none' : 'block';
       } catch (e) {
         toast('Error loading approvals: ' + e.message, true);
       }
@@ -619,14 +657,29 @@
     // Approve PR
     async function approve(prNo) {
       try {
-        await api.approvePR(prNo, currentUser.email, currentUser.name, 'Approved');
-        toast('PR approved successfully');
+        const res = await api.approvePR(prNo, currentUser.email, currentUser.name, 'Approved');
+        toast(res.message || 'อนุมัติสำเร็จ');
         loadApprovals();
         loadPRs();
       } catch (e) {
-        toast('Error approving PR: ' + e.message, true);
+        toast('อนุมัติไม่สำเร็จ: ' + e.message, true);
       }
     }
+    window.approve = approve;
+
+    async function rejectPR(prNo) {
+      const reason = prompt('เหตุผลในการปฏิเสธ (ไม่บังคับ):', '');
+      if (reason === null) return; // cancelled
+      try {
+        await api.rejectPR(prNo, currentUser.email, currentUser.name, reason);
+        toast('ปฏิเสธ PR แล้ว');
+        loadApprovals();
+        loadPRs();
+      } catch (e) {
+        toast('ปฏิเสธไม่สำเร็จ: ' + e.message, true);
+      }
+    }
+    window.rejectPR = rejectPR;
 
     // Save Company
     async function saveCompany() {
@@ -843,6 +896,51 @@
     }
     window.showDeptModal = showDeptModal;
 
+    // ===== Users & Roles =====
+    const ROLES = ['Admin', 'Manager', 'Purchasing', 'Approver', 'Viewer'];
+    const APPROVER_ROLES = ['Admin', 'Manager'];
+
+    async function loadUsers() {
+      try {
+        const users = await api.getUsers();
+        document.getElementById('user-table').innerHTML = users.map(u => `
+          <tr>
+            <td>${nz(u.name)}</td>
+            <td>${u.email}</td>
+            <td><span class="tag ${APPROVER_ROLES.includes(u.role) ? 'approved' : 'pending'}">${u.role}</span></td>
+            <td>${u.active === false ? 'ปิดใช้งาน' : 'ใช้งาน'}</td>
+            <td><button class="btn secondary" style="padding:4px 10px;" onclick="showUserModal('${u.id}')">แก้ไข</button></td>
+          </tr>`).join('') || '<tr><td colspan="5" class="dash-empty">ยังไม่มีผู้ใช้</td></tr>';
+      } catch (e) {
+        toast('โหลดผู้ใช้ไม่สำเร็จ: ' + e.message, true);
+      }
+    }
+    window.loadUsers = loadUsers;
+
+    async function showUserModal(id) {
+      let u = null;
+      if (id) { try { u = (await api.getUsers()).find(x => x.id === id); } catch {} }
+      const roleOpts = ROLES.map(r => `<option value="${r}" ${u && u.role === r ? 'selected' : ''}>${r}</option>`).join('');
+      openModal(id ? 'แก้ไขผู้ใช้' : 'เพิ่มผู้ใช้', `
+        <label>ชื่อ-นามสกุล *</label><input id="u-name" value="${u ? (u.name || '') : ''}">
+        <label style="margin-top:8px;">อีเมล *</label><input id="u-email" type="email" value="${u ? u.email : ''}">
+        <label style="margin-top:8px;">Role *</label><select id="u-role">${roleOpts}</select>
+        <label style="margin-top:8px;">รหัสผ่าน ${id ? '(เว้นว่างถ้าไม่เปลี่ยน)' : '*'}</label><input id="u-pass" type="text" placeholder="${id ? 'ไม่เปลี่ยน' : 'ตั้งรหัสผ่าน'}">
+      `, async () => {
+        const payload = { name: val('u-name'), email: val('u-email'), role: val('u-role') };
+        if (!payload.name || !payload.email) return toast('กรุณากรอกชื่อและอีเมล', true);
+        const pass = val('u-pass');
+        if (pass) payload.password = pass;
+        if (id) { payload.id = id; }
+        else if (!pass) return toast('กรุณาตั้งรหัสผ่านให้ผู้ใช้ใหม่', true);
+        await api.saveUser(payload);
+        toast('บันทึกผู้ใช้แล้ว');
+        closeModal();
+        loadUsers();
+      });
+    }
+    window.showUserModal = showUserModal;
+
     // ===== Auth gating =====
     function showLogin() {
       currentUser = null;
@@ -857,6 +955,8 @@
       document.getElementById('sidebar-email').textContent = user.email;
       document.getElementById('login-wrap').style.display = 'none';
       document.getElementById('app-container').style.display = 'flex';
+      // Only Admin sees Users & Roles management
+      document.getElementById('nav-users').style.display = (user.role === 'Admin') ? '' : 'none';
       init();
     }
 
