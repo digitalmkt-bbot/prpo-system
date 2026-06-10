@@ -302,6 +302,9 @@
       });
     });
 
+    // Show '-' for empty/null values
+    function nz(v) { return (v === null || v === undefined || v === '' || v === 'null') ? '-' : v; }
+
     // Toast notification
     function toast(msg, error = false) {
       const el = document.getElementById('toast');
@@ -370,7 +373,7 @@
         const suppliers = await api.getSuppliers();
         const tbody = document.getElementById('supplier-table');
         tbody.innerHTML = suppliers.map(s => `
-          <tr><td>${s.code}</td><td>${s.name}</td><td>${s.email}</td><td>${s.phone}</td></tr>
+          <tr><td>${s.code}</td><td>${s.name}</td><td>${nz(s.email)}</td><td>${nz(s.phone)}</td></tr>
         `).join('');
       } catch (e) {
         toast('Error loading suppliers: ' + e.message, true);
@@ -383,7 +386,7 @@
         const depts = await api.getDepartments();
         const tbody = document.getElementById('dept-table');
         tbody.innerHTML = depts.map(d => `
-          <tr><td>${d.code}</td><td>${d.name}</td><td>${d.manager_email}</td><td>${d.status}</td></tr>
+          <tr><td>${d.code}</td><td>${d.name}</td><td>${nz(d.manager_email)}</td><td>${d.status}</td></tr>
         `).join('');
       } catch (e) {
         toast('Error loading departments: ' + e.message, true);
