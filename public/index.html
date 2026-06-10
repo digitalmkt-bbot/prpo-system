@@ -71,6 +71,14 @@
     .modal-card { background: #fff; width: 420px; max-width: 92vw; border-radius: 14px; padding: 24px;
       box-shadow: 0 20px 60px rgba(0,0,0,.3); max-height: 88vh; overflow: auto; }
     .modal-card h3 { margin: 0 0 12px; }
+    /* Typeahead */
+    .typeahead { position: relative; }
+    .typeahead-results { position: absolute; left: 0; right: 0; top: 100%; background: #fff;
+      border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,.12);
+      max-height: 280px; overflow: auto; z-index: 50; display: none; margin-top: 4px; }
+    .typeahead-results > div { padding: 8px 12px; cursor: pointer; }
+    .typeahead-results > div:hover { background: #f1f5f9; }
+    .typeahead-results .code { color: var(--muted); font-size: 11px; }
   </style>
 </head>
 <body>
@@ -136,9 +144,11 @@
               <label>แผนก</label>
               <select id="cr-dept"></select>
             </div>
-            <div>
+            <div class="typeahead">
               <label>ซัพพลายเออร์</label>
-              <select id="cr-supplier"></select>
+              <input id="cr-supplier-search" placeholder="พิมพ์ชื่อหรือรหัส แล้วเลือกจากรายการ" autocomplete="off" oninput="filterSupplierTypeahead()" onfocus="filterSupplierTypeahead()">
+              <input type="hidden" id="cr-supplier">
+              <div class="typeahead-results" id="cr-supplier-results"></div>
             </div>
           </div>
           <label style="margin-top:16px;">รายการสินค้า</label>
@@ -216,8 +226,12 @@
       <div class="page" id="page-suppliers">
         <h1>Suppliers</h1>
         <p class="subtitle">จัดการผู้ขาย</p>
-        <button class="btn" onclick="showSupplierModal()">+ New Supplier</button>
-        <div class="panel" style="margin-top: 20px;">
+        <div class="toolbar" style="margin-top:16px;">
+          <input type="text" id="supplier-search" placeholder="ค้นหาซัพพลายเออร์ (ชื่อ/รหัส)..." oninput="renderSuppliers()">
+          <button class="btn" onclick="showSupplierModal()">+ New Supplier</button>
+        </div>
+        <div class="panel">
+          <div style="font-size:12px; color:var(--muted); margin-bottom:10px;" id="supplier-count"></div>
           <table>
             <thead>
               <tr><th>Code</th><th>Name</th><th>Email</th><th>Phone</th></tr>
@@ -367,18 +381,63 @@
       }
     }
 
-    // Load Suppliers
+    // Supplier cache (shared by Suppliers page + Create PR typeahead)
+    let SUPPLIERS = [];
+    async function ensureSuppliers(force = false) {
+      if (!SUPPLIERS.length || force) SUPPLIERS = await api.getSuppliers();
+      return SUPPLIERS;
+    }
+
     async function loadSuppliers() {
       try {
-        const suppliers = await api.getSuppliers();
-        const tbody = document.getElementById('supplier-table');
-        tbody.innerHTML = suppliers.map(s => `
-          <tr><td>${s.code}</td><td>${s.name}</td><td>${nz(s.email)}</td><td>${nz(s.phone)}</td></tr>
-        `).join('');
+        await ensureSuppliers(true);
+        renderSuppliers();
       } catch (e) {
         toast('Error loading suppliers: ' + e.message, true);
       }
     }
+
+    function renderSuppliers() {
+      const q = (document.getElementById('supplier-search')?.value || '').toLowerCase().trim();
+      const list = q
+        ? SUPPLIERS.filter(s => (s.name || '').toLowerCase().includes(q) || (s.code || '').toLowerCase().includes(q))
+        : SUPPLIERS;
+      const shown = list.slice(0, 500);
+      document.getElementById('supplier-table').innerHTML = shown.map(s =>
+        `<tr><td>${s.code}</td><td>${s.name}</td><td>${nz(s.email)}</td><td>${nz(s.phone)}</td></tr>`).join('');
+      document.getElementById('supplier-count').textContent =
+        `แสดง ${shown.length} จาก ${list.length} รายการ` + (list.length > 500 ? ' (จำกัด 500 แถว — ใช้ช่องค้นหาเพื่อกรอง)' : '');
+    }
+    window.renderSuppliers = renderSuppliers;
+
+    // Create PR supplier typeahead
+    function filterSupplierTypeahead() {
+      const q = document.getElementById('cr-supplier-search').value.toLowerCase().trim();
+      const box = document.getElementById('cr-supplier-results');
+      if (!q) { box.style.display = 'none'; return; }
+      const matches = SUPPLIERS.filter(s =>
+        (s.name || '').toLowerCase().includes(q) || (s.code || '').toLowerCase().includes(q)).slice(0, 20);
+      box.innerHTML = matches.length
+        ? matches.map(s => `<div onclick="pickSupplier('${s.id}', this)" data-label="${(s.name || '').replace(/"/g, '&quot;')}"><div>${s.name}</div><div class="code">${s.code}</div></div>`).join('')
+        : '<div style="color:var(--muted)">ไม่พบ</div>';
+      box.style.display = 'block';
+    }
+    window.filterSupplierTypeahead = filterSupplierTypeahead;
+
+    function pickSupplier(id, el) {
+      document.getElementById('cr-supplier').value = id;
+      document.getElementById('cr-supplier-search').value = el.getAttribute('data-label');
+      document.getElementById('cr-supplier-results').style.display = 'none';
+    }
+    window.pickSupplier = pickSupplier;
+
+    // hide typeahead when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.typeahead')) {
+        const box = document.getElementById('cr-supplier-results');
+        if (box) box.style.display = 'none';
+      }
+    });
 
     // Load Departments
     async function loadDepartments() {
@@ -464,13 +523,14 @@
     // ===== Create PR =====
     async function loadCreateForm() {
       try {
-        const [depts, sups] = await Promise.all([api.getDepartments(), api.getSuppliers()]);
+        const [depts] = await Promise.all([api.getDepartments(), ensureSuppliers()]);
         document.getElementById('cr-dept').innerHTML = depts.length
           ? depts.map(d => `<option value="${d.id}">${d.code} - ${d.name}</option>`).join('')
           : '<option value="">— ยังไม่มีแผนก —</option>';
-        document.getElementById('cr-supplier').innerHTML = sups.length
-          ? sups.map(s => `<option value="${s.id}">${s.name}</option>`).join('')
-          : '<option value="">— ยังไม่มีซัพพลายเออร์ (เพิ่มที่เมนู Suppliers) —</option>';
+        // reset supplier typeahead
+        document.getElementById('cr-supplier-search').value = '';
+        document.getElementById('cr-supplier').value = '';
+        document.getElementById('cr-supplier-results').style.display = 'none';
         document.getElementById('cr-items').innerHTML = '';
         addPrItem();
         recalcPR();
@@ -514,7 +574,7 @@
         const department_id = document.getElementById('cr-dept').value;
         const supplier_id = document.getElementById('cr-supplier').value;
         if (!department_id) return toast('กรุณาเลือกแผนก', true);
-        if (!supplier_id) return toast('กรุณาเพิ่มซัพพลายเออร์ก่อน (เมนู Suppliers)', true);
+        if (!supplier_id) return toast('กรุณาเลือกซัพพลายเออร์จากรายการค้นหา', true);
         const items = [...document.querySelectorAll('#cr-items tr')].map(tr => ({
           product_name: tr.querySelector('.it-name').value.trim(),
           quantity: parseFloat(tr.querySelector('.it-qty').value) || 0,
