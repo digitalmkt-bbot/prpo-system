@@ -68,6 +68,7 @@ pool.on('error', (err) => {
     app.use('/api/prs', requireAuth, (await import('./routes/purchaseRequests.js')).default(pool));
     app.use('/api/pos', requireAuth, (await import('./routes/purchaseOrders.js')).default(pool));
     app.use('/api/approval', requireAuth, (await import('./routes/approval.js')).default(pool));
+    app.use('/api/stats', requireAuth, (await import('./routes/stats.js')).default(pool));
 
     // Static files
     app.use(express.static('public'));

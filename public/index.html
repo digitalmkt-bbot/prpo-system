@@ -120,6 +120,20 @@
     .pr-sig-role { font-size:11px; color:#9ca3af; font-weight:600; }
     .pr-sig-line { border-top:1px dashed #d1d5db; margin-top:24px; padding-top:8px; font-size:11px; color:#9ca3af; }
     .btn-issue { background:var(--green); color:#fff; border:none; border-radius:6px; padding:4px 10px; font-size:12px; cursor:pointer; }
+    /* ===== Dashboard analytics ===== */
+    .dash-section { font-size:15px; font-weight:600; color:#1a1a2e; margin:20px 0 12px; }
+    .dash-metrics { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:14px; }
+    .dash-mc { background:#fff; border:1px solid #e8eaed; border-radius:14px; padding:16px; }
+    .dash-mc-label { font-size:12px; color:#9ca3af; }
+    .dash-mc-val { font-size:26px; font-weight:700; color:#1a1a2e; margin-top:4px; }
+    .dash-mc-val.green { color:#16a34a; } .dash-mc-val.amber { color:#d97706; } .dash-mc-val.teal { color:#1D9E75; }
+    .dash-row { display:flex; gap:14px; margin-bottom:14px; align-items:stretch; flex-wrap:wrap; }
+    .dash-row > .pr-card { margin-bottom:0; }
+    .dash-top-item { display:flex; justify-content:space-between; gap:10px; padding:8px 0; border-bottom:1px solid #f1f5f9; font-size:13px; }
+    .dash-top-item:last-child { border-bottom:none; }
+    .dash-top-item .amt { font-weight:600; color:#0F6E56; white-space:nowrap; }
+    .dash-empty { color:#9ca3af; font-size:13px; text-align:center; padding:18px; }
+    @media (max-width:900px){ .dash-metrics{grid-template-columns:repeat(2,1fr);} }
   </style>
 </head>
 <body>
@@ -160,19 +174,37 @@
 
     <div class="main">
       <!-- DASHBOARD -->
-      <div class="page active" id="page-dashboard">
+      <div class="page active pr-form" id="page-dashboard">
         <h1>Dashboard</h1>
         <p class="subtitle">ภาพรวมระบบการจัดซื้อ</p>
-        <div class="cards">
-          <div class="card"><div class="card-label">Total PR</div><div class="card-value" id="d-total">0</div></div>
-          <div class="card green"><div class="card-label">Approved</div><div class="card-value" id="d-approved">0</div></div>
-          <div class="card amber"><div class="card-label">Pending</div><div class="card-value" id="d-pending">0</div></div>
-          <div class="card red"><div class="card-label">Rejected</div><div class="card-value" id="d-rejected">0</div></div>
+
+        <div class="dash-section">📄 ใบขอซื้อ (PR)</div>
+        <div class="dash-metrics">
+          <div class="dash-mc"><div class="dash-mc-label">PR ทั้งหมด</div><div class="dash-mc-val" id="pr-total-count">0</div></div>
+          <div class="dash-mc"><div class="dash-mc-label">มูลค่ารวม (บาท)</div><div class="dash-mc-val teal" id="pr-total-amount">0</div></div>
+          <div class="dash-mc"><div class="dash-mc-label">รออนุมัติ</div><div class="dash-mc-val amber" id="pr-pending">0</div></div>
+          <div class="dash-mc"><div class="dash-mc-label">อนุมัติแล้ว</div><div class="dash-mc-val green" id="pr-approved">0</div></div>
         </div>
-        <div class="panel">
-          <b>Status</b>
-          <div class="status" id="api-status">✅ API Connected</div>
+        <div class="dash-row">
+          <div class="pr-card" style="flex:2; min-width:280px;"><div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> PR รายวัน (14 วันล่าสุด)</div></div><div class="pr-card-body"><div style="height:210px;"><canvas id="pr-chart"></canvas></div></div></div>
+          <div class="pr-card" style="flex:1; min-width:240px;"><div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> Top แผนก (ตามมูลค่า)</div></div><div class="pr-card-body" id="pr-top"></div></div>
         </div>
+        <div class="pr-card"><div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> PR ล่าสุด</div></div><div class="pr-card-body"><table class="pr-items"><thead><tr><th>PR No</th><th>วันที่</th><th>แผนก</th><th style="text-align:right">มูลค่า</th><th>สถานะ</th></tr></thead><tbody id="pr-recent"></tbody></table></div></div>
+
+        <div class="dash-section">🛒 ใบสั่งซื้อ (PO)</div>
+        <div class="dash-metrics">
+          <div class="dash-mc"><div class="dash-mc-label">PO ทั้งหมด</div><div class="dash-mc-val" id="po-total-count">0</div></div>
+          <div class="dash-mc"><div class="dash-mc-label">มูลค่ารวม (บาท)</div><div class="dash-mc-val teal" id="po-total-amount">0</div></div>
+          <div class="dash-mc"><div class="dash-mc-label">Active</div><div class="dash-mc-val green" id="po-active">0</div></div>
+          <div class="dash-mc"><div class="dash-mc-label">เสร็จสิ้น</div><div class="dash-mc-val" id="po-completed">0</div></div>
+        </div>
+        <div class="dash-row">
+          <div class="pr-card" style="flex:2; min-width:280px;"><div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> PO รายวัน (14 วันล่าสุด)</div></div><div class="pr-card-body"><div style="height:210px;"><canvas id="po-chart"></canvas></div></div></div>
+          <div class="pr-card" style="flex:1; min-width:240px;"><div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> Top ผู้ขาย (ตามมูลค่า)</div></div><div class="pr-card-body" id="po-top"></div></div>
+        </div>
+        <div class="pr-card"><div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> PO ล่าสุด</div></div><div class="pr-card-body"><table class="pr-items"><thead><tr><th>PO No</th><th>วันที่</th><th>ผู้ขาย</th><th style="text-align:right">มูลค่า</th><th>สถานะ</th></tr></thead><tbody id="po-recent"></tbody></table></div></div>
+
+        <div class="panel" style="margin-top:14px;"><div class="status" id="api-status">✅ API Connected</div></div>
       </div>
 
       <!-- CREATE PR -->
@@ -388,6 +420,7 @@
         const page = e.target.dataset.page;
         document.getElementById(`page-${page}`).classList.add('active');
 
+        if (page === 'dashboard') loadDashboard();
         if (page === 'create') loadCreateForm();
         if (page === 'prs') loadPRs();
         if (page === 'pos') loadPOs();
@@ -409,16 +442,63 @@
     }
 
     // Initialize
-    async function init() {
+    async function init() { loadDashboard(); }
+
+    let dashCharts = {};
+    async function loadDashboard() {
       try {
-        const prs = await api.getPRs();
-        document.getElementById('d-total').textContent = prs.length;
-        document.getElementById('d-approved').textContent = prs.filter(p => p.status === 'Approved').length;
-        document.getElementById('d-pending').textContent = prs.filter(p => p.status === 'Pending').length;
-        document.getElementById('d-rejected').textContent = prs.filter(p => p.status === 'Rejected').length;
+        const s = await api.getDashboardStats();
+        const money = v => Number(v || 0).toLocaleString('th-TH');
+        // PR
+        document.getElementById('pr-total-count').textContent = s.pr.total_count;
+        document.getElementById('pr-total-amount').textContent = money(Math.round(s.pr.total_amount));
+        document.getElementById('pr-pending').textContent = s.pr.status.Pending || 0;
+        document.getElementById('pr-approved').textContent = s.pr.status.Approved || 0;
+        renderDashTop('pr-top', s.pr.top_departments);
+        renderDashRecent('pr-recent', s.pr.recent, 'pr_no', 'department_name');
+        drawDayChart('pr-chart', s.pr.by_day, '#6366f1');
+        // PO
+        document.getElementById('po-total-count').textContent = s.po.total_count;
+        document.getElementById('po-total-amount').textContent = money(Math.round(s.po.total_amount));
+        document.getElementById('po-active').textContent = s.po.status.Active || 0;
+        document.getElementById('po-completed').textContent = s.po.status.Completed || 0;
+        renderDashTop('po-top', s.po.top_suppliers);
+        renderDashRecent('po-recent', s.po.recent, 'po_no', 'supplier_name');
+        drawDayChart('po-chart', s.po.by_day, '#1D9E75');
       } catch (e) {
-        toast('Error loading dashboard: ' + e.message, true);
+        toast('โหลด Dashboard ไม่สำเร็จ: ' + e.message, true);
       }
+    }
+    window.loadDashboard = loadDashboard;
+
+    function renderDashTop(id, rows) {
+      const el = document.getElementById(id);
+      el.innerHTML = (rows && rows.length)
+        ? rows.map(r => `<div class="dash-top-item"><span>${r.name} <span style="color:#cbd5e1">(${r.c})</span></span><span class="amt">฿${Number(r.a || 0).toLocaleString('th-TH')}</span></div>`).join('')
+        : '<div class="dash-empty">ยังไม่มีข้อมูล</div>';
+    }
+
+    function renderDashRecent(id, rows, noKey, nameKey) {
+      const tb = document.getElementById(id);
+      if (!rows || !rows.length) { tb.innerHTML = '<tr><td colspan="5" class="dash-empty">ยังไม่มีข้อมูล</td></tr>'; return; }
+      const tagOf = st => st === 'Pending' ? 'pending' : (st === 'Approved' || st === 'Active') ? 'approved' : st === 'Rejected' ? 'rejected' : 'approved';
+      tb.innerHTML = rows.map(r => `<tr><td><b>${r[noKey]}</b></td><td>${nz(r.date)}</td><td>${nz(r[nameKey])}</td><td style="text-align:right">${Number(r.total_amount || 0).toLocaleString()}</td><td><span class="tag ${tagOf(r.status)}">${r.status}</span></td></tr>`).join('');
+    }
+
+    function drawDayChart(canvasId, byDay, color) {
+      const canvas = document.getElementById(canvasId);
+      if (!canvas || typeof Chart === 'undefined') return;
+      const days = [];
+      for (let i = 13; i >= 0; i--) { const d = new Date(); d.setDate(d.getDate() - i); days.push(d.toISOString().slice(0, 10)); }
+      const map = {}; (byDay || []).forEach(r => { map[r.d] = r.c; });
+      const data = days.map(d => map[d] || 0);
+      const labels = days.map(d => d.slice(5));
+      if (dashCharts[canvasId]) dashCharts[canvasId].destroy();
+      dashCharts[canvasId] = new Chart(canvas.getContext('2d'), {
+        type: 'bar',
+        data: { labels, datasets: [{ data, backgroundColor: color, borderRadius: 4 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+      });
     }
 
     // Load PRs

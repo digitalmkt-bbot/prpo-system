@@ -235,6 +235,11 @@ class PROPOApi {
     return this.request('DELETE', `/users/${id}`);
   }
 
+  // ========== DASHBOARD STATS ==========
+  async getDashboardStats() {
+    return this.request('GET', '/stats/dashboard');
+  }
+
   // ========== HEALTH CHECK ==========
   async healthCheck() {
     try {
