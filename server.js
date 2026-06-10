@@ -19,13 +19,28 @@ app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 
 // Database Connection
-const pool = new Pool({
-  user: process.env.DB_USER || 'postgres',
-  password: process.env.DB_PASSWORD || 'password',
-  host: process.env.DB_HOST || 'localhost',
-  port: process.env.DB_PORT || 5432,
-  database: process.env.DB_NAME || 'prpo_system',
-});
+// Prefer Railway's standard DATABASE_URL connection string when available,
+// otherwise fall back to individual DB_* variables (local development).
+let pool;
+if (process.env.DATABASE_URL) {
+  const url = process.env.DATABASE_URL;
+  const isInternal =
+    url.includes('.railway.internal') ||
+    url.includes('localhost') ||
+    url.includes('127.0.0.1');
+  pool = new Pool({
+    connectionString: url,
+    ssl: isInternal ? false : { rejectUnauthorized: false },
+  });
+} else {
+  pool = new Pool({
+    user: process.env.DB_USER || 'postgres',
+    password: process.env.DB_PASSWORD || 'password',
+    host: process.env.DB_HOST || 'localhost',
+    port: process.env.DB_PORT || 5432,
+    database: process.env.DB_NAME || 'prpo_system',
+  });
+}
 
 // Test DB Connection
 pool.on('connect', () => {

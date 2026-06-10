@@ -12,7 +12,8 @@ COPY . .
 
 EXPOSE 3000
 
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-  CMD node -e "fetch('http://localhost:3000/api/health').then(r => r.ok || process.exit(1))"
+# Railway provides its own platform healthcheck and injects PORT dynamically,
+# so a Docker-level healthcheck hardcoded to port 3000 can wrongly mark the
+# container unhealthy. Let the app bind to $PORT and skip the Docker healthcheck.
 
 CMD ["node", "server.js"]
