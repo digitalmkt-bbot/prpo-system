@@ -1036,11 +1036,15 @@
         const items = (po.items || []).filter(i => i && i.product_name);
         const money = x => Number(x || 0).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         const dt = po.date ? String(po.date).slice(0, 10).split('-').reverse().join('/') : '-';
+        let grossTotal = 0, discountTotal = 0;
         const rows = items.map((it, i) => {
-          const base = (it.quantity || 0) * (it.unit_price || 0) - (it.discount || 0);
+          const gross = (it.quantity || 0) * (it.unit_price || 0);
+          const base = gross - (it.discount || 0);
+          grossTotal += gross; discountTotal += Number(it.discount || 0);
           return `<tr>
             <td>${i + 1}. ${nz(it.product_name)}${it.description ? '<div style="color:#6b7280;font-size:11px">' + it.description + '</div>' : ''}</td>
             <td style="text-align:center">${Number(it.quantity).toLocaleString()}</td>
+            <td style="text-align:center">${nz(it.unit)}</td>
             <td style="text-align:right">${money(it.unit_price)}</td>
             <td style="text-align:right">${money(it.discount)}</td>
             <td style="text-align:center">${it.vat_rate || 0}%</td>
@@ -1062,6 +1066,7 @@
                 <div class="lbl" style="margin-top:8px">ผู้ขาย</div><div class="nm">${nz(po.supplier_code)} ${nz(po.supplier_name)}</div>
                 <div style="font-size:12px;margin-top:3px">${nz(po.supplier_address)}</div>
                 <div style="font-size:12px">เลขที่ภาษี: ${nz(po.supplier_tax_id)}</div>
+                <div style="font-size:12px">${nz(po.supplier_phone)}${po.supplier_email ? ' · ' + po.supplier_email : ''}</div>
               </div>
               <div class="podoc-party podoc-meta">
                 <div><span class="mk">เลขที่เอกสาร:</span><b>${po.po_no}</b></div>
@@ -1074,20 +1079,22 @@
               </div>
             </div>
             <table class="podoc-items">
-              <thead><tr><th>คำอธิบาย</th><th style="text-align:center;width:60px">จำนวน</th><th style="text-align:right;width:90px">ราคา</th><th style="text-align:right;width:80px">ส่วนลด</th><th style="text-align:center;width:50px">VAT</th><th style="text-align:right;width:100px">มูลค่าก่อนภาษี</th></tr></thead>
-              <tbody>${rows || '<tr><td colspan="6" style="text-align:center;color:#9ca3af;padding:16px">ไม่มีรายการ</td></tr>'}</tbody>
+              <thead><tr><th>คำอธิบาย</th><th style="text-align:center;width:55px">จำนวน</th><th style="text-align:center;width:55px">หน่วย</th><th style="text-align:right;width:85px">ราคา/หน่วย</th><th style="text-align:right;width:75px">ส่วนลด</th><th style="text-align:center;width:45px">VAT</th><th style="text-align:right;width:95px">มูลค่าก่อนภาษี</th></tr></thead>
+              <tbody>${rows || '<tr><td colspan="7" style="text-align:center;color:#9ca3af;padding:16px">ไม่มีรายการ</td></tr>'}</tbody>
             </table>
             <div class="podoc-sum">
-              <div style="font-size:12px;line-height:1.9;text-align:right;color:#374151">
-                <div>มูลค่าที่คำนวณภาษี: ${money(po.subtotal)} บาท</div>
-                <div>ภาษีมูลค่าเพิ่ม: ${money(po.vat_amount)} บาท</div>
-                <div style="color:#6b7280">(${bahtText(po.net_amount)})</div>
-                <div>หัก ณ ที่จ่าย: ${money(po.wht_amount)} บาท</div>
+              <div style="font-size:12px;line-height:1.95;text-align:right;color:#374151;min-width:300px">
+                <div style="display:flex;justify-content:space-between"><span>รวมเป็นเงิน</span><b>${money(grossTotal)} บาท</b></div>
+                <div style="display:flex;justify-content:space-between"><span>หักส่วนลด</span><b>${money(discountTotal)} บาท</b></div>
+                <div style="display:flex;justify-content:space-between;border-top:1px dashed #d1d5db;padding-top:3px"><span>มูลค่าที่คำนวณภาษี</span><b>${money(po.subtotal)} บาท</b></div>
+                <div style="display:flex;justify-content:space-between"><span>ภาษีมูลค่าเพิ่ม (VAT)</span><b>${money(po.vat_amount)} บาท</b></div>
+                <div style="display:flex;justify-content:space-between;border-top:1px solid #d1d5db;padding-top:3px"><span>จำนวนเงินรวมทั้งสิ้น</span><b>${money(po.total_amount)} บาท</b></div>
+                <div style="display:flex;justify-content:space-between;color:#b91c1c"><span>หัก ณ ที่จ่าย</span><b>${money(po.wht_amount)} บาท</b></div>
               </div>
               <div class="grand">
-                <div style="font-size:11px;color:#6b7280">จำนวนเงินทั้งสิ้น</div>
-                <div style="font-size:22px;font-weight:800;color:#4f46e5">${money(po.total_amount)} บาท</div>
-                <div style="font-size:11px;color:#6b7280;margin-top:6px">ยอดชำระ: <b>${money(po.net_amount)} บาท</b></div>
+                <div style="font-size:11px;color:#6b7280">ยอดชำระสุทธิ</div>
+                <div style="font-size:22px;font-weight:800;color:#16a34a">${money(po.net_amount)} บาท</div>
+                <div style="font-size:11px;color:#6b7280;margin-top:6px;font-style:italic">(${bahtText(po.net_amount)})</div>
               </div>
             </div>
             ${po.note ? `<div style="margin-top:14px;font-size:12px"><b>หมายเหตุ:</b> ${po.note}</div>` : ''}
