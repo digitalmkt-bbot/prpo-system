@@ -90,8 +90,14 @@ pool.on('error', (err) => {
     app.use('/api/stats', requireAuth, (await import('./routes/stats.js')).default(pool));
     app.use('/api/purchase-types', requireAuth, (await import('./routes/purchaseTypes.js')).default(pool));
 
-    // Static files
-    app.use(express.static('public'));
+    // Static files — disable caching for HTML/JS so deploys show immediately (no hard-refresh needed)
+    app.use(express.static('public', {
+      setHeaders: (res, path) => {
+        if (path.endsWith('.html') || path.endsWith('.js')) {
+          res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        }
+      }
+    }));
 
     // Health check
     app.get('/api/health', (req, res) => {
