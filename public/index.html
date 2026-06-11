@@ -71,6 +71,14 @@
     .modal-card { background: #fff; width: 420px; max-width: 92vw; border-radius: 14px; padding: 24px;
       box-shadow: 0 20px 60px rgba(0,0,0,.3); max-height: 88vh; overflow: auto; }
     .modal-card h3 { margin: 0 0 12px; }
+    /* PR detail modal */
+    .detail-overlay { position:fixed; inset:0; background:rgba(15,23,42,.5); display:none; align-items:flex-start; justify-content:center; z-index:950; overflow:auto; padding:30px 16px; }
+    .detail-card { background:#fff; width:780px; max-width:96vw; border-radius:14px; padding:26px; box-shadow:0 20px 60px rgba(0,0,0,.3); }
+    .detail-head { display:flex; justify-content:space-between; align-items:flex-start; border-bottom:1px solid var(--line); padding-bottom:14px; margin-bottom:16px; }
+    .detail-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px 24px; font-size:13px; margin-bottom:18px; }
+    .detail-grid .k { color:var(--muted); font-size:11px; margin-bottom:2px; }
+    .detail-close { background:none; border:none; font-size:20px; cursor:pointer; color:var(--muted); }
+    @media print { .sidebar, .detail-close, .detail-actions { display:none !important; } }
     /* Typeahead */
     .typeahead { position: relative; }
     .typeahead-results { position: absolute; left: 0; right: 0; top: 100%; background: #fff;
@@ -464,6 +472,11 @@
 
   <div class="toast" id="toast"></div>
 
+  <!-- PR Detail Modal -->
+  <div class="detail-overlay" id="pr-detail-overlay">
+    <div class="detail-card" id="pr-detail-card"></div>
+  </div>
+
   <!-- Generic Modal -->
   <div class="modal-overlay" id="modal-overlay">
     <div class="modal-card">
@@ -617,14 +630,14 @@
           let action = '-';
           if (p.status === 'Approved' && !p.po_no) action = `<button class="btn-issue" onclick="showIssuePO('${p.pr_no}')">ออก PO</button>`;
           else if (p.po_no) action = `<span style="color:var(--green);font-weight:600">${p.po_no}</span>`;
-          return `<tr>
-            <td><b>${p.pr_no}</b></td>
+          return `<tr style="cursor:pointer" onclick="showPRDetail('${p.pr_no}')">
+            <td><b style="color:var(--brand)">${p.pr_no}</b></td>
             <td>${nz(p.date && String(p.date).slice(0,10))}</td>
             <td>${nz(p.department_name)}</td>
             <td>${Number(p.total_amount || 0).toLocaleString()}</td>
             <td><span class="tag ${tagClass}">${p.status}</span></td>
             <td>${p.current_approval_step || 1}/${p.total_approval_steps || 1}</td>
-            <td>${action}</td>
+            <td onclick="event.stopPropagation()">${action}</td>
           </tr>`;
         }).join('') : '';
         document.getElementById('pr-empty').style.display = prs.length ? 'none' : 'block';
@@ -632,6 +645,62 @@
         toast('Error loading PRs: ' + e.message, true);
       }
     }
+
+    // ===== PR detail view =====
+    async function showPRDetail(prNo) {
+      try {
+        const pr = await api.getPRDetail(prNo);
+        const items = (pr.items || []).filter(i => i && i.product_name);
+        const tagClass = pr.status === 'Pending' ? 'pending' : pr.status === 'Approved' ? 'approved' : 'rejected';
+        const rows = items.map((it, idx) => `<tr>
+          <td style="text-align:center">${idx + 1}</td>
+          <td>${nz(it.product_name)}</td>
+          <td>${nz(it.description)}</td>
+          <td style="text-align:center">${it.quantity}</td>
+          <td>${nz(it.unit)}</td>
+          <td style="text-align:right">${Number(it.unit_price || 0).toLocaleString()}</td>
+          <td style="text-align:right">${Number(it.total_price || (it.quantity * it.unit_price) || 0).toLocaleString()}</td>
+        </tr>`).join('');
+        let chain = '';
+        if (Array.isArray(pr.approval_chain) && pr.approval_chain.length) {
+          chain = `<div style="margin-top:16px"><b>ประวัติการอนุมัติ</b><ul style="font-size:13px;color:var(--muted);margin:8px 0 0 18px;line-height:1.7">${pr.approval_chain.map(c => `<li>ขั้น ${c.step}: ${c.approverName || c.approver}${c.comment ? ' — ' + c.comment : ''}</li>`).join('')}</ul></div>`;
+        }
+        document.getElementById('pr-detail-card').innerHTML = `
+          <div class="detail-head">
+            <div><h2 style="margin:0;font-size:22px">${pr.pr_no}</h2><div style="color:var(--muted);font-size:13px">ใบขอซื้อ (Purchase Request)</div></div>
+            <div style="text-align:right;display:flex;align-items:center;gap:10px">
+              <span class="tag ${tagClass}">${pr.status}</span>
+              ${pr.po_no ? `<span style="color:var(--green);font-weight:600">PO: ${pr.po_no}</span>` : ''}
+              <button class="detail-close" onclick="closePRDetail()">✕</button>
+            </div>
+          </div>
+          <div class="detail-grid">
+            <div><div class="k">วันที่ขอซื้อ</div>${nz(pr.date && String(pr.date).slice(0,10))}</div>
+            <div><div class="k">วันที่ต้องการ</div>${nz(pr.needed_date && String(pr.needed_date).slice(0,10))}</div>
+            <div><div class="k">ผู้ขอซื้อ</div>${nz(pr.requester_name || pr.requested_by)}</div>
+            <div><div class="k">แผนก</div>${nz(pr.department_name)}</div>
+            <div><div class="k">ประเภทการจัดซื้อ</div>${nz(pr.purchase_type)}</div>
+            <div><div class="k">ขั้นอนุมัติ</div>${pr.current_approval_step || 1}/${pr.total_approval_steps || 1}</div>
+            <div style="grid-column:1/-1"><div class="k">วัตถุประสงค์</div>${nz(pr.purpose)}</div>
+          </div>
+          <table class="pr-items">
+            <thead><tr><th style="width:30px">#</th><th>รายการ</th><th>รายละเอียด</th><th style="text-align:center">จำนวน</th><th>หน่วย</th><th style="text-align:right">ราคา/หน่วย</th><th style="text-align:right">รวม</th></tr></thead>
+            <tbody>${rows || '<tr><td colspan="7" class="dash-empty">ไม่มีรายการ</td></tr>'}</tbody>
+          </table>
+          <div style="text-align:right;margin-top:14px;font-size:16px;font-weight:700">ยอดรวม: ฿${Number(pr.total_amount || 0).toLocaleString()}${pr.has_vat ? ' (มี VAT 7%)' : ''}</div>
+          ${chain}
+          <div class="detail-actions" style="margin-top:20px;text-align:right">
+            <button class="btn secondary" onclick="window.print()">พิมพ์</button>
+            <button class="btn" onclick="closePRDetail()">ปิด</button>
+          </div>`;
+        document.getElementById('pr-detail-overlay').style.display = 'flex';
+      } catch (e) {
+        toast('โหลดใบ PR ไม่สำเร็จ: ' + e.message, true);
+      }
+    }
+    function closePRDetail() { document.getElementById('pr-detail-overlay').style.display = 'none'; }
+    window.showPRDetail = showPRDetail;
+    window.closePRDetail = closePRDetail;
 
     // Load Approvals
     async function loadApprovals() {

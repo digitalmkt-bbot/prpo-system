@@ -68,10 +68,12 @@ export default function(pool) {
           d.name as department_name,
           json_agg(json_build_object(
             'product_name', pri.product_name,
+            'description', pri.description,
+            'unit', pri.unit,
             'quantity', pri.quantity,
             'unit_price', pri.unit_price,
             'total_price', pri.total_price
-          )) as items
+          ) ORDER BY pri.created_at) as items
         FROM purchase_requests pr
         LEFT JOIN suppliers s ON pr.supplier_id = s.id
         LEFT JOIN departments d ON pr.department_id = d.id
