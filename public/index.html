@@ -508,7 +508,7 @@
             <div style="font-size:12px; color:var(--muted); margin-bottom:10px;" id="supplier-count"></div>
             <table>
               <thead>
-                <tr><th>Code</th><th>Name</th><th>Email</th><th>Phone</th></tr>
+                <tr><th>Code</th><th>Name</th><th>ประเภทผู้ติดต่อ</th><th>เลขทะเบียนภาษี</th><th>เบอร์โทร</th></tr>
               </thead>
               <tbody id="supplier-table"></tbody>
             </table>
@@ -891,7 +891,7 @@
         : SUPPLIERS;
       const shown = list.slice(0, 500);
       document.getElementById('supplier-table').innerHTML = shown.map(s =>
-        `<tr><td>${s.code}</td><td>${s.name}</td><td>${nz(s.email)}</td><td>${nz(s.phone)}</td></tr>`).join('');
+        `<tr style="cursor:pointer" onclick="editSupplier('${s.id}')" title="คลิกเพื่อแก้ไข"><td>${s.code}</td><td>${s.name}</td><td>${nz(s.contact_type)}</td><td>${nz(s.tax_id)}</td><td>${nz(s.phone)}</td></tr>`).join('');
       document.getElementById('supplier-count').textContent =
         `แสดง ${shown.length} จาก ${list.length} รายการ` + (list.length > 500 ? ' (จำกัด 500 แถว — ใช้ช่องค้นหาเพื่อกรอง)' : '');
     }
@@ -1363,7 +1363,11 @@
           const addrParts = [r[12], r[13], r[14], r[15], r[17]].map(clean).filter(Boolean);
           list.push({
             code, name,
+            contact_type: clean(r[2]),
             tax_id: clean(r[4]),
+            branch: clean(r[5]),
+            entity_type: clean(r[6]),
+            business_type: clean(r[7]),
             address: addrParts.join(' '),
             phone: clean(r[25]),
             email: pickEmail(r[26]),
@@ -1605,23 +1609,44 @@
     window.submitIssuePO = submitIssuePO;
 
     // ===== Supplier / Department modals =====
-    function showSupplierModal() {
-      openModal('เพิ่มซัพพลายเออร์', `
-        <label>รหัส *</label><input id="sp-code" placeholder="เช่น SUP001">
-        <label style="margin-top:8px;">ชื่อ *</label><input id="sp-name">
-        <label style="margin-top:8px;">อีเมล</label><input id="sp-email">
-        <label style="margin-top:8px;">เบอร์โทร</label><input id="sp-phone">
-        <label style="margin-top:8px;">ที่อยู่</label><input id="sp-address">
+    function showSupplierModal(existing) {
+      const s = existing || {};
+      const e = v => (v == null ? '' : String(v).replace(/"/g, '&quot;'));
+      openModal(existing ? 'แก้ไขผู้ขาย' : 'เพิ่มผู้ขาย', `
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 12px">
+          <div><label>รหัส *</label><input id="sp-code" value="${e(s.code)}" placeholder="เช่น A-001"></div>
+          <div><label>ประเภทผู้ติดต่อ</label><input id="sp-contact-type" value="${e(s.contact_type)}" placeholder="ผู้ขาย / ลูกค้า"></div>
+          <div style="grid-column:1/-1"><label>ชื่อ *</label><input id="sp-name" value="${e(s.name)}"></div>
+          <div><label>เลขทะเบียนภาษี</label><input id="sp-tax" value="${e(s.tax_id)}"></div>
+          <div><label>สาขา</label><input id="sp-branch" value="${e(s.branch)}" placeholder="เช่น 00000"></div>
+          <div><label>บุคคล/นิติบุคคล</label><input id="sp-entity" value="${e(s.entity_type)}" placeholder="นิติบุคคล / บุคคล"></div>
+          <div><label>ประเภทกิจการ</label><input id="sp-business" value="${e(s.business_type)}"></div>
+          <div><label>เบอร์โทร</label><input id="sp-phone" value="${e(s.phone)}"></div>
+          <div><label>อีเมล</label><input id="sp-email" value="${e(s.email)}"></div>
+          <div style="grid-column:1/-1"><label>ที่อยู่</label><textarea id="sp-address" style="min-height:54px">${s.address ? String(s.address).replace(/</g,'&lt;') : ''}</textarea></div>
+        </div>
       `, async () => {
-        const s = { code: val('sp-code'), name: val('sp-name'), email: val('sp-email'), phone: val('sp-phone'), address: val('sp-address') };
-        if (!s.code || !s.name) return toast('กรุณากรอกรหัสและชื่อ', true);
-        await api.saveSupplier(s);
-        toast('บันทึกซัพพลายเออร์แล้ว');
+        const data = {
+          id: s.id,
+          code: val('sp-code'), name: val('sp-name'),
+          contact_type: val('sp-contact-type'), tax_id: val('sp-tax'), branch: val('sp-branch'),
+          entity_type: val('sp-entity'), business_type: val('sp-business'),
+          phone: val('sp-phone'), email: val('sp-email'), address: val('sp-address'),
+        };
+        if (!data.code || !data.name) return toast('กรุณากรอกรหัสและชื่อ', true);
+        await api.saveSupplier(data);
+        toast('บันทึกผู้ขายแล้ว');
         closeModal();
         loadSuppliers();
       });
     }
     window.showSupplierModal = showSupplierModal;
+
+    function editSupplier(id) {
+      const s = SUPPLIERS.find(x => x.id === id);
+      if (s) showSupplierModal(s);
+    }
+    window.editSupplier = editSupplier;
 
     function showDeptModal() {
       openModal('เพิ่มแผนก', `
