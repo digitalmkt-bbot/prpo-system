@@ -24,6 +24,10 @@
     .nav a.active { background: linear-gradient(135deg,#22c55e,#16a34a); color: #fff; font-weight:600; box-shadow:0 4px 12px rgba(22,163,74,.30); }
     .nav a.active:hover { background: linear-gradient(135deg,#22c55e,#15803d); color:#fff; }
     .main { flex: 1; padding: 28px 32px; overflow: auto; background: linear-gradient(180deg,#e7f8ee 0%,#f1faf4 38%,#f6fcf9 100%); }
+    .sub-tabs { display:flex; gap:4px; border-bottom:2px solid #dfe7e2; margin-top:14px; }
+    .sub-tab { background:none; border:none; padding:10px 18px; font-size:14px; font-weight:600; color:var(--muted); cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-2px; transition:color .15s; }
+    .sub-tab:hover { color:var(--brand-dark); }
+    .sub-tab.active { color:var(--brand-dark); border-bottom-color:var(--brand); }
     h1 { margin: 0 0 6px; font-size: 26px; font-weight:800; }
     .subtitle { color: var(--muted); margin-bottom: 22px; }
     .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 26px; }
@@ -485,32 +489,42 @@
       <!-- SUPPLIERS -->
       <div class="page" id="page-suppliers">
         <h1>Suppliers</h1>
-        <p class="subtitle">จัดการผู้ขาย</p>
-        <div class="toolbar" style="margin-top:16px;">
-          <input type="text" id="supplier-search" placeholder="ค้นหาซัพพลายเออร์ (ชื่อ/รหัส)..." oninput="renderSuppliers()">
-          <button class="btn" onclick="showSupplierModal()">+ New Supplier</button>
-        </div>
-        <div class="panel">
-          <div style="font-size:12px; color:var(--muted); margin-bottom:10px;" id="supplier-count"></div>
-          <table>
-            <thead>
-              <tr><th>Code</th><th>Name</th><th>Email</th><th>Phone</th></tr>
-            </thead>
-            <tbody id="supplier-table"></tbody>
-          </table>
+        <p class="subtitle">จัดการผู้ขายและประเภทการจัดซื้อ</p>
+
+        <div class="sub-tabs">
+          <button class="sub-tab active" id="suptab-btn-suppliers" onclick="switchSupTab('suppliers')">ผู้ขาย</button>
+          <button class="sub-tab" id="suptab-btn-types" onclick="switchSupTab('types')">ประเภทการจัดซื้อ</button>
         </div>
 
-        <div class="panel" style="margin-top:20px;">
-          <b>ประเภทการจัดซื้อ</b>
-          <p style="font-size:13px;color:var(--muted);margin:4px 0 12px;">เพิ่ม/ลบประเภทที่ใช้ในหน้า Create PR</p>
-          <div style="display:flex;gap:8px;max-width:480px;">
-            <input type="text" id="pt-new" placeholder="ชื่อประเภทใหม่..." onkeydown="if(event.key==='Enter')addPurchaseType()">
-            <button class="btn" style="white-space:nowrap" onclick="addPurchaseType()">+ เพิ่ม</button>
+        <div id="suptab-suppliers">
+          <div class="toolbar" style="margin-top:16px;">
+            <input type="text" id="supplier-search" placeholder="ค้นหาซัพพลายเออร์ (ชื่อ/รหัส)..." oninput="renderSuppliers()">
+            <button class="btn" onclick="showSupplierModal()">+ New Supplier</button>
           </div>
-          <table style="margin-top:14px;max-width:480px;">
-            <thead><tr><th>ชื่อประเภท</th><th style="width:80px;text-align:right">จัดการ</th></tr></thead>
-            <tbody id="pt-table"></tbody>
-          </table>
+          <div class="panel">
+            <div style="font-size:12px; color:var(--muted); margin-bottom:10px;" id="supplier-count"></div>
+            <table>
+              <thead>
+                <tr><th>Code</th><th>Name</th><th>Email</th><th>Phone</th></tr>
+              </thead>
+              <tbody id="supplier-table"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div id="suptab-types" style="display:none;">
+          <div class="panel" style="margin-top:16px;">
+            <b>ประเภทการจัดซื้อ</b>
+            <p style="font-size:13px;color:var(--muted);margin:4px 0 12px;">เพิ่ม/ลบประเภทที่ใช้ในหน้า Create PR</p>
+            <div style="display:flex;gap:8px;max-width:480px;">
+              <input type="text" id="pt-new" placeholder="ชื่อประเภทใหม่..." onkeydown="if(event.key==='Enter')addPurchaseType()">
+              <button class="btn" style="white-space:nowrap" onclick="addPurchaseType()">+ เพิ่ม</button>
+            </div>
+            <table style="margin-top:14px;max-width:480px;">
+              <thead><tr><th>ชื่อประเภท</th><th style="width:80px;text-align:right">จัดการ</th></tr></thead>
+              <tbody id="pt-table"></tbody>
+            </table>
+          </div>
         </div>
       </div>
 
@@ -625,7 +639,7 @@
         if (page === 'prs') loadPRs();
         if (page === 'pos') loadPOs();
         if (page === 'approvals') loadApprovals();
-        if (page === 'suppliers') { loadSuppliers(); loadPurchaseTypes(); }
+        if (page === 'suppliers') switchSupTab('suppliers');
         if (page === 'departments') loadDepartments();
         if (page === 'users') loadUsers();
       });
@@ -1313,6 +1327,16 @@
       }
     }
     window.loadPurchaseTypes = loadPurchaseTypes;
+
+    function switchSupTab(name) {
+      const isTypes = name === 'types';
+      document.getElementById('suptab-suppliers').style.display = isTypes ? 'none' : '';
+      document.getElementById('suptab-types').style.display = isTypes ? '' : 'none';
+      document.getElementById('suptab-btn-suppliers').classList.toggle('active', !isTypes);
+      document.getElementById('suptab-btn-types').classList.toggle('active', isTypes);
+      if (isTypes) loadPurchaseTypes(); else loadSuppliers();
+    }
+    window.switchSupTab = switchSupTab;
 
     async function addPurchaseType() {
       const input = document.getElementById('pt-new');
