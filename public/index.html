@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PR/PO Procurement System - Railway</title>
   <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
     :root {
       --brand:#16a34a; --brand-dark:#15803d; --panel:#ffffff; --ink:#0f172a; --muted:#6b7280;
@@ -499,7 +500,9 @@
         <div id="suptab-suppliers">
           <div class="toolbar" style="margin-top:16px;">
             <input type="text" id="supplier-search" placeholder="ค้นหาซัพพลายเออร์ (ชื่อ/รหัส)..." oninput="renderSuppliers()">
+            <button class="btn secondary" onclick="document.getElementById('supplier-import-file').click()">📥 นำเข้า Excel</button>
             <button class="btn" onclick="showSupplierModal()">+ New Supplier</button>
+            <input type="file" id="supplier-import-file" accept=".xlsx,.xls" style="display:none" onchange="importSuppliersFromExcel(this)">
           </div>
           <div class="panel">
             <div style="font-size:12px; color:var(--muted); margin-bottom:10px;" id="supplier-count"></div>
@@ -1337,6 +1340,45 @@
       if (isTypes) loadPurchaseTypes(); else loadSuppliers();
     }
     window.switchSupTab = switchSupTab;
+
+    async function importSuppliersFromExcel(input) {
+      const file = input.files && input.files[0];
+      input.value = '';
+      if (!file) return;
+      if (typeof XLSX === 'undefined') return toast('ไลบรารีอ่าน Excel ยังโหลดไม่เสร็จ ลองใหม่อีกครั้ง', true);
+      try {
+        toast('กำลังอ่านไฟล์...');
+        const buf = await file.arrayBuffer();
+        const wb = XLSX.read(buf, { type: 'array' });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+        const clean = s => (s == null ? '' : String(s)).replace(/\s+/g, ' ').trim();
+        const pickEmail = s => { const m = String(s || '').match(/[\w.+-]+@[\w.-]+\.\w+/); return m ? m[0] : ''; };
+        const list = [];
+        // ข้าม 2 แถวหัวตาราง — ข้อมูลเริ่ม index 2
+        for (let i = 2; i < rows.length; i++) {
+          const r = rows[i]; if (!r) continue;
+          const code = clean(r[1]); const name = clean(r[9]);
+          if (!code || !name) continue;
+          const addrParts = [r[12], r[13], r[14], r[15], r[17]].map(clean).filter(Boolean);
+          list.push({
+            code, name,
+            tax_id: clean(r[4]),
+            address: addrParts.join(' '),
+            phone: clean(r[25]),
+            email: pickEmail(r[26]),
+          });
+        }
+        if (!list.length) return toast('ไม่พบข้อมูลผู้ขายในไฟล์ (ตรวจรูปแบบคอลัมน์)', true);
+        toast(`กำลังนำเข้า ${list.length} รายการ...`);
+        const res = await api.importSuppliers(list);
+        toast(`นำเข้าสำเร็จ: เพิ่มใหม่ ${res.inserted} · อัปเดต ${res.updated}${res.skipped ? ' · ข้าม ' + res.skipped : ''}`);
+        loadSuppliers();
+      } catch (e) {
+        toast('นำเข้าไม่สำเร็จ: ' + e.message, true);
+      }
+    }
+    window.importSuppliersFromExcel = importSuppliersFromExcel;
 
     async function addPurchaseType() {
       const input = document.getElementById('pt-new');

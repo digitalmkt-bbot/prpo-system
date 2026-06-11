@@ -143,6 +143,10 @@ class PROPOApi {
     return this.request('DELETE', `/suppliers/${id}`);
   }
 
+  async importSuppliers(suppliers) {
+    return this.request('POST', '/suppliers/import', { suppliers });
+  }
+
   // ========== PRODUCTS ==========
   async getProducts() {
     return this.request('GET', '/products');
