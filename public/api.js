@@ -210,6 +210,10 @@ class PROPOApi {
     return this.request('PUT', `/pos/${id}`, { status });
   }
 
+  async updatePO(poNo, payload) {
+    return this.request('PUT', `/pos/${encodeURIComponent(poNo)}/full`, payload);
+  }
+
   // ========== COMPANY ==========
   async getCompanyInfo() {
     return this.request('GET', '/company');

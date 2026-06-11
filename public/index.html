@@ -590,6 +590,11 @@
     <div class="detail-card" id="po-detail-card" style="width:800px;position:relative"></div>
   </div>
 
+  <!-- PO Edit Modal -->
+  <div class="detail-overlay" id="po-edit-overlay">
+    <div class="detail-card" id="po-edit-card" style="width:880px;position:relative"></div>
+  </div>
+
   <!-- Generic Modal -->
   <div class="modal-overlay" id="modal-overlay">
     <div class="modal-card">
@@ -1106,6 +1111,7 @@
             </div>
           </div>
           <div class="detail-actions po-print-hide" style="margin-top:20px;text-align:right">
+            ${canEditPO() ? `<button class="btn secondary" style="border-color:#16a34a;color:#16a34a" onclick="closePODetail();showEditPO('${po.po_no}')">✏️ แก้ไขใบ PO</button>` : ''}
             <button class="btn secondary" onclick="printDoc('po-detail-overlay')">🖨 พิมพ์ใบ PO</button>
             <button class="btn" onclick="closePODetail()">ปิด</button>
           </div>
@@ -1128,6 +1134,134 @@
       setTimeout(() => { document.body.classList.remove('print-mode'); ov.classList.remove('print-target'); }, 300);
     }
     window.printDoc = printDoc;
+
+    // ===== Edit issued PO (Purchasing / Admin only) =====
+    function canEditPO() {
+      const u = api.getStoredUser() || {};
+      return ['admin', 'purchasing'].includes(String(u.role || '').toLowerCase());
+    }
+    window.canEditPO = canEditPO;
+
+    async function showEditPO(poNo) {
+      if (!canEditPO()) return toast('เฉพาะฝ่ายจัดซื้อ/Admin แก้ไขใบ PO ได้', true);
+      try {
+        const po = await api.getPODetail(poNo);
+        const esc = v => (v == null ? '' : String(v).replace(/"/g, '&quot;'));
+        const escT = v => (v == null ? '' : String(v).replace(/</g, '&lt;'));
+        const items = (po.items || []).filter(i => i && i.product_name);
+        document.getElementById('po-edit-card').innerHTML = `
+          <h2 style="margin:0 0 4px">แก้ไขใบสั่งซื้อ ${po.po_no}</h2>
+          <p class="subtitle" style="margin:0 0 16px">ผู้ขาย: ${nz(po.supplier_code)} ${nz(po.supplier_name)} · แก้รายการแล้วยอดคำนวณใหม่อัตโนมัติ</p>
+          <div class="pr-grid">
+            <div class="pr-field"><label>อ้างอิง</label><input id="ed-reference" value="${esc(po.reference)}"></div>
+            <div class="pr-field"><label>ผู้ติดต่อ (ฝั่งผู้ขาย)</label><input id="ed-contact-name" value="${esc(po.contact_name)}"></div>
+            <div class="pr-field"><label>เบอร์โทรผู้ติดต่อ</label><input id="ed-contact-phone" value="${esc(po.contact_phone)}"></div>
+            <div class="pr-field"><label>อีเมลผู้ติดต่อ</label><input id="ed-contact-email" value="${esc(po.contact_email)}"></div>
+            <div class="pr-field full"><label>หมายเหตุ</label><textarea id="ed-note">${escT(po.note)}</textarea></div>
+          </div>
+          <h3 style="margin:18px 0 6px;font-size:14px">รายการสินค้า / บริการ</h3>
+          <table class="pr-items"><thead><tr>
+            <th style="width:26px">#</th><th>รายการ</th><th>รายละเอียด</th>
+            <th style="width:66px;text-align:center">จำนวน</th><th style="width:60px;text-align:center">หน่วย</th>
+            <th style="width:100px">ราคา/หน่วย</th><th style="width:90px">ส่วนลด</th>
+            <th style="width:58px;text-align:center">VAT%</th><th style="width:110px;text-align:right">มูลค่า</th><th style="width:30px"></th>
+          </tr></thead><tbody id="ed-items"></tbody></table>
+          <button class="pr-add" onclick="addEditRow({})">+ เพิ่มรายการ</button>
+          <div class="pr-sum">
+            <div class="pr-sum-box" style="text-align:left;min-width:300px">
+              <div style="display:flex;justify-content:space-between;font-size:13px"><span>มูลค่าก่อนภาษี</span><span>฿<span id="ed-subtotal">0.00</span></span></div>
+              <div style="display:flex;justify-content:space-between;font-size:13px;margin-top:4px"><span>ภาษีมูลค่าเพิ่ม (VAT)</span><span>฿<span id="ed-vat">0.00</span></span></div>
+              <div style="display:flex;justify-content:space-between;font-weight:700;font-size:16px;border-top:1px solid #a7f3d0;margin-top:8px;padding-top:8px;color:#065f46"><span>จำนวนเงินทั้งสิ้น</span><span>฿<span id="ed-total">0.00</span></span></div>
+              <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;margin-top:10px"><span>หัก ณ ที่จ่าย</span><input type="number" id="ed-wht" value="${po.wht_amount != null ? po.wht_amount : 0}" min="0" step="0.01" style="width:120px;text-align:right;padding:5px 8px" oninput="recalcEdit()"></div>
+              <div style="display:flex;justify-content:space-between;font-weight:700;font-size:15px;margin-top:4px;color:#16a34a"><span>ยอดชำระสุทธิ</span><span>฿<span id="ed-net">0.00</span></span></div>
+            </div>
+          </div>
+          <div style="margin-top:20px;text-align:right">
+            <button class="btn secondary" onclick="closeEditPO()">ยกเลิก</button>
+            <button class="btn" onclick="submitEditPO('${po.po_no}')">💾 บันทึกการแก้ไข</button>
+          </div>
+          <button class="detail-close" onclick="closeEditPO()" style="position:absolute;top:18px;right:24px">✕</button>`;
+        document.getElementById('ed-items').innerHTML = '';
+        (items.length ? items : [{}]).forEach(it => addEditRow(it));
+        recalcEdit();
+        document.getElementById('po-edit-overlay').style.display = 'flex';
+      } catch (e) {
+        toast('โหลดใบ PO ไม่สำเร็จ: ' + e.message, true);
+      }
+    }
+    window.showEditPO = showEditPO;
+
+    function addEditRow(it) {
+      it = it || {};
+      const esc = v => (v == null ? '' : String(v).replace(/"/g, '&quot;'));
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="ei-no" style="text-align:center;color:#cbd5e1"></td>
+        <td><input class="ei-name" value="${esc(it.product_name)}" placeholder="ชื่อรายการ"></td>
+        <td><input class="ei-desc" value="${esc(it.description)}" placeholder="รายละเอียด"></td>
+        <td><input class="ei-qty" type="number" min="0" step="1" value="${it.quantity != null ? it.quantity : 1}" style="text-align:center" oninput="recalcEdit()"></td>
+        <td><input class="ei-unit" value="${esc(it.unit)}" style="text-align:center" placeholder="หน่วย"></td>
+        <td><input class="ei-price" type="number" min="0" step="0.01" value="${it.unit_price != null ? it.unit_price : 0}" oninput="recalcEdit()"></td>
+        <td><input class="ei-disc" type="number" min="0" step="0.01" value="${it.discount != null ? it.discount : 0}" oninput="recalcEdit()"></td>
+        <td><input class="ei-vat" type="number" min="0" step="1" value="${it.vat_rate != null ? it.vat_rate : 0}" style="text-align:center" oninput="recalcEdit()"></td>
+        <td class="ei-line" style="text-align:right;font-weight:600">0.00</td>
+        <td style="text-align:center"><button style="background:none;border:none;color:#fca5a5;cursor:pointer;font-size:15px" onclick="this.closest('tr').remove();recalcEdit()">🗑</button></td>`;
+      document.getElementById('ed-items').appendChild(tr);
+      recalcEdit();
+    }
+    window.addEditRow = addEditRow;
+
+    function recalcEdit() {
+      let subtotal = 0, vat = 0, n = 0;
+      document.querySelectorAll('#ed-items tr').forEach(tr => {
+        n++; tr.querySelector('.ei-no').textContent = n;
+        const q = +tr.querySelector('.ei-qty').value || 0, p = +tr.querySelector('.ei-price').value || 0,
+              d = +tr.querySelector('.ei-disc').value || 0, v = +tr.querySelector('.ei-vat').value || 0;
+        const base = q * p - d;
+        subtotal += base; vat += base * v / 100;
+        tr.querySelector('.ei-line').textContent = base.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      });
+      const total = subtotal + vat;
+      const wht = +document.getElementById('ed-wht').value || 0;
+      const net = total - wht;
+      const f = x => x.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      document.getElementById('ed-subtotal').textContent = f(subtotal);
+      document.getElementById('ed-vat').textContent = f(vat);
+      document.getElementById('ed-total').textContent = f(total);
+      document.getElementById('ed-net').textContent = f(net);
+    }
+    window.recalcEdit = recalcEdit;
+
+    function closeEditPO() { document.getElementById('po-edit-overlay').style.display = 'none'; }
+    window.closeEditPO = closeEditPO;
+
+    async function submitEditPO(poNo) {
+      try {
+        const items = [...document.querySelectorAll('#ed-items tr')].map(tr => ({
+          product_name: tr.querySelector('.ei-name').value.trim(),
+          description: tr.querySelector('.ei-desc').value.trim(),
+          unit: tr.querySelector('.ei-unit').value.trim(),
+          quantity: +tr.querySelector('.ei-qty').value || 0,
+          unit_price: +tr.querySelector('.ei-price').value || 0,
+          discount: +tr.querySelector('.ei-disc').value || 0,
+          vat_rate: +tr.querySelector('.ei-vat').value || 0,
+        })).filter(i => i.product_name);
+        if (!items.length) return toast('ต้องมีรายการอย่างน้อย 1 รายการ', true);
+        await api.updatePO(poNo, {
+          reference: val('ed-reference'), note: val('ed-note'),
+          contact_name: val('ed-contact-name'), contact_phone: val('ed-contact-phone'), contact_email: val('ed-contact-email'),
+          wht_amount: +document.getElementById('ed-wht').value || 0,
+          items,
+        });
+        toast('บันทึกการแก้ไขใบ PO แล้ว');
+        closeEditPO();
+        loadPOs();
+        showPODetail(poNo);
+      } catch (e) {
+        toast('บันทึกไม่สำเร็จ: ' + e.message, true);
+      }
+    }
+    window.submitEditPO = submitEditPO;
 
     // ===== Create PR =====
     async function loadCreateForm() {

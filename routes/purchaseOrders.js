@@ -166,5 +166,65 @@ export default function(pool) {
     }
   });
 
+  // Full update of an issued PO: header + items, with totals recalculated
+  router.put('/:poNo/full', async (req, res) => {
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      const {
+        supplier_id, reference = null, note = null,
+        contact_name = null, contact_phone = null, contact_email = null,
+        wht_amount = 0, items: bodyItems,
+      } = req.body || {};
+
+      const poR = await client.query('SELECT * FROM purchase_orders WHERE po_no = $1 FOR UPDATE', [req.params.poNo]);
+      const po = poR.rows[0];
+      if (!po) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'ไม่พบ PO' }); }
+
+      const items = (Array.isArray(bodyItems) ? bodyItems : []).filter(it => it && it.product_name);
+      if (!items.length) { await client.query('ROLLBACK'); return res.status(400).json({ error: 'ต้องมีรายการอย่างน้อย 1 รายการ' }); }
+
+      const r2 = (n) => Math.round((Number(n) || 0) * 100) / 100;
+      let subtotal = 0, vat_amount = 0;
+      items.forEach(it => {
+        const base = (Number(it.quantity) || 0) * (Number(it.unit_price) || 0) - (Number(it.discount) || 0);
+        subtotal += base;
+        vat_amount += base * (Number(it.vat_rate) || 0) / 100;
+      });
+      subtotal = r2(subtotal); vat_amount = r2(vat_amount);
+      const total = r2(subtotal + vat_amount);
+      const wht = r2(wht_amount);
+      const net = r2(total - wht);
+
+      await client.query(`
+        UPDATE purchase_orders SET
+          supplier_id = COALESCE($1, supplier_id),
+          reference = $2, note = $3,
+          contact_name = $4, contact_phone = $5, contact_email = $6,
+          subtotal = $7, vat_amount = $8, wht_amount = $9, total_amount = $10,
+          net_amount = $11, has_vat = $12, updated_at = NOW()
+        WHERE id = $13
+      `, [supplier_id || null, reference, note, contact_name, contact_phone, contact_email,
+          subtotal, vat_amount, wht, total, net, vat_amount > 0, po.id]);
+
+      await client.query('DELETE FROM po_items WHERE po_id = $1', [po.id]);
+      for (const it of items) {
+        await client.query(`
+          INSERT INTO po_items (po_id, product_name, description, unit, quantity, unit_price, discount, vat_rate)
+          VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+        `, [po.id, it.product_name, it.description || null, it.unit || null,
+            it.quantity || 0, it.unit_price || 0, it.discount || 0, it.vat_rate ?? 0]);
+      }
+
+      await client.query('COMMIT');
+      res.json({ ok: true, po_no: po.po_no });
+    } catch (err) {
+      await client.query('ROLLBACK');
+      res.status(500).json({ error: err.message });
+    } finally {
+      client.release();
+    }
+  });
+
   return router;
 }
