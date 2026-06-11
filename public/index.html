@@ -326,9 +326,6 @@
                   <option>ซื้อทั่วไป</option><option>บริการ / จ้างเหมา</option><option>วัสดุสิ้นเปลือง</option><option>ครุภัณฑ์</option>
                 </select>
               </div>
-              <div class="pr-field"><label>VAT</label>
-                <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#374151;margin-top:6px;"><input type="checkbox" id="cr-vat" style="width:auto;" onchange="recalcPR()"> มี VAT 7%</label>
-              </div>
               <div class="pr-field full"><label>วัตถุประสงค์ / เหตุผลในการขอซื้อ</label><textarea id="cr-purpose" placeholder="ระบุเหตุผลและความจำเป็น..."></textarea></div>
             </div>
           </div>
@@ -357,7 +354,7 @@
               <div class="pr-sum-box">
                 <div class="pr-sum-label">ยอดรวม (ฐานอนุมัติ)</div>
                 <div class="pr-sum-val">฿<span id="cr-total">0.00</span></div>
-                <div style="font-size:11px;color:var(--muted);" id="cr-vat-hint"></div>
+                <div style="font-size:11px;color:var(--muted);">VAT จะกำหนดตอนออก PO</div>
               </div>
             </div>
           </div>
@@ -393,6 +390,9 @@
                 <div class="typeahead-results" id="issue-supplier-results"></div>
               </div>
               <div class="pr-field"><label>อ้างอิง</label><input id="iss-reference" placeholder="เลขอ้างอิง (ถ้ามี)"></div>
+              <div class="pr-field"><label>ภาษีมูลค่าเพิ่ม</label>
+                <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#374151;margin-top:6px;"><input type="checkbox" id="iss-vat-all" style="width:auto;" checked onchange="applyIssueVatAll()"> มี VAT 7% (ทั้งใบ)</label>
+              </div>
               <div class="pr-field"><label>ผู้ติดต่อ (ฝั่งผู้ขาย)</label><input id="iss-contact-name"></div>
               <div class="pr-field"><label>เบอร์โทรผู้ติดต่อ</label><input id="iss-contact-phone"></div>
               <div class="pr-field"><label>อีเมลผู้ติดต่อ</label><input id="iss-contact-email"></div>
@@ -1154,6 +1154,9 @@
           <p class="subtitle" style="margin:0 0 16px">ผู้ขาย: ${nz(po.supplier_code)} ${nz(po.supplier_name)} · แก้รายการแล้วยอดคำนวณใหม่อัตโนมัติ</p>
           <div class="pr-grid">
             <div class="pr-field"><label>อ้างอิง</label><input id="ed-reference" value="${esc(po.reference)}"></div>
+            <div class="pr-field"><label>ภาษีมูลค่าเพิ่ม</label>
+              <label style="display:flex;align-items:center;gap:8px;font-size:13px;margin-top:6px"><input type="checkbox" id="ed-vat-all" style="width:auto" ${(po.vat_amount > 0 || po.has_vat) ? 'checked' : ''} onchange="applyEditVatAll()"> มี VAT 7% (ทั้งใบ)</label>
+            </div>
             <div class="pr-field"><label>ผู้ติดต่อ (ฝั่งผู้ขาย)</label><input id="ed-contact-name" value="${esc(po.contact_name)}"></div>
             <div class="pr-field"><label>เบอร์โทรผู้ติดต่อ</label><input id="ed-contact-phone" value="${esc(po.contact_phone)}"></div>
             <div class="pr-field"><label>อีเมลผู้ติดต่อ</label><input id="ed-contact-email" value="${esc(po.contact_email)}"></div>
@@ -1232,6 +1235,13 @@
     }
     window.recalcEdit = recalcEdit;
 
+    function applyEditVatAll() {
+      const rate = document.getElementById('ed-vat-all').checked ? 7 : 0;
+      document.querySelectorAll('#ed-items .ei-vat').forEach(i => { i.value = rate; });
+      recalcEdit();
+    }
+    window.applyEditVatAll = applyEditVatAll;
+
     function closeEditPO() { document.getElementById('po-edit-overlay').style.display = 'none'; }
     window.closeEditPO = closeEditPO;
 
@@ -1282,7 +1292,6 @@
         document.getElementById('cr-requester').value = currentUser ? (currentUser.name || '') : '';
         document.getElementById('cr-needed').value = '';
         document.getElementById('cr-purpose').value = '';
-        document.getElementById('cr-vat').checked = false;
         document.getElementById('cr-items').innerHTML = '';
         addPrItem();
         recalcPR();
@@ -1361,8 +1370,6 @@
         tr.querySelector('.it-line').textContent = line.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
       });
       document.getElementById('cr-total').textContent = subtotal.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-      const vat = document.getElementById('cr-vat').checked;
-      document.getElementById('cr-vat-hint').textContent = vat ? `รวม VAT 7% = ฿${(subtotal * 1.07).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '';
     }
     window.recalcPR = recalcPR;
 
@@ -1382,7 +1389,7 @@
         const res = await api.savePR({
           date: document.getElementById('cr-date').value || new Date().toISOString().slice(0, 10),
           department_id, items,
-          has_vat: document.getElementById('cr-vat').checked,
+          has_vat: false,
           requested_by: currentUser.email,
           requester_name: document.getElementById('cr-requester').value.trim(),
           needed_date: document.getElementById('cr-needed').value || null,
@@ -1442,9 +1449,10 @@
         // อ้างอิงเติมจากเลข PR ต้นทางอัตโนมัติ (แก้ไขได้)
         document.getElementById('iss-reference').value = pr.pr_no || '';
         document.getElementById('iss-wht').value = '0';
+        document.getElementById('iss-vat-all').checked = true;
         const items = (pr.items || []).filter(i => i && i.product_name);
         document.getElementById('iss-items').innerHTML = '';
-        const defVat = pr.has_vat ? 7 : 0;
+        const defVat = 7;
         (items.length ? items : [{}]).forEach(it => addIssueRow(it, defVat));
         recalcIssue();
         showPage('issue');
@@ -1493,6 +1501,13 @@
       document.getElementById('iss-net').textContent = f(net);
     }
     window.recalcIssue = recalcIssue;
+
+    function applyIssueVatAll() {
+      const rate = document.getElementById('iss-vat-all').checked ? 7 : 0;
+      document.querySelectorAll('#iss-items .ii-vat').forEach(i => { i.value = rate; });
+      recalcIssue();
+    }
+    window.applyIssueVatAll = applyIssueVatAll;
 
     function cancelIssue() { showPage('prs'); loadPRs(); }
     window.cancelIssue = cancelIssue;
