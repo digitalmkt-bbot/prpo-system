@@ -10,7 +10,11 @@ export default function(pool) {
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
-      const { pr_no, supplier_id } = req.body || {};
+      const {
+        pr_no, supplier_id, reference = null, note = null,
+        contact_name = null, contact_phone = null, contact_email = null,
+        wht_amount = 0, items: bodyItems,
+      } = req.body || {};
       if (!pr_no || !supplier_id) {
         await client.query('ROLLBACK');
         return res.status(400).json({ error: 'ต้องระบุ pr_no และ supplier_id' });
@@ -21,6 +25,24 @@ export default function(pool) {
       if (pr.status !== 'Approved') { await client.query('ROLLBACK'); return res.status(400).json({ error: 'PR ยังไม่อนุมัติครบ' }); }
       if (pr.po_no) { await client.query('ROLLBACK'); return res.status(400).json({ error: 'PR นี้ออก PO แล้ว: ' + pr.po_no }); }
 
+      // Items: use edited items from the form, else fall back to copying PR items
+      let items = Array.isArray(bodyItems) && bodyItems.length ? bodyItems
+        : (await client.query('SELECT product_name, description, unit, quantity, unit_price FROM pr_items WHERE pr_id = $1 ORDER BY created_at', [pr.id]))
+            .rows.map(r => ({ ...r, discount: 0, vat_rate: pr.has_vat ? 7 : 0 }));
+      items = items.filter(it => it && it.product_name);
+
+      const r2 = (n) => Math.round((Number(n) || 0) * 100) / 100;
+      let subtotal = 0, vat_amount = 0;
+      items.forEach(it => {
+        const base = (Number(it.quantity) || 0) * (Number(it.unit_price) || 0) - (Number(it.discount) || 0);
+        subtotal += base;
+        vat_amount += base * (Number(it.vat_rate) || 0) / 100;
+      });
+      subtotal = r2(subtotal); vat_amount = r2(vat_amount);
+      const total = r2(subtotal + vat_amount);
+      const wht = r2(wht_amount);
+      const net = r2(total - wht);
+
       const now = new Date();
       const yyyymm = now.toISOString().slice(0, 7).replace('-', '');
       const numR = await client.query('SELECT last_number FROM running_numbers WHERE document_type = $1 FOR UPDATE', ['PO']);
@@ -30,14 +52,22 @@ export default function(pool) {
 
       const po_id = uuid();
       await client.query(`
-        INSERT INTO purchase_orders (id, po_no, date, pr_id, supplier_id, status, total_amount, has_vat)
-        VALUES ($1, $2, CURRENT_DATE, $3, $4, 'Active', $5, $6)
-      `, [po_id, po_no, pr.id, supplier_id, pr.total_amount, pr.has_vat]);
+        INSERT INTO purchase_orders
+          (id, po_no, date, pr_id, supplier_id, status, total_amount, has_vat,
+           reference, note, contact_name, contact_phone, contact_email,
+           subtotal, vat_amount, wht_amount, net_amount, issued_by)
+        VALUES ($1,$2,CURRENT_DATE,$3,$4,'Active',$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
+      `, [po_id, po_no, pr.id, supplier_id, total, vat_amount > 0, reference, note,
+          contact_name, contact_phone, contact_email, subtotal, vat_amount, wht, net,
+          (req.user && (req.user.name || req.user.email)) || null]);
 
-      await client.query(`
-        INSERT INTO po_items (po_id, product_name, description, unit, quantity, unit_price)
-        SELECT $1, product_name, description, unit, quantity, unit_price FROM pr_items WHERE pr_id = $2
-      `, [po_id, pr.id]);
+      for (const it of items) {
+        await client.query(`
+          INSERT INTO po_items (po_id, product_name, description, unit, quantity, unit_price, discount, vat_rate)
+          VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+        `, [po_id, it.product_name, it.description || null, it.unit || null,
+            it.quantity || 0, it.unit_price || 0, it.discount || 0, it.vat_rate ?? (pr.has_vat ? 7 : 0)]);
+      }
 
       await client.query('UPDATE purchase_requests SET po_no = $1, updated_at = NOW() WHERE id = $2', [po_no, pr.id]);
       await client.query('COMMIT');
@@ -93,25 +123,31 @@ export default function(pool) {
       const result = await pool.query(`
         SELECT
           po.*,
-          s.name as supplier_name, s.address as supplier_address,
+          s.code as supplier_code, s.name as supplier_name, s.address as supplier_address,
+          s.tax_id as supplier_tax_id, s.phone as supplier_phone, s.email as supplier_email,
           json_agg(json_build_object(
             'product_name', poi.product_name,
+            'description', poi.description,
+            'unit', poi.unit,
             'quantity', poi.quantity,
             'unit_price', poi.unit_price,
-            'total_price', poi.total_price
-          )) as items
+            'discount', poi.discount,
+            'vat_rate', poi.vat_rate
+          ) ORDER BY poi.created_at) as items
         FROM purchase_orders po
         LEFT JOIN suppliers s ON po.supplier_id = s.id
         LEFT JOIN po_items poi ON po.id = poi.po_id
         WHERE po.po_no = $1
-        GROUP BY po.id, s.name, s.address
+        GROUP BY po.id, s.code, s.name, s.address, s.tax_id, s.phone, s.email
       `, [req.params.poNo]);
 
       if (result.rows.length === 0) {
         return res.status(404).json({ error: 'PO not found' });
       }
-
-      res.json(result.rows[0]);
+      const po = result.rows[0];
+      const co = await pool.query('SELECT name, tax_id, address, phone, email FROM company LIMIT 1');
+      po.company = co.rows[0] || {};
+      res.json(po);
     } catch (err) {
       res.status(500).json({ error: err.message });
     }
