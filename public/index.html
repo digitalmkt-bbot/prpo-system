@@ -15,7 +15,8 @@
     body { margin: 0; background: var(--bg); color: var(--ink); font-size: 14px; }
     .container { display: flex; min-height: 100vh; }
     .sidebar { width: 248px; background: #fff; border-right: 1px solid var(--line); padding: 22px 16px; }
-    .logo { font-size: 18px; font-weight: 800; color: var(--ink); margin-bottom: 26px; display:flex; align-items:center; gap:8px; }
+    .logo { font-size: 16px; font-weight: 800; color: var(--ink); margin-bottom: 26px; display:flex; align-items:center; gap:10px; }
+    .logo-ic { width:36px; height:36px; border-radius:11px; background:linear-gradient(135deg,#34d399,#16a34a); display:flex; align-items:center; justify-content:center; flex-shrink:0; box-shadow:0 4px 10px rgba(22,163,74,.25); }
     .nav { list-style: none; margin: 0; padding: 0; }
     .nav li { margin-bottom: 3px; }
     .nav a { display: block; padding: 11px 14px; border-radius: 12px; color: #475569; text-decoration: none; cursor: pointer; font-size:14px; font-weight:500; transition:all .15s; }
@@ -181,6 +182,16 @@
     .dash-filter input, .dash-filter select { width:auto; padding:8px 12px; border:1px solid var(--line); border-radius:8px; font-size:13px; }
     .dash-filter .btn { padding:8px 18px; }
     @media (max-width:1100px){ .dash-metrics-5{grid-template-columns:repeat(3,1fr);} }
+    /* CitrusScan-style metric cards with gradient icon squares */
+    .dash-mc { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; border-top:1px solid var(--line); }
+    .dash-mc .dash-mc-val { font-size:24px; }
+    .dash-ic { width:46px; height:46px; border-radius:13px; display:flex; align-items:center; justify-content:center; color:#fff; flex-shrink:0; font-size:20px; font-weight:800; box-shadow:0 4px 10px rgba(16,24,40,.12); }
+    .dash-ic svg { width:23px; height:23px; stroke:#fff; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+    .ic-green { background:linear-gradient(135deg,#34d399,#16a34a); }
+    .ic-blue { background:linear-gradient(135deg,#60a5fa,#3b82f6); }
+    .ic-purple { background:linear-gradient(135deg,#c084fc,#7c3aed); }
+    .ic-amber { background:linear-gradient(135deg,#fbbf24,#f59e0b); }
+    .ic-red { background:linear-gradient(135deg,#fb7185,#e11d48); }
   </style>
 </head>
 <body>
@@ -202,7 +213,10 @@
 
   <div class="container" id="app-container" style="display:none;">
     <div class="sidebar">
-      <div class="logo">🚀 PR/PO System</div>
+      <div class="logo">
+        <span class="logo-ic"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></span>
+        <span><span style="display:block;line-height:1.1">PR/PO System</span><span style="display:block;font-size:11px;color:var(--muted);font-weight:500">จัดซื้อ / Procurement</span></span>
+      </div>
       <ul class="nav">
         <li><a class="active" data-page="dashboard">Dashboard</a></li>
         <li><a data-page="create">+ Create PR</a></li>
@@ -251,11 +265,11 @@
 
         <div class="dash-section">📄 ใบขอซื้อ (PR)</div>
         <div class="dash-metrics dash-metrics-5">
-          <div class="dash-mc bt-purple"><div class="dash-mc-label">PR ทั้งหมด</div><div class="dash-mc-val" id="pr-total-count">0</div></div>
-          <div class="dash-mc bt-blue"><div class="dash-mc-label">มูลค่ารวม (บาท)</div><div class="dash-mc-val teal" id="pr-total-amount">0</div></div>
-          <div class="dash-mc bt-green"><div class="dash-mc-label">อนุมัติแล้ว</div><div class="dash-mc-val green" id="pr-approved">0</div></div>
-          <div class="dash-mc bt-amber"><div class="dash-mc-label">รออนุมัติ</div><div class="dash-mc-val amber" id="pr-pending">0</div></div>
-          <div class="dash-mc bt-red"><div class="dash-mc-label">ปฏิเสธ</div><div class="dash-mc-val red" id="pr-rejected">0</div></div>
+          <div class="dash-mc"><div><div class="dash-mc-label">PR ทั้งหมด</div><div class="dash-mc-val" id="pr-total-count">0</div></div><div class="dash-ic ic-purple"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg></div></div>
+          <div class="dash-mc"><div><div class="dash-mc-label">มูลค่ารวม (บาท)</div><div class="dash-mc-val teal" id="pr-total-amount">0</div></div><div class="dash-ic ic-blue">฿</div></div>
+          <div class="dash-mc"><div><div class="dash-mc-label">อนุมัติแล้ว</div><div class="dash-mc-val green" id="pr-approved">0</div></div><div class="dash-ic ic-green"><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg></div></div>
+          <div class="dash-mc"><div><div class="dash-mc-label">รออนุมัติ</div><div class="dash-mc-val amber" id="pr-pending">0</div></div><div class="dash-ic ic-amber"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></div></div>
+          <div class="dash-mc"><div><div class="dash-mc-label">ปฏิเสธ</div><div class="dash-mc-val red" id="pr-rejected">0</div></div><div class="dash-ic ic-red"><svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></div></div>
         </div>
         <div class="dash-row r-2-1">
           <div class="pr-card"><div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> PR รายวัน</div></div><div class="pr-card-body"><div class="dash-chart-box"><canvas id="pr-chart"></canvas></div></div></div>
@@ -268,11 +282,11 @@
 
         <div class="dash-section">🛒 ใบสั่งซื้อ (PO)</div>
         <div class="dash-metrics dash-metrics-5">
-          <div class="dash-mc bt-purple"><div class="dash-mc-label">PO ทั้งหมด</div><div class="dash-mc-val" id="po-total-count">0</div></div>
-          <div class="dash-mc bt-blue"><div class="dash-mc-label">มูลค่ารวม (บาท)</div><div class="dash-mc-val teal" id="po-total-amount">0</div></div>
-          <div class="dash-mc bt-green"><div class="dash-mc-label">Active</div><div class="dash-mc-val green" id="po-active">0</div></div>
-          <div class="dash-mc bt-blue"><div class="dash-mc-label">เสร็จสิ้น</div><div class="dash-mc-val" id="po-completed">0</div></div>
-          <div class="dash-mc bt-red"><div class="dash-mc-label">ยกเลิก</div><div class="dash-mc-val red" id="po-cancelled">0</div></div>
+          <div class="dash-mc"><div><div class="dash-mc-label">PO ทั้งหมด</div><div class="dash-mc-val" id="po-total-count">0</div></div><div class="dash-ic ic-purple"><svg viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/></svg></div></div>
+          <div class="dash-mc"><div><div class="dash-mc-label">มูลค่ารวม (บาท)</div><div class="dash-mc-val teal" id="po-total-amount">0</div></div><div class="dash-ic ic-blue">฿</div></div>
+          <div class="dash-mc"><div><div class="dash-mc-label">Active</div><div class="dash-mc-val green" id="po-active">0</div></div><div class="dash-ic ic-green"><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg></div></div>
+          <div class="dash-mc"><div><div class="dash-mc-label">เสร็จสิ้น</div><div class="dash-mc-val" id="po-completed">0</div></div><div class="dash-ic ic-blue"><svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg></div></div>
+          <div class="dash-mc"><div><div class="dash-mc-label">ยกเลิก</div><div class="dash-mc-val red" id="po-cancelled">0</div></div><div class="dash-ic ic-red"><svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></div></div>
         </div>
         <div class="dash-row r-2-1">
           <div class="pr-card"><div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> PO รายวัน</div></div><div class="pr-card-body"><div class="dash-chart-box"><canvas id="po-chart"></canvas></div></div></div>
@@ -639,7 +653,7 @@
         document.getElementById('po-cancelled').textContent = s.po.status.Cancelled || 0;
         drawDayChart('po-chart', s.po.by_day, '#1D9E75');
         drawDonut('po-donut', [['Active', s.po.status.Active || 0, '#16a34a'], ['เสร็จสิ้น', s.po.status.Completed || 0, '#3b82f6'], ['ยกเลิก', s.po.status.Cancelled || 0, '#e11d48']]);
-        drawTopBar('po-top', s.po.top, '#9333ea');
+        drawTopBar('po-top', s.po.top, '#16a34a');
         renderDashRecent('po-recent', s.po.recent);
       } catch (e) {
         toast('โหลด Dashboard ไม่สำเร็จ: ' + e.message, true);
