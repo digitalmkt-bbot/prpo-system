@@ -21,18 +21,19 @@
     .nav li { margin-bottom: 3px; }
     .nav a { display: block; padding: 11px 14px; border-radius: 12px; color: #475569; text-decoration: none; cursor: pointer; font-size:14px; font-weight:500; transition:all .15s; }
     .nav a:hover { background: #f1f5f9; color: var(--brand-dark); }
-    .nav a.active { background: #e8faf4; color: var(--brand-dark); font-weight:600; }
-    .main { flex: 1; padding: 28px 32px; overflow: auto; }
+    .nav a.active { background: linear-gradient(135deg,#22c55e,#16a34a); color: #fff; font-weight:600; box-shadow:0 4px 12px rgba(22,163,74,.30); }
+    .nav a.active:hover { background: linear-gradient(135deg,#22c55e,#15803d); color:#fff; }
+    .main { flex: 1; padding: 28px 32px; overflow: auto; background: linear-gradient(180deg,#e7f8ee 0%,#f1faf4 38%,#f6fcf9 100%); }
     h1 { margin: 0 0 6px; font-size: 26px; font-weight:800; }
     .subtitle { color: var(--muted); margin-bottom: 22px; }
     .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 26px; }
-    .card { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 20px; box-shadow: 0 1px 2px rgba(16,24,40,.04); }
+    .card { background: var(--panel); border: 1px solid rgba(16,24,40,.04); border-radius: 16px; padding: 20px; box-shadow: 0 1px 3px rgba(16,24,40,.05), 0 6px 20px rgba(16,40,24,.05); }
     .card-label { color: var(--muted); font-size: 12px; margin-bottom: 8px; }
     .card-value { font-size: 30px; font-weight: 800; color: var(--ink); }
     .card.green .card-value { color: var(--green); }
     .card.amber .card-value { color: var(--amber); }
     .card.red .card-value { color: var(--red); }
-    .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 20px; margin-bottom: 18px; box-shadow: 0 1px 2px rgba(16,24,40,.04); }
+    .panel { background: var(--panel); border: 1px solid rgba(16,24,40,.04); border-radius: 16px; padding: 20px; margin-bottom: 18px; box-shadow: 0 1px 3px rgba(16,24,40,.05), 0 6px 20px rgba(16,40,24,.05); }
     .page { display: none; }
     .page.active { display: block; }
     .toolbar { display: flex; gap: 12px; margin-bottom: 16px; }
