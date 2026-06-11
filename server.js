@@ -56,6 +56,25 @@ pool.on('error', (err) => {
   try {
     // Auth middleware + public auth routes
     const { requireAuth } = await import('./middleware/auth.js');
+
+    // --- Schema bootstrap: purchase_types master data (idempotent) ---
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS purchase_types (
+        id     SERIAL PRIMARY KEY,
+        name   VARCHAR(120) UNIQUE NOT NULL,
+        active BOOLEAN NOT NULL DEFAULT true,
+        sort   INTEGER NOT NULL DEFAULT 0
+      );
+    `);
+    await pool.query(`
+      INSERT INTO purchase_types (name, sort) VALUES
+        ('ซื้อทั่วไป', 1),
+        ('บริการ / จ้างเหมา', 2),
+        ('วัสดุสิ้นเปลือง', 3),
+        ('ครุภัณฑ์', 4)
+      ON CONFLICT (name) DO NOTHING;
+    `);
+
     app.use('/api/auth', (await import('./routes/auth.js')).default(pool));
 
     // Protected data routes (require a valid Bearer token)
@@ -69,6 +88,7 @@ pool.on('error', (err) => {
     app.use('/api/pos', requireAuth, (await import('./routes/purchaseOrders.js')).default(pool));
     app.use('/api/approval', requireAuth, (await import('./routes/approval.js')).default(pool));
     app.use('/api/stats', requireAuth, (await import('./routes/stats.js')).default(pool));
+    app.use('/api/purchase-types', requireAuth, (await import('./routes/purchaseTypes.js')).default(pool));
 
     // Static files
     app.use(express.static('public'));

@@ -550,6 +550,20 @@
           <input type="text" id="company-tax">
           <button class="btn" style="margin-top: 16px;" onclick="saveCompany()">Save</button>
         </div>
+
+        <div class="panel" style="margin-top: 20px;">
+          <b>ประเภทการจัดซื้อ</b>
+          <p style="font-size:13px;color:var(--muted);margin:4px 0 12px;">เพิ่ม/ลบประเภทที่ใช้ในหน้า Create PR</p>
+          <div style="display:flex;gap:8px;max-width:480px;">
+            <input type="text" id="pt-new" placeholder="ชื่อประเภทใหม่..." onkeydown="if(event.key==='Enter')addPurchaseType()">
+            <button class="btn" style="white-space:nowrap" onclick="addPurchaseType()">+ เพิ่ม</button>
+          </div>
+          <table style="margin-top:14px;max-width:480px;">
+            <thead><tr><th>ชื่อประเภท</th><th style="width:80px;text-align:right">จัดการ</th></tr></thead>
+            <tbody id="pt-table"></tbody>
+          </table>
+        </div>
+
         <div class="panel" style="margin-top: 20px; background: #f0f4f8;">
           <b>API Information</b>
           <div style="margin-top: 10px; font-size: 13px; color: var(--muted);">
@@ -608,6 +622,7 @@
         if (page === 'suppliers') loadSuppliers();
         if (page === 'departments') loadDepartments();
         if (page === 'users') loadUsers();
+        if (page === 'settings') loadPurchaseTypes();
       });
     });
 
@@ -1113,6 +1128,14 @@
         document.getElementById('cr-dept').innerHTML = depts.length
           ? depts.map(d => `<option value="${d.id}">${d.code} - ${d.name}</option>`).join('')
           : '<option value="">— ยังไม่มีแผนก —</option>';
+        // Purchase types (dynamic, managed in Settings)
+        try {
+          const types = await api.getPurchaseTypes();
+          if (types && types.length) {
+            document.getElementById('cr-type').innerHTML =
+              types.map(t => `<option>${t.name}</option>`).join('');
+          }
+        } catch (_) { /* keep default options if API unavailable */ }
         document.getElementById('cr-date').value = new Date().toISOString().slice(0, 10);
         document.getElementById('cr-requester').value = currentUser ? (currentUser.name || '') : '';
         document.getElementById('cr-needed').value = '';
@@ -1126,6 +1149,47 @@
       }
     }
     window.loadCreateForm = loadCreateForm;
+
+    // ===== Purchase Types (Settings) =====
+    async function loadPurchaseTypes() {
+      try {
+        const types = await api.getPurchaseTypes();
+        const tbody = document.getElementById('pt-table');
+        tbody.innerHTML = (types && types.length)
+          ? types.map(t => `<tr><td>${t.name}</td><td style="text-align:right"><a href="#" onclick="deletePurchaseType(${t.id});return false;" style="color:#dc2626">ลบ</a></td></tr>`).join('')
+          : '<tr><td colspan="2" style="color:var(--muted)">— ยังไม่มีประเภท —</td></tr>';
+      } catch (e) {
+        toast('โหลดประเภทการจัดซื้อไม่สำเร็จ: ' + e.message, true);
+      }
+    }
+    window.loadPurchaseTypes = loadPurchaseTypes;
+
+    async function addPurchaseType() {
+      const input = document.getElementById('pt-new');
+      const name = (input.value || '').trim();
+      if (!name) { toast('กรุณากรอกชื่อประเภท', true); return; }
+      try {
+        await api.savePurchaseType(name);
+        input.value = '';
+        toast('เพิ่มประเภทแล้ว');
+        loadPurchaseTypes();
+      } catch (e) {
+        toast('เพิ่มไม่สำเร็จ: ' + e.message, true);
+      }
+    }
+    window.addPurchaseType = addPurchaseType;
+
+    async function deletePurchaseType(id) {
+      if (!confirm('ลบประเภทนี้?')) return;
+      try {
+        await api.deletePurchaseType(id);
+        toast('ลบแล้ว');
+        loadPurchaseTypes();
+      } catch (e) {
+        toast('ลบไม่สำเร็จ: ' + e.message, true);
+      }
+    }
+    window.deletePurchaseType = deletePurchaseType;
 
     function addPrItem() {
       const tr = document.createElement('tr');
@@ -1232,7 +1296,9 @@
         document.getElementById('issue-supplier-search').value = '';
         document.getElementById('issue-supplier').value = '';
         document.getElementById('issue-supplier-results').style.display = 'none';
-        ['iss-reference', 'iss-contact-name', 'iss-contact-phone', 'iss-contact-email', 'iss-note'].forEach(id => document.getElementById(id).value = '');
+        ['iss-contact-name', 'iss-contact-phone', 'iss-contact-email', 'iss-note'].forEach(id => document.getElementById(id).value = '');
+        // อ้างอิงเติมจากเลข PR ต้นทางอัตโนมัติ (แก้ไขได้)
+        document.getElementById('iss-reference').value = pr.pr_no || '';
         document.getElementById('iss-wht').value = '0';
         const items = (pr.items || []).filter(i => i && i.product_name);
         document.getElementById('iss-items').innerHTML = '';

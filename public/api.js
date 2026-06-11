@@ -235,6 +235,17 @@ class PROPOApi {
     return this.request('DELETE', `/users/${id}`);
   }
 
+  // ========== PURCHASE TYPES ==========
+  async getPurchaseTypes() {
+    return this.request('GET', '/purchase-types');
+  }
+  async savePurchaseType(name) {
+    return this.request('POST', '/purchase-types', { name });
+  }
+  async deletePurchaseType(id) {
+    return this.request('DELETE', `/purchase-types/${id}`);
+  }
+
   // ========== DASHBOARD STATS ==========
   async getDashboardStats(filters = {}) {
     const p = new URLSearchParams();
