@@ -229,5 +229,26 @@ export default function(pool) {
     }
   });
 
+  // Admin: wipe all transactions (PR + PO) and reset running numbers — for clearing test data
+  router.post('/admin/cleanup', async (req, res) => {
+    if (!req.user || req.user.role !== 'Admin') {
+      return res.status(403).json({ error: 'เฉพาะ Admin เท่านั้น' });
+    }
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      const po = await client.query('DELETE FROM purchase_orders');
+      const pr = await client.query('DELETE FROM purchase_requests');
+      await client.query("UPDATE running_numbers SET last_number = 0 WHERE document_type IN ('PR','PO')");
+      await client.query('COMMIT');
+      res.json({ ok: true, deletedPOs: po.rowCount, deletedPRs: pr.rowCount });
+    } catch (err) {
+      await client.query('ROLLBACK');
+      res.status(500).json({ error: err.message });
+    } finally {
+      client.release();
+    }
+  });
+
   return router;
 }

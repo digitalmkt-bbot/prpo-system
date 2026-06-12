@@ -219,6 +219,10 @@ class PROPOApi {
     return this.request('PUT', `/pos/${encodeURIComponent(poNo)}/full`, payload);
   }
 
+  async cleanupTransactions() {
+    return this.request('POST', '/pos/admin/cleanup');
+  }
+
   // ========== COMPANY ==========
   async getCompanyInfo() {
     return this.request('GET', '/company');
