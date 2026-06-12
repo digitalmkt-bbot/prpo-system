@@ -382,7 +382,7 @@
       <!-- ISSUE PO -->
       <div class="page pr-form" id="page-issue">
         <h1>ออกใบสั่งซื้อ (PO)</h1>
-        <p class="subtitle">อ้างอิงจาก <b id="iss-pr-ref">-</b> · เลือกผู้ขายและตรวจรายการก่อนออก PO</p>
+        <p class="subtitle">อ้างอิงจาก <b id="iss-pr-ref">-</b> · เลือกผู้ขายและตรวจรายการก่อนออก PO · ถ้าซื้อจากหลาย Supplier ให้ลบ (🗑) รายการที่ไม่ได้ซื้อจากเจ้านี้ออก แล้วออก PO ใบใหม่สำหรับรายการที่เหลือได้</p>
 
         <div class="pr-card">
           <div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> ข้อมูลผู้ขาย</div></div>
@@ -763,8 +763,11 @@
         tbody.innerHTML = prs.length ? prs.map(p => {
           const tagClass = p.status === 'Pending' ? 'pending' : p.status === 'Approved' ? 'approved' : 'rejected';
           let action = '-';
-          if (p.status === 'Approved' && !p.po_no) action = `<button class="btn-issue" onclick="showIssuePO('${p.pr_no}')">ออก PO</button>`;
-          else if (p.po_no) action = `<span style="color:var(--green);font-weight:600">${p.po_no}</span>`;
+          const unissued = Number(p.unissued_count || 0);
+          const parts = [];
+          if (p.status === 'Approved' && unissued > 0) parts.push(`<button class="btn-issue" onclick="event.stopPropagation();showIssuePO('${p.pr_no}')">ออก PO${p.po_no ? ' (รายการที่เหลือ)' : ''}</button>`);
+          if (p.po_no) parts.push(`<span style="color:var(--green);font-weight:600">${p.po_no}</span>`);
+          if (parts.length) action = parts.join(' ');
           return `<tr style="cursor:pointer" onclick="showPRDetail('${p.pr_no}')">
             <td><b style="color:var(--brand)">${p.pr_no}</b></td>
             <td>${nz(p.date && String(p.date).slice(0,10))}</td>
@@ -793,7 +796,7 @@
           const rejected = it.item_status === 'rejected';
           const statusCell = canApprove
             ? `<td style="text-align:center"><label style="display:inline-flex;align-items:center;gap:5px;cursor:pointer;font-size:12px"><input type="checkbox" class="pr-appr-chk" data-id="${it.id}" data-total="${lineTotal}" ${rejected ? '' : 'checked'} onchange="recalcPRApprove()" style="width:auto"> อนุมัติ</label></td>`
-            : `<td style="text-align:center">${rejected ? '<span class="tag rejected">ปฏิเสธ</span>' : '<span class="tag approved">อนุมัติ</span>'}</td>`;
+            : `<td style="text-align:center">${rejected ? '<span class="tag rejected">ปฏิเสธ</span>' : (it.po_no ? `<span class="tag approved" title="ออก PO แล้ว">${it.po_no}</span>` : '<span class="tag pending">รอออก PO</span>')}</td>`;
           return `<tr${rejected && !canApprove ? ' style="opacity:.5;text-decoration:line-through"' : ''}>
             <td style="text-align:center">${idx + 1}</td>
             <td>${nz(it.product_name)}</td>
@@ -808,6 +811,10 @@
         let chain = '';
         if (Array.isArray(pr.approval_chain) && pr.approval_chain.length) {
           chain = `<div style="margin-top:16px"><b>ประวัติการอนุมัติ</b><ul style="font-size:13px;color:var(--muted);margin:8px 0 0 18px;line-height:1.7">${pr.approval_chain.map(c => `<li>ขั้น ${c.step}: ${c.approverName || c.approver}${c.comment ? ' — ' + c.comment : ''}</li>`).join('')}</ul></div>`;
+        }
+        let posHtml = '';
+        if (Array.isArray(pr.pos) && pr.pos.length) {
+          posHtml = `<div style="margin-top:16px"><b>ใบสั่งซื้อที่ออกแล้ว (${pr.pos.length} ใบ)</b><ul style="font-size:13px;margin:8px 0 0 18px;line-height:1.8">${pr.pos.map(po => `<li><a href="#" onclick="closePRDetail();showPODetail('${po.po_no}');return false;" style="color:var(--brand);font-weight:600">${po.po_no}</a> — ${nz(po.supplier)} · ฿${Number(po.total || 0).toLocaleString()}</li>`).join('')}</ul></div>`;
         }
         document.getElementById('pr-detail-card').innerHTML = `
           <div class="detail-head">
@@ -833,6 +840,7 @@
           </table>
           <div style="text-align:right;margin-top:14px;font-size:16px;font-weight:700">ยอดรวม${canApprove ? ' (เฉพาะที่อนุมัติ)' : ''}: ฿<span id="pr-appr-total">${Number(pr.total_amount || 0).toLocaleString()}</span></div>
           ${canApprove ? '<div style="text-align:right;font-size:12px;color:var(--muted)">ติ๊กออกเพื่อปฏิเสธรายการนั้น — รายการที่ปฏิเสธจะถูกตัดออกจากยอดและไม่ส่งต่อไป PO</div>' : ''}
+          ${posHtml}
           ${chain}
           <div class="detail-actions" style="margin-top:20px;text-align:right">
             ${canApprove ? `<button class="btn secondary" style="border-color:#e11d48;color:#e11d48" onclick="rejectPR('${pr.pr_no}');closePRDetail()">✕ ปฏิเสธทั้งใบ</button>
@@ -1556,7 +1564,8 @@
         document.getElementById('iss-reference').value = pr.pr_no || '';
         document.getElementById('iss-wht').value = '0';
         document.getElementById('iss-vat-all').checked = true;
-        const items = (pr.items || []).filter(i => i && i.product_name && i.item_status !== 'rejected');
+        const items = (pr.items || []).filter(i => i && i.product_name && i.item_status !== 'rejected' && !i.po_no);
+        if (!items.length) { toast('รายการในใบนี้ออก PO ครบแล้ว', true); return; }
         document.getElementById('iss-items').innerHTML = '';
         const defVat = 7;
         (items.length ? items : [{}]).forEach(it => addIssueRow(it, defVat));
@@ -1581,7 +1590,8 @@
         <td><input class="ii-disc" type="number" min="0" step="0.01" value="${it.discount != null ? it.discount : 0}" oninput="recalcIssue()"></td>
         <td><input class="ii-vat" type="number" min="0" step="1" value="${it.vat_rate != null ? it.vat_rate : defVat}" style="text-align:center" oninput="recalcIssue()"></td>
         <td class="ii-line" style="text-align:right;font-weight:600">0.00</td>
-        <td style="text-align:center"><button style="background:none;border:none;color:#fca5a5;cursor:pointer;font-size:15px" onclick="this.closest('tr').remove();recalcIssue()">🗑</button></td>`;
+        <td style="text-align:center"><button title="ลบรายการนี้ออกจากใบ PO ใบนี้ (ออกใบใหม่ได้ทีหลัง)" style="background:none;border:none;color:#fca5a5;cursor:pointer;font-size:15px" onclick="this.closest('tr').remove();recalcIssue()">🗑</button></td>`;
+      tr.dataset.prid = it.id || '';
       document.getElementById('iss-items').appendChild(tr);
       recalcIssue();
     }
@@ -1622,7 +1632,8 @@
       try {
         const supplier_id = document.getElementById('issue-supplier').value;
         if (!supplier_id) return toast('กรุณาเลือกผู้ขาย', true);
-        const items = [...document.querySelectorAll('#iss-items tr')].map(tr => ({
+        const trs = [...document.querySelectorAll('#iss-items tr')];
+        const items = trs.map(tr => ({
           product_name: tr.querySelector('.ii-name').value.trim(),
           description: tr.querySelector('.ii-desc').value.trim(),
           quantity: +tr.querySelector('.ii-qty').value || 0,
@@ -1631,14 +1642,15 @@
           vat_rate: +tr.querySelector('.ii-vat').value || 0,
         })).filter(i => i.product_name);
         if (!items.length) return toast('ต้องมีรายการอย่างน้อย 1 รายการ', true);
+        const pr_item_ids = trs.filter(tr => tr.querySelector('.ii-name').value.trim() && tr.dataset.prid).map(tr => tr.dataset.prid);
         const res = await api.issuePO({
-          pr_no: _issuePR.pr_no, supplier_id, items,
+          pr_no: _issuePR.pr_no, supplier_id, items, pr_item_ids,
           reference: val('iss-reference'), note: val('iss-note'),
           contact_name: val('iss-contact-name'), contact_phone: val('iss-contact-phone'), contact_email: val('iss-contact-email'),
           wht_amount: +document.getElementById('iss-wht').value || 0,
         });
         toast('ออก PO สำเร็จ: ' + res.po_no);
-        showPage('pos'); loadPOs();
+        showPage('prs'); loadPRs(); loadPOs();
       } catch (e) {
         toast('ออก PO ไม่สำเร็จ: ' + e.message, true);
       }

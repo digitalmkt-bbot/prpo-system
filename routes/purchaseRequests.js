@@ -7,8 +7,9 @@ import { th } from 'date-fns/locale/index.js';
 export default function(pool) {
   const router = Router();
 
-  // Ensure per-item approval status column exists
+  // Ensure per-item approval status + per-item issued-PO columns exist
   pool.query("ALTER TABLE pr_items ADD COLUMN IF NOT EXISTS item_status VARCHAR(20) DEFAULT 'approved'").catch(() => {});
+  pool.query("ALTER TABLE pr_items ADD COLUMN IF NOT EXISTS po_no VARCHAR(50)").catch(() => {});
 
   // Get all PRs with optional filters
   router.get('/', async (req, res) => {
@@ -21,6 +22,7 @@ export default function(pool) {
           pr.total_amount, pr.has_vat, pr.requested_by, pr.po_no,
           pr.current_approval_step, pr.total_approval_steps,
           s.name as supplier_name, d.name as department_name,
+          COUNT(*) FILTER (WHERE pri.id IS NOT NULL AND COALESCE(pri.item_status,'approved') <> 'rejected' AND pri.po_no IS NULL) AS unissued_count,
           json_agg(json_build_object(
             'product_name', pri.product_name,
             'quantity', pri.quantity,
@@ -69,6 +71,9 @@ export default function(pool) {
           pr.*,
           s.name as supplier_name, s.address as supplier_address,
           d.name as department_name,
+          (SELECT json_agg(json_build_object('po_no', po.po_no, 'supplier', sup.name, 'total', po.total_amount) ORDER BY po.created_at)
+             FROM purchase_orders po LEFT JOIN suppliers sup ON po.supplier_id = sup.id
+             WHERE po.pr_id = pr.id) as pos,
           json_agg(json_build_object(
             'id', pri.id,
             'product_name', pri.product_name,
@@ -77,7 +82,8 @@ export default function(pool) {
             'quantity', pri.quantity,
             'unit_price', pri.unit_price,
             'total_price', pri.total_price,
-            'item_status', pri.item_status
+            'item_status', pri.item_status,
+            'po_no', pri.po_no
           ) ORDER BY pri.created_at) as items
         FROM purchase_requests pr
         LEFT JOIN suppliers s ON pr.supplier_id = s.id

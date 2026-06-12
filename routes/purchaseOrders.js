@@ -13,7 +13,7 @@ export default function(pool) {
       const {
         pr_no, supplier_id, reference = null, note = null,
         contact_name = null, contact_phone = null, contact_email = null,
-        wht_amount = 0, items: bodyItems,
+        wht_amount = 0, items: bodyItems, pr_item_ids = [],
       } = req.body || {};
       if (!pr_no || !supplier_id) {
         await client.query('ROLLBACK');
@@ -23,7 +23,6 @@ export default function(pool) {
       const pr = prR.rows[0];
       if (!pr) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'ไม่พบ PR' }); }
       if (pr.status !== 'Approved') { await client.query('ROLLBACK'); return res.status(400).json({ error: 'PR ยังไม่อนุมัติครบ' }); }
-      if (pr.po_no) { await client.query('ROLLBACK'); return res.status(400).json({ error: 'PR นี้ออก PO แล้ว: ' + pr.po_no }); }
 
       // Items: use edited items from the form, else fall back to copying PR items
       let items = Array.isArray(bodyItems) && bodyItems.length ? bodyItems
@@ -69,7 +68,11 @@ export default function(pool) {
             it.quantity || 0, it.unit_price || 0, it.discount || 0, it.vat_rate ?? (pr.has_vat ? 7 : 0)]);
       }
 
-      await client.query('UPDATE purchase_requests SET po_no = $1, updated_at = NOW() WHERE id = $2', [po_no, pr.id]);
+      // Mark the issued PR items so they are not issued again (enables multiple POs per PR)
+      if (Array.isArray(pr_item_ids) && pr_item_ids.length) {
+        await client.query('UPDATE pr_items SET po_no = $1 WHERE id = ANY($2::uuid[]) AND pr_id = $3', [po_no, pr_item_ids, pr.id]);
+      }
+      await client.query('UPDATE purchase_requests SET po_no = COALESCE(po_no, $1), updated_at = NOW() WHERE id = $2', [po_no, pr.id]);
       await client.query('COMMIT');
       res.status(201).json({ ok: true, po_no });
     } catch (err) {
