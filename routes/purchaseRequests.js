@@ -7,6 +7,9 @@ import { th } from 'date-fns/locale/index.js';
 export default function(pool) {
   const router = Router();
 
+  // Ensure per-item approval status column exists
+  pool.query("ALTER TABLE pr_items ADD COLUMN IF NOT EXISTS item_status VARCHAR(20) DEFAULT 'approved'").catch(() => {});
+
   // Get all PRs with optional filters
   router.get('/', async (req, res) => {
     try {
@@ -67,12 +70,14 @@ export default function(pool) {
           s.name as supplier_name, s.address as supplier_address,
           d.name as department_name,
           json_agg(json_build_object(
+            'id', pri.id,
             'product_name', pri.product_name,
             'description', pri.description,
             'unit', pri.unit,
             'quantity', pri.quantity,
             'unit_price', pri.unit_price,
-            'total_price', pri.total_price
+            'total_price', pri.total_price,
+            'item_status', pri.item_status
           ) ORDER BY pri.created_at) as items
         FROM purchase_requests pr
         LEFT JOIN suppliers s ON pr.supplier_id = s.id

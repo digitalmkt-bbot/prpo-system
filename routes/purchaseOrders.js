@@ -27,7 +27,7 @@ export default function(pool) {
 
       // Items: use edited items from the form, else fall back to copying PR items
       let items = Array.isArray(bodyItems) && bodyItems.length ? bodyItems
-        : (await client.query('SELECT product_name, description, unit, quantity, unit_price FROM pr_items WHERE pr_id = $1 ORDER BY created_at', [pr.id]))
+        : (await client.query("SELECT product_name, description, unit, quantity, unit_price FROM pr_items WHERE pr_id = $1 AND COALESCE(item_status,'approved') <> 'rejected' ORDER BY created_at", [pr.id]))
             .rows.map(r => ({ ...r, discount: 0, vat_rate: pr.has_vat ? 7 : 0 }));
       items = items.filter(it => it && it.product_name);
 

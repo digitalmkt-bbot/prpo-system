@@ -111,11 +111,12 @@ class PROPOApi {
     return this.request('GET', `/approval/my-approvals/${userEmail}`);
   }
 
-  async approvePR(prNo, approverEmail, approverName, comment = '') {
+  async approvePR(prNo, approverEmail, approverName, comment = '', itemStatuses = null) {
     return this.request('POST', `/approval/approve/${prNo}`, {
       approverEmail,
       approverName,
-      comment
+      comment,
+      itemStatuses
     });
   }
 

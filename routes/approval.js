@@ -111,7 +111,7 @@ export default function(pool) {
       await client.query('BEGIN');
 
       const { prNo } = req.params;
-      const { comment } = req.body;
+      const { comment, itemStatuses } = req.body;
       const approverEmail = req.user.email;
       const approverName = req.user.name || req.user.email;
 
@@ -137,6 +137,19 @@ export default function(pool) {
       if (pr.status !== 'Pending') {
         await client.query('ROLLBACK');
         return res.status(400).json({ error: 'PR is not pending' });
+      }
+
+      // Apply per-item approve/reject decisions (if provided) and recompute total
+      if (Array.isArray(itemStatuses) && itemStatuses.length) {
+        for (const it of itemStatuses) {
+          const st = it.status === 'rejected' ? 'rejected' : 'approved';
+          await client.query('UPDATE pr_items SET item_status = $1 WHERE id = $2 AND pr_id = $3', [st, it.id, pr.id]);
+        }
+        const sumR = await client.query(
+          "SELECT COALESCE(SUM(total_price),0) AS t FROM pr_items WHERE pr_id = $1 AND COALESCE(item_status,'approved') <> 'rejected'",
+          [pr.id]
+        );
+        await client.query('UPDATE purchase_requests SET total_amount = $1 WHERE id = $2', [sumR.rows[0].t, pr.id]);
       }
 
       // Update approval chain
