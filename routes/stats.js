@@ -60,7 +60,35 @@ export default function (pool) {
         FROM purchase_orders po LEFT JOIN suppliers s ON po.supplier_id = s.id
         ${poS.f.where} ORDER BY po.created_at DESC LIMIT 6`, poS.f.params)).rows;
 
-      res.json({ pr: prS.out, po: poS.out });
+      // Product report (by individual product name) — combines PR + PO items, respects date/status filter
+      const prodParams = [];
+      const mkWhere = (alias, allowed) => {
+        const cond = [];
+        if (from) { prodParams.push(from); cond.push(`${alias}.date >= $${prodParams.length}`); }
+        if (to) { prodParams.push(to); cond.push(`${alias}.date <= $${prodParams.length}`); }
+        if (status && allowed.includes(status)) { prodParams.push(status); cond.push(`${alias}.status = $${prodParams.length}`); }
+        return cond.length ? 'WHERE ' + cond.join(' AND ') : '';
+      };
+      const wPr = mkWhere('pr', PR_STATUSES);
+      const wPo = mkWhere('po', PO_STATUSES);
+      const prod = (await pool.query(`
+        SELECT name, SUM(total)::float AS value, COUNT(*)::int AS orders, SUM(qty)::float AS qty
+        FROM (
+          SELECT btrim(pri.product_name) AS name, COALESCE(pri.total_price,0) AS total, COALESCE(pri.quantity,0) AS qty
+          FROM pr_items pri JOIN purchase_requests pr ON pri.pr_id = pr.id ${wPr}
+          UNION ALL
+          SELECT btrim(poi.product_name) AS name, COALESCE(poi.total_price,0) AS total, COALESCE(poi.quantity,0) AS qty
+          FROM po_items poi JOIN purchase_orders po ON poi.po_id = po.id ${wPo}
+        ) x
+        WHERE COALESCE(name,'') <> ''
+        GROUP BY name
+      `, prodParams)).rows;
+      const products = {
+        by_value: [...prod].sort((a, b) => b.value - a.value).slice(0, 8),
+        by_orders: [...prod].sort((a, b) => b.orders - a.orders).slice(0, 8),
+      };
+
+      res.json({ pr: prS.out, po: poS.out, products });
     } catch (err) {
       res.status(500).json({ error: err.message });
     }

@@ -303,6 +303,12 @@
           <div class="pr-card"><div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> PO ล่าสุด</div></div><div class="pr-card-body"><table class="pr-items"><thead><tr><th>PO No</th><th>ผู้ขาย</th><th style="text-align:right">มูลค่า</th><th>สถานะ</th></tr></thead><tbody id="po-recent"></tbody></table></div></div>
         </div>
 
+        <div class="dash-section">📦 หมวดหมู่สินค้า (รวม PR + PO)</div>
+        <div class="dash-row r-1-1">
+          <div class="pr-card"><div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> สินค้าที่มียอดสูงสุด (มูลค่า)</div></div><div class="pr-card-body"><div class="dash-chart-box sm"><canvas id="prod-value"></canvas></div></div></div>
+          <div class="pr-card"><div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> สินค้าที่สั่งซื้อบ่อยสุด (จำนวนครั้ง)</div></div><div class="pr-card-body"><div class="dash-chart-box sm"><canvas id="prod-orders"></canvas></div></div></div>
+        </div>
+
         <div class="panel" style="margin-top:14px;"><div class="status" id="api-status">✅ API Connected</div></div>
       </div>
 
@@ -692,6 +698,10 @@
         drawDonut('po-donut', [['Active', s.po.status.Active || 0, '#16a34a'], ['เสร็จสิ้น', s.po.status.Completed || 0, '#3b82f6'], ['ยกเลิก', s.po.status.Cancelled || 0, '#e11d48']]);
         drawTopBar('po-top', s.po.top, '#16a34a');
         renderDashRecent('po-recent', s.po.recent);
+        // Product category report (combined PR + PO)
+        const prod = s.products || { by_value: [], by_orders: [] };
+        drawTopValueBar('prod-value', prod.by_value, '#7c3aed', 'value', true);
+        drawTopValueBar('prod-orders', prod.by_orders, '#f59e0b', 'orders', false);
       } catch (e) {
         toast('โหลด Dashboard ไม่สำเร็จ: ' + e.message, true);
       }
@@ -753,6 +763,16 @@
       upsertChart(canvasId, 'bar',
         { labels: list.map(r => r.name), datasets: [{ data: list.map(r => r.a), backgroundColor: color, borderRadius: 4 }] },
         { ...NO_RESIZE, indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true } } });
+    }
+
+    function drawTopValueBar(canvasId, rows, color, key, isMoney) {
+      const list = rows || [];
+      const short = s => { s = String(s || ''); return s.length > 28 ? s.slice(0, 27) + '…' : s; };
+      upsertChart(canvasId, 'bar',
+        { labels: list.map(r => short(r.name)), datasets: [{ data: list.map(r => Number(r[key] || 0)), backgroundColor: color, borderRadius: 4 }] },
+        { ...NO_RESIZE, indexAxis: 'y', plugins: { legend: { display: false },
+            tooltip: { callbacks: { label: c => isMoney ? ('฿' + Number(c.parsed.x).toLocaleString()) : (Number(c.parsed.x).toLocaleString() + ' ครั้ง') } } },
+          scales: { x: { beginAtZero: true, ticks: { precision: 0 } } } });
     }
 
     // Load PRs
