@@ -4,7 +4,11 @@ import { v4 as uuid } from 'uuid';
 
 export default function(pool) {
   const router = Router();
-  const APPROVER_ROLES = ['Admin', 'Manager']; // เฉพาะ Manager ขึ้นไปที่อนุมัติได้
+  // Fixed 3-step approval chain (role required at each step). PO can be issued after step 3.
+  const APPROVAL_CHAIN = ['Manager', 'Executive', 'Managing Director'];
+  const APPROVER_ROLES = ['Admin', 'Manager', 'Executive', 'Managing Director', 'Owner'];
+  // Required role for a given 1-based step (Admin can act on any step)
+  const roleForStep = (step) => APPROVAL_CHAIN[step - 1] || null;
 
   // Get approval steps for a PR
   router.get('/steps/:prNo', async (req, res) => {
@@ -98,7 +102,12 @@ export default function(pool) {
         WHERE pr.status = 'Pending'
         ORDER BY pr.created_at ASC
       `);
-      res.json(result.rows);
+      // Admin sees all; others see only PRs whose current step matches their role
+      const isAdmin = req.user.role === 'Admin';
+      const rows = result.rows
+        .filter(r => isAdmin || roleForStep(r.current_approval_step) === req.user.role)
+        .map(r => ({ ...r, required_role: roleForStep(r.current_approval_step) }));
+      res.json(rows);
     } catch (err) {
       res.status(500).json({ error: err.message });
     }
@@ -139,6 +148,13 @@ export default function(pool) {
         return res.status(400).json({ error: 'PR is not pending' });
       }
 
+      // Enforce the role required for the current approval step (Admin can act on any step)
+      const requiredRole = roleForStep(pr.current_approval_step);
+      if (req.user.role !== 'Admin' && req.user.role !== requiredRole) {
+        await client.query('ROLLBACK');
+        return res.status(403).json({ error: `ขั้นที่ ${pr.current_approval_step} ต้องอนุมัติโดย ${requiredRole}` });
+      }
+
       // Apply per-item approve/reject decisions (if provided) and recompute total
       if (Array.isArray(itemStatuses) && itemStatuses.length) {
         for (const it of itemStatuses) {
@@ -156,6 +172,7 @@ export default function(pool) {
       const approvalChain = pr.approval_chain || [];
       approvalChain.push({
         step: pr.current_approval_step,
+        role: requiredRole,
         approver: approverEmail,
         approverName: approverName || approverEmail,
         approveTime: new Date().toISOString(),
@@ -250,6 +267,13 @@ export default function(pool) {
       }
 
       const pr = prResult.rows[0];
+
+      // Only the role for the current step (or Admin) can reject
+      const rejectRole = roleForStep(pr.current_approval_step);
+      if (req.user.role !== 'Admin' && req.user.role !== rejectRole) {
+        await client.query('ROLLBACK');
+        return res.status(403).json({ error: `ขั้นที่ ${pr.current_approval_step} ปฏิเสธได้โดย ${rejectRole} เท่านั้น` });
+      }
 
       if (pr.status !== 'Pending') {
         await client.query('ROLLBACK');

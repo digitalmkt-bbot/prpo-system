@@ -566,12 +566,14 @@
           </table>
         </div>
         <div class="panel" style="margin-top:16px; background:#f0f4f8;">
-          <b>คำอธิบาย Role</b>
+          <b>คำอธิบาย Role (ลำดับอนุมัติ 3 ขั้น)</b>
           <div style="margin-top:8px; font-size:13px; color:var(--muted); line-height:1.9;">
-            <b>Admin</b> — เข้าถึงทุกส่วน + อนุมัติได้<br>
-            <b>Manager</b> — อนุมัติ PR ได้ (Manager ขึ้นไป)<br>
-            <b>Purchasing</b> — ฝ่ายจัดซื้อ สร้าง PR/ออก PO (อนุมัติไม่ได้)<br>
-            <b>Approver / Viewer</b> — ดู/ใช้งานทั่วไป (อนุมัติไม่ได้)
+            <b>Manager</b> — อนุมัติ <b>ขั้นที่ 1</b><br>
+            <b>Executive</b> — อนุมัติ <b>ขั้นที่ 2</b><br>
+            <b>Managing Director</b> — อนุมัติ <b>ขั้นที่ 3</b> (ครบขั้นนี้ → ออก PO ได้)<br>
+            <b>Owner</b> — ผู้บริหารสูงสุด (ดูได้ทุกใบ ไม่บังคับสำหรับออก PO)<br>
+            <b>Purchasing</b> — ฝ่ายจัดซื้อ สร้าง PR / ออก PO (อนุมัติไม่ได้)<br>
+            <b>Admin</b> — เข้าถึงทุกส่วน + อนุมัติแทนได้ทุกขั้น · <b>Approver/Viewer</b> — ดู/ใช้งานทั่วไป
           </div>
         </div>
       </div>
@@ -810,7 +812,8 @@
         const pr = await api.getPRDetail(prNo);
         const items = (pr.items || []).filter(i => i && i.product_name);
         const tagClass = pr.status === 'Pending' ? 'pending' : pr.status === 'Approved' ? 'approved' : 'rejected';
-        const canApprove = pr.status === 'Pending' && APPROVER_ROLES.includes(currentUser.role);
+        const stepRole = APPROVAL_CHAIN[(pr.current_approval_step || 1) - 1];
+        const canApprove = pr.status === 'Pending' && (currentUser.role === 'Admin' || currentUser.role === stepRole);
         const rows = items.map((it, idx) => {
           const lineTotal = Number(it.total_price || (it.quantity * it.unit_price) || 0);
           const rejected = it.item_status === 'rejected';
@@ -830,7 +833,7 @@
         }).join('');
         let chain = '';
         if (Array.isArray(pr.approval_chain) && pr.approval_chain.length) {
-          chain = `<div style="margin-top:16px"><b>ประวัติการอนุมัติ</b><ul style="font-size:13px;color:var(--muted);margin:8px 0 0 18px;line-height:1.7">${pr.approval_chain.map(c => `<li>ขั้น ${c.step}: ${c.approverName || c.approver}${c.comment ? ' — ' + c.comment : ''}</li>`).join('')}</ul></div>`;
+          chain = `<div style="margin-top:16px"><b>ประวัติการอนุมัติ</b><ul style="font-size:13px;color:var(--muted);margin:8px 0 0 18px;line-height:1.7">${pr.approval_chain.map(c => `<li>ขั้น ${c.step}${c.role ? ' (' + c.role + ')' : ''}: ${c.approverName || c.approver}${c.comment ? ' — ' + c.comment : ''}</li>`).join('')}</ul></div>`;
         }
         let posHtml = '';
         if (Array.isArray(pr.pos) && pr.pos.length) {
@@ -851,7 +854,7 @@
             <div><div class="k">ผู้ขอซื้อ</div>${nz(pr.requester_name || pr.requested_by)}</div>
             <div><div class="k">แผนก</div>${nz(pr.department_name)}</div>
             <div><div class="k">ประเภทการจัดซื้อ</div>${nz(pr.purchase_type)}</div>
-            <div><div class="k">ขั้นอนุมัติ</div>${pr.current_approval_step || 1}/${pr.total_approval_steps || 1}</div>
+            <div><div class="k">ขั้นอนุมัติ</div>${pr.current_approval_step || 1}/${pr.total_approval_steps || 1}${pr.status === 'Pending' && stepRole ? ` · รอ <b style="color:var(--brand-dark)">${stepRole}</b>` : ''}</div>
             <div style="grid-column:1/-1"><div class="k">วัตถุประสงค์</div>${nz(pr.purpose)}</div>
           </div>
           <table class="pr-items">
@@ -919,7 +922,7 @@
           <tr>
             <td><b>${a.pr_no}</b></td>
             <td>${Number(a.total_amount || 0).toLocaleString()}</td>
-            <td>Step ${a.current_approval_step} / ${a.total_approval_steps}</td>
+            <td>Step ${a.current_approval_step} / ${a.total_approval_steps}${a.required_role ? ' · ' + a.required_role : ''}</td>
             <td>
               <button class="btn" style="padding: 4px 8px;" onclick="showPRDetail('${a.pr_no}')">ตรวจ/อนุมัติ</button>
               <button class="btn secondary" style="padding: 4px 8px;" onclick="rejectPR('${a.pr_no}')">Reject</button>
@@ -1734,8 +1737,9 @@
     window.showDeptModal = showDeptModal;
 
     // ===== Users & Roles =====
-    const ROLES = ['Admin', 'Manager', 'Purchasing', 'Approver', 'Viewer'];
-    const APPROVER_ROLES = ['Admin', 'Manager'];
+    const ROLES = ['Admin', 'Manager', 'Executive', 'Managing Director', 'Owner', 'Purchasing', 'Approver', 'Viewer'];
+    const APPROVER_ROLES = ['Admin', 'Manager', 'Executive', 'Managing Director', 'Owner'];
+    const APPROVAL_CHAIN = ['Manager', 'Executive', 'Managing Director']; // role required at step 1,2,3
 
     async function loadUsers() {
       try {

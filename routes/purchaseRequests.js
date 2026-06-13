@@ -140,15 +140,8 @@ export default function(pool) {
         total += (parseFloat(item.quantity) * parseFloat(item.unit_price));
       });
 
-      // Get approval steps needed
-      const approvalResult = await client.query(`
-        SELECT COUNT(*) as step_count FROM approval_matrix
-        WHERE department_id = $1
-        AND min_amount <= $2
-        AND max_amount >= $2
-      `, [department_id, total]);
-
-      const totalSteps = approvalResult.rows[0]?.step_count || 0;
+      // Fixed 3-step approval chain for every PR (Manager → Executive → Managing Director)
+      const totalSteps = 3;
 
       // Create PR (supplier chosen later at the PO stage)
       await client.query(`
