@@ -22,7 +22,10 @@ export default function(pool) {
       const prR = await client.query('SELECT * FROM purchase_requests WHERE pr_no = $1 FOR UPDATE', [pr_no]);
       const pr = prR.rows[0];
       if (!pr) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'ไม่พบ PR' }); }
-      if (pr.status !== 'Approved') { await client.query('ROLLBACK'); return res.status(400).json({ error: 'PR ยังไม่อนุมัติครบ' }); }
+      // PO can be issued once step 3 (Managing Director) is passed — even while Owner (step 4) is still pending
+      const PO_AFTER_STEP = 3;
+      if (pr.status === 'Rejected') { await client.query('ROLLBACK'); return res.status(400).json({ error: 'PR ถูกปฏิเสธ' }); }
+      if (pr.current_approval_step <= PO_AFTER_STEP) { await client.query('ROLLBACK'); return res.status(400).json({ error: 'ต้องผ่านอนุมัติขั้นที่ 3 (Managing Director) ก่อนจึงออก PO ได้' }); }
 
       // Items: use edited items from the form, else fall back to copying PR items
       let items = Array.isArray(bodyItems) && bodyItems.length ? bodyItems

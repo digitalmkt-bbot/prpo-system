@@ -4,8 +4,9 @@ import { v4 as uuid } from 'uuid';
 
 export default function(pool) {
   const router = Router();
-  // Fixed 3-step approval chain (role required at each step). PO can be issued after step 3.
-  const APPROVAL_CHAIN = ['Manager', 'Executive', 'Managing Director'];
+  // 4-step approval chain (role required at each step). PO can be issued once step 3 (MD) is passed.
+  const APPROVAL_CHAIN = ['Manager', 'Executive', 'Managing Director', 'Owner'];
+  const PO_AFTER_STEP = 3; // after Managing Director (step 3), PO can be issued (Owner step 4 still proceeds)
   const APPROVER_ROLES = ['Admin', 'Manager', 'Executive', 'Managing Director', 'Owner'];
   // Required role for a given 1-based step (Admin can act on any step)
   const roleForStep = (step) => APPROVAL_CHAIN[step - 1] || null;
@@ -225,9 +226,13 @@ export default function(pool) {
             'Pending', 'Pending']);
 
         await client.query('COMMIT');
+        const justPassedPO = pr.current_approval_step === PO_AFTER_STEP;
         res.json({
           ok: true,
-          message: `Step ${pr.current_approval_step} approved. Moving to step ${nextStep}/${pr.total_approval_steps}`
+          message: justPassedPO
+            ? `อนุมัติขั้นที่ ${pr.current_approval_step} (Managing Director) แล้ว — ออก PO ได้เลย (ส่งต่อขั้น ${nextStep} Owner)`
+            : `อนุมัติขั้นที่ ${pr.current_approval_step} แล้ว — ส่งต่อขั้นที่ ${nextStep}/${pr.total_approval_steps}`,
+          po_ready: nextStep > PO_AFTER_STEP
         });
       }
     } catch (err) {

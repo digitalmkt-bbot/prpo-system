@@ -140,8 +140,8 @@ export default function(pool) {
         total += (parseFloat(item.quantity) * parseFloat(item.unit_price));
       });
 
-      // Fixed 3-step approval chain for every PR (Manager → Executive → Managing Director)
-      const totalSteps = 3;
+      // Fixed 4-step approval chain (Manager → Executive → Managing Director → Owner); PO issuable after step 3
+      const totalSteps = 4;
 
       // Create PR (supplier chosen later at the PO stage)
       await client.query(`
