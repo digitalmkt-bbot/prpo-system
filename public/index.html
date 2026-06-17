@@ -750,8 +750,8 @@
     function drawDayChart(canvasId, byDay, color) {
       const list = byDay || [];
       upsertChart(canvasId, 'bar',
-        { labels: list.map(r => r.d.slice(5)), datasets: [{ data: list.map(r => r.c), backgroundColor: color, borderRadius: 4 }] },
-        { ...NO_RESIZE, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } });
+        { labels: list.map(r => r.d.slice(5)), datasets: [{ data: list.map(r => r.c), backgroundColor: color, borderRadius: 4, maxBarThickness: 42 }] },
+        { ...NO_RESIZE, plugins: { legend: { display: false } }, scales: { x: { ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 14 } }, y: { beginAtZero: true, ticks: { precision: 0 } } } });
     }
 
     function drawDonut(canvasId, items) {

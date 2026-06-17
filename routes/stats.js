@@ -33,10 +33,19 @@ export default function (pool) {
         (await pool.query(`SELECT ${alias}.status, COUNT(*)::int c FROM ${table} ${alias} ${f.where} GROUP BY ${alias}.status`, f.params))
           .rows.forEach(r => { out.status[r.status] = r.c; });
 
-        // daily: default last 14 days if no explicit date range
-        const byDayCond = (from || to) ? f.cond : [`${alias}.date >= CURRENT_DATE - INTERVAL '13 days'`, ...f.cond];
-        const byDayWhere = byDayCond.length ? 'WHERE ' + byDayCond.join(' AND ') : '';
-        out.by_day = (await pool.query(`SELECT to_char(${alias}.date,'YYYY-MM-DD') d, COUNT(*)::int c, COALESCE(SUM(${alias}.total_amount),0)::float a FROM ${table} ${alias} ${byDayWhere} GROUP BY d ORDER BY d`, f.params)).rows;
+        // daily: continuous series (fills empty days with 0) — default last 14 days, or the chosen range
+        const dayParams = [];
+        let startSql, endSql;
+        if (from) { dayParams.push(from); startSql = `$${dayParams.length}::date`; } else { startSql = "CURRENT_DATE - INTERVAL '13 days'"; }
+        if (to) { dayParams.push(to); endSql = `$${dayParams.length}::date`; } else { endSql = 'CURRENT_DATE'; }
+        let statusJoin = '';
+        if (status && allowed.includes(status)) { dayParams.push(status); statusJoin = ` AND ${alias}.status = $${dayParams.length}`; }
+        out.by_day = (await pool.query(`
+          SELECT to_char(gs.d,'YYYY-MM-DD') d, COUNT(${alias}.id)::int c, COALESCE(SUM(${alias}.total_amount),0)::float a
+          FROM generate_series(${startSql}, ${endSql}, INTERVAL '1 day') gs(d)
+          LEFT JOIN ${table} ${alias} ON ${alias}.date = gs.d::date${statusJoin}
+          GROUP BY gs.d ORDER BY gs.d
+        `, dayParams)).rows;
 
         out.top = (await pool.query(`
           SELECT COALESCE(j.name,'(ไม่ระบุ)') name, COUNT(*)::int c, COALESCE(SUM(${alias}.total_amount),0)::float a
