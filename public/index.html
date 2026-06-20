@@ -2152,7 +2152,16 @@
       "กรุณาตั้งรหัสผ่านให้ผู้ใช้ใหม่": "Please set a password for the new user",
       "บันทึกผู้ใช้แล้ว": "User saved",
       "กำลังเข้าสู่ระบบ...": "Signing in...",
-      "เข้าสู่ระบบไม่สำเร็จ": "Sign in failed"
+      "เข้าสู่ระบบไม่สำเร็จ": "Sign in failed",
+      "PR ทั้งหมด": "Total PRs",
+      "PO ทั้งหมด": "Total POs",
+      "PR รายวัน": "PR (daily)",
+      "PO รายวัน": "PO (daily)",
+      "PR ล่าสุด": "Recent PRs",
+      "PO ล่าสุด": "Recent POs",
+      "Top แผนก (มูลค่า)": "Top Departments (value)",
+      "Top ผู้ขาย (มูลค่า)": "Top Suppliers (value)",
+      "หมวดหมู่สินค้า (รวม PR + PO)": "Product Categories (PR + PO)"
     };
 
     let LANG = localStorage.getItem('prpo_lang') || 'en';
@@ -2160,18 +2169,29 @@
     const _tPh = [];
     let _busy = false;
 
+    // Dictionary keys sorted longest-first so compound phrases win over their parts
+    const _KEYS = Object.keys(I18N_TH2EN).sort(function(a, b){ return b.length - a.length; });
+    const _hasThai = function(s){ return /[฀-๿]/.test(s); };
+    // Translate any Thai segments inside a string (handles mixed Latin/emoji + Thai nodes)
+    function tStr(raw){
+      if (!raw || !_hasThai(raw)) return null;
+      let out = raw;
+      for (let i = 0; i < _KEYS.length; i++) {
+        const k = _KEYS[i];
+        if (out.indexOf(k) !== -1) out = out.split(k).join(I18N_TH2EN[k]);
+      }
+      return out !== raw ? out : null;
+    }
+
     function translateTextNodes(root){
       const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
       let node;
       while ((node = walker.nextNode())) {
         const raw = node.nodeValue;
-        if (!raw) continue;
-        const key = raw.trim();
-        if (!key) continue;
-        const en = I18N_TH2EN[key];
-        if (en !== undefined && en !== key && raw.indexOf(key) !== -1 && raw !== en) {
+        const en = tStr(raw);
+        if (en !== null) {
           if (node.__thOrig === undefined) { node.__thOrig = raw; _tNodes.push(node); }
-          node.nodeValue = raw.replace(key, en);
+          node.nodeValue = en;
         }
       }
     }
@@ -2181,10 +2201,8 @@
       for (let i = 0; i < els.length; i++) {
         const el = els[i];
         const ph = el.getAttribute('placeholder');
-        if (!ph) continue;
-        const key = ph.trim();
-        const en = I18N_TH2EN[key];
-        if (en !== undefined && en !== key) {
+        const en = tStr(ph);
+        if (en !== null) {
           if (el.dataset.thPh === undefined) { el.dataset.thPh = ph; _tPh.push(el); }
           el.placeholder = en;
         }
@@ -2243,22 +2261,20 @@
             if (n.nodeType === Node.ELEMENT_NODE) {
               translateTree(n);
             } else if (n.nodeType === Node.TEXT_NODE) {
-              const raw = n.nodeValue, key = raw ? raw.trim() : '';
-              const en = key ? I18N_TH2EN[key] : undefined;
-              if (en !== undefined && en !== key) {
-                if (n.__thOrig === undefined) { n.__thOrig = raw; _tNodes.push(n); }
-                n.nodeValue = raw.replace(key, en);
+              const en = tStr(n.nodeValue);
+              if (en !== null) {
+                if (n.__thOrig === undefined) { n.__thOrig = n.nodeValue; _tNodes.push(n); }
+                n.nodeValue = en;
               }
             }
           }
         } else if (m.type === 'characterData') {
           const n = m.target;
           if (n && n.nodeType === Node.TEXT_NODE) {
-            const raw = n.nodeValue, key = raw ? raw.trim() : '';
-            const en = key ? I18N_TH2EN[key] : undefined;
-            if (en !== undefined && en !== key && raw !== en) {
-              if (n.__thOrig === undefined) { n.__thOrig = raw; _tNodes.push(n); }
-              n.nodeValue = raw.replace(key, en);
+            const en = tStr(n.nodeValue);
+            if (en !== null) {
+              if (n.__thOrig === undefined) { n.__thOrig = n.nodeValue; _tNodes.push(n); }
+              n.nodeValue = en;
             }
           }
         }
