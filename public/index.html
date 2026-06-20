@@ -691,7 +691,8 @@
         document.getElementById('pr-pending').textContent = s.pr.status.Pending || 0;
         document.getElementById('pr-rejected').textContent = s.pr.status.Rejected || 0;
         drawDayChart('pr-chart', s.pr.by_day, '#6366f1');
-        drawDonut('pr-donut', [['รออนุมัติ', s.pr.status.Pending || 0, '#d97706'], ['อนุมัติแล้ว', s.pr.status.Approved || 0, '#16a34a'], ['ปฏิเสธ', s.pr.status.Rejected || 0, '#e11d48']]);
+        const _L = (window.tDyn || (s => s));
+        drawDonut('pr-donut', [[_L('รออนุมัติ'), s.pr.status.Pending || 0, '#d97706'], [_L('อนุมัติแล้ว'), s.pr.status.Approved || 0, '#16a34a'], [_L('ปฏิเสธ'), s.pr.status.Rejected || 0, '#e11d48']]);
         drawTopBar('pr-top', s.pr.top, '#6366f1');
         renderDashRecent('pr-recent', s.pr.recent);
         // PO
@@ -701,7 +702,7 @@
         document.getElementById('po-completed').textContent = s.po.status.Completed || 0;
         document.getElementById('po-cancelled').textContent = s.po.status.Cancelled || 0;
         drawDayChart('po-chart', s.po.by_day, '#1D9E75');
-        drawDonut('po-donut', [['Active', s.po.status.Active || 0, '#16a34a'], ['เสร็จสิ้น', s.po.status.Completed || 0, '#3b82f6'], ['ยกเลิก', s.po.status.Cancelled || 0, '#e11d48']]);
+        drawDonut('po-donut', [['Active', s.po.status.Active || 0, '#16a34a'], [_L('เสร็จสิ้น'), s.po.status.Completed || 0, '#3b82f6'], [_L('ยกเลิก'), s.po.status.Cancelled || 0, '#e11d48']]);
         drawTopBar('po-top', s.po.top, '#16a34a');
         renderDashRecent('po-recent', s.po.recent);
         // Product category report (combined PR + PO)
@@ -2243,11 +2244,17 @@
       });
     }
 
+    // Translate a known string for current language (used by canvas charts that DOM-translation can't reach)
+    window.tDyn = function(s){ return (LANG === 'en' && I18N_TH2EN[s] !== undefined) ? I18N_TH2EN[s] : s; };
+
     window.setLang = function(l){
       if (l !== 'en' && l !== 'th') return;
       localStorage.setItem('prpo_lang', l);
       if (l === 'en') toEN(); else toTH();
       updateToggleUI();
+      // re-render dashboard so canvas chart legends pick up the language
+      const dash = document.getElementById('page-dashboard');
+      if (dash && dash.classList.contains('active') && typeof window.loadDashboard === 'function') window.loadDashboard();
     };
 
     const _observer = new MutationObserver(function(mutations){
