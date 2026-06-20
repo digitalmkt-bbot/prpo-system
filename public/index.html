@@ -223,6 +223,10 @@
         <span class="logo-ic"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></span>
         <span><span style="display:block;line-height:1.1">PR/PO System</span><span style="display:block;font-size:11px;color:var(--muted);font-weight:500">จัดซื้อ / Procurement</span></span>
       </div>
+      <div id="lang-toggle" style="display:flex;gap:4px;margin:4px 0 12px;padding:4px;background:#f1f5f9;border-radius:8px;">
+        <button type="button" data-lang="en" onclick="setLang('en')" style="flex:1;border:none;border-radius:6px;padding:6px 0;font-size:12px;font-weight:700;cursor:pointer;background:var(--brand);color:#fff;">EN</button>
+        <button type="button" data-lang="th" onclick="setLang('th')" style="flex:1;border:none;border-radius:6px;padding:6px 0;font-size:12px;font-weight:700;cursor:pointer;background:transparent;color:var(--muted);">TH</button>
+      </div>
       <ul class="nav">
         <li><a class="active" data-page="dashboard">Dashboard</a></li>
         <li><a data-page="create">Create PR</a></li>
@@ -1840,6 +1844,441 @@
     }
 
     window.addEventListener('load', bootstrap);
+  </script>
+
+  <!-- ===== Bilingual EN/TH runtime DOM translation (additive, English default) ===== -->
+  <script>
+  (function(){
+    const I18N_TH2EN = {
+      "เข้าสู่ระบบเพื่อใช้งาน": "Sign in to continue",
+      "อีเมล": "Email",
+      "รหัสผ่าน": "Password",
+      "เข้าสู่ระบบ": "Sign in",
+      "จัดซื้อ / Procurement": "Procurement",
+      "ออกจากระบบ": "Log out",
+      "ภาพรวมระบบการจัดซื้อ": "Procurement system overview",
+      "ช่วงวันที่:": "Date range:",
+      "ถึง": "to",
+      "ทุกสถานะ": "All statuses",
+      "รออนุมัติ": "Pending",
+      "อนุมัติแล้ว": "Approved",
+      "ปฏิเสธ": "Rejected",
+      "เสร็จสิ้น": "Completed",
+      "ยกเลิก": "Cancel",
+      "กรอง": "Filter",
+      "ล้าง": "Clear",
+      "ใบขอซื้อ (PR)": "Purchase Requests (PR)",
+      "ทั้งหมด": "All",
+      "มูลค่ารวม (บาท)": "Total value (THB)",
+      "รายวัน": "Daily",
+      "สถานะ PR": "PR status",
+      "แผนก (มูลค่า)": "Department (value)",
+      "ล่าสุด": "Latest",
+      "แผนก": "Department",
+      "มูลค่า": "Value",
+      "สถานะ": "Status",
+      "ใบสั่งซื้อ (PO)": "Purchase Orders (PO)",
+      "สถานะ PO": "PO status",
+      "ผู้ขาย (มูลค่า)": "Supplier (value)",
+      "ผู้ขาย": "Supplier",
+      "หมวดหมู่สินค้า (รวม PR + PO)": "Product categories (PR + PO)",
+      "สินค้าที่มียอดสูงสุด (มูลค่า)": "Top products by value",
+      "สินค้าที่สั่งซื้อบ่อยสุด (จำนวนครั้ง)": "Most frequently ordered products (count)",
+      "สร้างใบขอซื้อใหม่": "Create new Purchase Request",
+      "กรอกข้อมูลให้ครบถ้วนก่อนส่งอนุมัติ (ผู้ขายจะเลือกตอนออก PO)": "Complete all fields before submitting for approval (the supplier is selected when issuing the PO)",
+      "สร้าง PR": "Create PR",
+      "กำลังดำเนินการ": "In progress",
+      "อนุมัติ": "Approve",
+      "รอดำเนินการ": "Pending action",
+      "ออก PO": "Issue PO",
+      "ข้อมูลทั่วไป": "General information",
+      "เลขที่ออกเมื่อบันทึก": "Number generated on save",
+      "วันที่ขอซื้อ": "Request date",
+      "ผู้ขอซื้อ": "Requester",
+      "ชื่อ-นามสกุล": "Full name",
+      "แผนก / ฝ่าย": "Department / Division",
+      "วันที่ต้องการ": "Required date",
+      "ประเภทการจัดซื้อ": "Purchase Type",
+      "ซื้อทั่วไป": "General purchase",
+      "บริการ / จ้างเหมา": "Service / Subcontract",
+      "วัสดุสิ้นเปลือง": "Consumables",
+      "ครุภัณฑ์": "Durable goods",
+      "วัตถุประสงค์ / เหตุผลในการขอซื้อ": "Purpose / Reason for request",
+      "ระบุเหตุผลและความจำเป็น...": "State the reason and necessity...",
+      "รายการสินค้า / บริการ": "Goods / Services items",
+      "รายการ": "Items",
+      "รายละเอียด": "Description",
+      "จำนวน": "Qty",
+      "หน่วย": "Unit",
+      "ราคา/หน่วย": "Unit Price",
+      "รวม": "Total",
+      "เพิ่มรายการ": "Add item",
+      "ยอดรวม (ฐานอนุมัติ)": "Total (approval basis)",
+      "จะกำหนดตอนออก PO": "To be set when issuing the PO",
+      "ลายมือชื่ออนุมัติ": "Approval signatures",
+      "ผู้ขอซื้อ / Requester": "Requester",
+      "ลงชื่อ ............": "Signature ............",
+      "วันที่ ............": "Date ............",
+      "ผู้จัดการ / Manager": "Manager",
+      "ฝ่ายจัดซื้อ / Purchasing": "Purchasing",
+      "ส่งอนุมัติ (บันทึก PR)": "Submit for approval (save PR)",
+      "ออกใบสั่งซื้อ (PO)": "Issue Purchase Order (PO)",
+      "อ้างอิงจาก": "Reference from",
+      "เลือกผู้ขายและตรวจรายการก่อนออก PO": "Select a supplier and review items before issuing the PO",
+      "ถ้าซื้อจากหลาย Supplier ให้ลบ (": "If purchasing from multiple suppliers, remove (",
+      "รายการที่ไม่ได้ซื้อจากเจ้านี้ออก แล้วออก PO ใบใหม่สำหรับรายการที่เหลือได้": "the items not purchased from this supplier, then issue a new PO for the remaining items",
+      "ข้อมูลผู้ขาย": "Supplier information",
+      "ผู้ขาย (Supplier)": "Supplier",
+      "พิมพ์ชื่อ/รหัสผู้ขาย...": "Type supplier name / code...",
+      "อ้างอิง": "Reference",
+      "เลขอ้างอิง (ถ้ามี)": "Reference number (if any)",
+      "ภาษีมูลค่าเพิ่ม": "VAT",
+      "มี VAT 7% (ทั้งใบ)": "Includes 7% VAT (whole document)",
+      "ผู้ติดต่อ (ฝั่งผู้ขาย)": "Contact (supplier side)",
+      "เบอร์โทรผู้ติดต่อ": "Contact phone",
+      "อีเมลผู้ติดต่อ": "Contact email",
+      "หมายเหตุ": "Note",
+      "หมายเหตุในใบสั่งซื้อ...": "Note on the purchase order...",
+      "ส่วนลด": "Discount",
+      "มูลค่าก่อนภาษี": "Pre-tax amount",
+      "ภาษีมูลค่าเพิ่ม (VAT)": "VAT",
+      "จำนวนเงินทั้งสิ้น": "Grand total",
+      "หัก ณ ที่จ่าย": "Withholding Tax",
+      "ยอดชำระ": "Amount payable",
+      "รายการใบสั่งซื้อที่ออกแล้ว": "Issued purchase orders",
+      "ยังไม่มี PO": "No PO yet",
+      "รายการใบขอซื้อทั้งหมด": "All purchase requests",
+      "รายการรออนุมัติของฉัน": "My pending approvals",
+      "ไม่มีการรอการอนุมัติ": "No pending approvals",
+      "จัดการผู้ขายและประเภทการจัดซื้อ": "Manage suppliers and purchase types",
+      "ค้นหาซัพพลายเออร์ (ชื่อ/รหัส)...": "Search suppliers (name / code)...",
+      "นำเข้า Excel": "Import Excel",
+      "ประเภทผู้ติดต่อ": "Contact type",
+      "เลขทะเบียนภาษี": "Tax ID",
+      "เบอร์โทร": "Phone",
+      "เพิ่ม/ลบประเภทที่ใช้ในหน้า Create PR": "Add / remove types used on the Create PR page",
+      "ชื่อประเภทใหม่...": "New type name...",
+      "เพิ่ม": "Add",
+      "ชื่อประเภท": "Type name",
+      "จัดการ": "Manage",
+      "จัดการแผนก": "Manage departments",
+      "จัดการผู้ใช้และกำหนดสิทธิ์ (Role)": "Manage users and assign roles",
+      "เฉพาะ Manager ขึ้นไปอนุมัติ PR ได้": "Only Manager and above can approve PRs",
+      "เพิ่มผู้ใช้": "Add user",
+      "ชื่อ": "Name",
+      "คำอธิบาย Role (ลำดับอนุมัติ 4 ขั้น)": "Role description (4-step approval sequence)",
+      "ขั้นที่ 1": "Step 1",
+      "ขั้นที่ 2": "Step 2",
+      "ขั้นที่ 3": "Step 3",
+      "ผ่านขั้นนี้": "after this step",
+      "ฝ่ายจัดซื้อออก PO ได้ทันที)": "Purchasing can issue the PO immediately)",
+      "ขั้นที่ 4": "Step 4",
+      "อนุมัติสุดท้าย": "Final approval",
+      "ทำคู่ขนานได้ ไม่บล็อกการออก PO)": "can be done in parallel, does not block issuing the PO)",
+      "ฝ่ายจัดซื้อ สร้าง PR / ออก PO (อนุมัติไม่ได้)": "Purchasing: create PR / issue PO (cannot approve)",
+      "เข้าถึงทุกส่วน + อนุมัติแทนได้ทุกขั้น": "Full access + can approve on behalf at every step",
+      "ดู/ใช้งานทั่วไป": "View / general use",
+      "ตั้งค่าระบบ": "System settings",
+      "บริษัท...": "Company...",
+      "บันทึก": "Save",
+      "โหลด Dashboard ไม่สำเร็จ:": "Failed to load Dashboard:",
+      "ยังไม่มีข้อมูล": "No data yet",
+      "ครั้ง": "times",
+      "ผ่านขั้น 3 แล้ว": "Passed step 3",
+      "รายการที่เหลือ)": "remaining items)",
+      "ครบ": "Complete",
+      "ออก PO แล้ว": "PO issued",
+      "รอออก PO": "Awaiting PO issuance",
+      "ประวัติการอนุมัติ": "Approval history",
+      "ขั้น": "Step",
+      "ใบสั่งซื้อที่ออกแล้ว (": "Issued purchase orders (",
+      "ใบ)": "documents)",
+      "ใบขอซื้อ (Purchase Request)": "Purchase Request",
+      "ขั้นอนุมัติ": "Approval step",
+      "อนุมัติครบ": "Fully approved",
+      "รอ": "Pending",
+      "ออก PO ได้แล้ว": "Ready to issue PO",
+      "วัตถุประสงค์": "Purpose",
+      "ไม่มีรายการ": "No items",
+      "ยอดรวม": "Total",
+      "เฉพาะที่อนุมัติ)": "approved items only)",
+      "ติ๊กออกเพื่อปฏิเสธรายการนั้น": "Uncheck to reject that item",
+      "รายการที่ปฏิเสธจะถูกตัดออกจากยอดและไม่ส่งต่อไป PO": "Rejected items are excluded from the total and not carried over to the PO",
+      "ปฏิเสธทั้งใบ": "Reject entire document",
+      "อนุมัติตามรายการ": "Approve by item",
+      "พิมพ์": "Print",
+      "ปิด": "Close",
+      "โหลดใบ PR ไม่สำเร็จ:": "Failed to load the PR:",
+      "ทุกรายการถูกปฏิเสธ": "All items rejected",
+      "ถ้าต้องการปฏิเสธทั้งใบ ใช้ปุ่ม": "To reject the entire document, use the button",
+      "อนุมัติสำเร็จ": "Approved successfully",
+      "อนุมัติไม่สำเร็จ:": "Approval failed:",
+      "คุณไม่มีสิทธิ์อนุมัติ": "You do not have approval permission",
+      "เฉพาะ Manager ขึ้นไปเท่านั้น": "Manager and above only",
+      "ตรวจ/อนุมัติ": "Review / Approve",
+      "คลิกเพื่อแก้ไข": "Click to edit",
+      "แสดง": "Showing",
+      "จาก": "of",
+      "จำกัด 500 แถว": "limited to 500 rows",
+      "ใช้ช่องค้นหาเพื่อกรอง)": "use the search box to filter)",
+      "ไม่พบ": "Not found",
+      "เหตุผลในการปฏิเสธ (ไม่บังคับ):": "Reason for rejection (optional):",
+      "ปฏิเสธ PR แล้ว": "PR rejected",
+      "ปฏิเสธไม่สำเร็จ:": "Rejection failed:",
+      "โหลด PO ไม่สำเร็จ:": "Failed to load PO:",
+      "หนึ่ง": "one",
+      "สอง": "two",
+      "สาม": "three",
+      "สี่": "four",
+      "ห้า": "five",
+      "หก": "six",
+      "เจ็ด": "seven",
+      "แปด": "eight",
+      "เก้า": "nine",
+      "สิบ": "ten",
+      "ร้อย": "hundred",
+      "พัน": "thousand",
+      "หมื่น": "ten thousand",
+      "แสน": "hundred thousand",
+      "ยี่สิบ": "twenty",
+      "เอ็ด": "one",
+      "ล้าน": "million",
+      "บาท": "Baht",
+      "สตางค์": "Satang",
+      "ถ้วน": "only",
+      "ศูนย์บาทถ้วน": "Zero Baht only",
+      "ต้นฉบับ)": "original)",
+      "ใบสั่งซื้อ": "Purchase Order",
+      "ผู้ซื้อ": "Buyer",
+      "เลขที่ภาษี:": "Tax ID:",
+      "เลขที่เอกสาร:": "Document No.:",
+      "วันที่ออก:": "Issue date:",
+      "อ้างอิง:": "Reference:",
+      "ติดต่อกลับที่:": "Contact:",
+      "ชื่อ:": "Name:",
+      "โทร:": "Tel:",
+      "อีเมล:": "Email:",
+      "คำอธิบาย": "Description",
+      "รวมเป็นเงิน": "Subtotal",
+      "หักส่วนลด": "Less discount",
+      "มูลค่าที่คำนวณภาษี": "Taxable amount",
+      "จำนวนเงินรวมทั้งสิ้น": "Grand total",
+      "ยอดชำระสุทธิ": "Net amount payable",
+      "หมายเหตุ:": "Note:",
+      "ผู้ออกเอกสาร (ผู้ซื้อ)": "Document issuer (Buyer)",
+      "ผู้อนุมัติ (ผู้ซื้อ)": "Approver (Buyer)",
+      "ผู้รับเอกสาร (ผู้ขาย)": "Document recipient (Supplier)",
+      "แก้ไขใบ PO": "Edit PO",
+      "พิมพ์ใบ PO": "Print PO",
+      "โหลดใบ PO ไม่สำเร็จ:": "Failed to load the PO:",
+      "เฉพาะฝ่ายจัดซื้อ/Admin แก้ไขใบ PO ได้": "Only Purchasing / Admin can edit the PO",
+      "แก้ไขใบสั่งซื้อ": "Edit Purchase Order",
+      "ผู้ขาย:": "Supplier:",
+      "แก้รายการแล้วยอดคำนวณใหม่อัตโนมัติ": "Editing items recalculates the totals automatically",
+      "บันทึกการแก้ไข": "Save changes",
+      "ชื่อรายการ": "Item name",
+      "ต้องมีรายการอย่างน้อย 1 รายการ": "At least one item is required",
+      "บันทึกการแก้ไขใบ PO แล้ว": "PO changes saved",
+      "บันทึกไม่สำเร็จ:": "Save failed:",
+      "ยังไม่มีแผนก": "No departments yet",
+      "โหลดฟอร์มไม่สำเร็จ:": "Failed to load the form:",
+      "ลบ": "Delete",
+      "ยังไม่มีประเภท": "No types yet",
+      "โหลดประเภทการจัดซื้อไม่สำเร็จ:": "Failed to load purchase types:",
+      "ไลบรารีอ่าน Excel ยังโหลดไม่เสร็จ ลองใหม่อีกครั้ง": "The Excel reading library has not finished loading, please try again",
+      "กำลังอ่านไฟล์...": "Reading file...",
+      "ข้าม 2 แถวหัวตาราง": "Skip 2 header rows",
+      "ข้อมูลเริ่ม index 2": "Data starts at index 2",
+      "ไม่พบข้อมูลผู้ขายในไฟล์ (ตรวจรูปแบบคอลัมน์)": "No supplier data found in the file (check the column format)",
+      "กำลังนำเข้า": "Importing",
+      "รายการ...": "items...",
+      "นำเข้าสำเร็จ: เพิ่มใหม่": "Import successful: newly added",
+      "อัปเดต": "Updated",
+      "ข้าม": "Skipped",
+      "นำเข้าไม่สำเร็จ:": "Import failed:",
+      "กรุณากรอกชื่อประเภท": "Please enter a type name",
+      "เพิ่มประเภทแล้ว": "Type added",
+      "เพิ่มไม่สำเร็จ:": "Failed to add:",
+      "ลบประเภทนี้": "Delete this type",
+      "ลบแล้ว": "Deleted",
+      "ลบไม่สำเร็จ:": "Delete failed:",
+      "ชื่อสินค้า": "Product name",
+      "ชิ้น": "pcs",
+      "กล่อง": "box",
+      "ชุด": "set",
+      "แพ็ค": "pack",
+      "ม้วน": "roll",
+      "ลิตร": "litre",
+      "กิโลกรัม": "kg",
+      "เดือน": "month",
+      "กรุณาเลือกแผนก": "Please select a department",
+      "กรุณาเพิ่มรายการสินค้าอย่างน้อย 1 รายการ": "Please add at least one item",
+      "สร้าง PR สำเร็จ:": "PR created successfully:",
+      "ขั้น)": "step)",
+      "สร้าง PR ไม่สำเร็จ:": "Failed to create PR:",
+      "อ้างอิงเติมจากเลข PR ต้นทางอัตโนมัติ (แก้ไขได้)": "Reference auto-filled from the source PR number (editable)",
+      "รายการในใบนี้ออก PO ครบแล้ว": "All items in this document have been fully issued as POs",
+      "โหลดข้อมูล PR ไม่สำเร็จ:": "Failed to load PR data:",
+      "ลบรายการนี้ออกจากใบ PO ใบนี้ (ออกใบใหม่ได้ทีหลัง)": "Remove this item from this PO (a new PO can be issued later)",
+      "กรุณาเลือกผู้ขาย": "Please select a supplier",
+      "ออก PO สำเร็จ:": "PO issued successfully:",
+      "ออก PO ไม่สำเร็จ:": "Failed to issue PO:",
+      "แก้ไขผู้ขาย": "Edit supplier",
+      "เพิ่มผู้ขาย": "Add supplier",
+      "รหัส": "Code",
+      "เช่น A-001": "e.g. A-001",
+      "ผู้ขาย / ลูกค้า": "Supplier / Customer",
+      "สาขา": "Branch",
+      "เช่น 00000": "e.g. 00000",
+      "บุคคล/นิติบุคคล": "Individual / Juristic person",
+      "นิติบุคคล / บุคคล": "Juristic person / Individual",
+      "ประเภทกิจการ": "Business type",
+      "ที่อยู่": "Address",
+      "กรุณากรอกรหัสและชื่อ": "Please enter the code and name",
+      "บันทึกผู้ขายแล้ว": "Supplier saved",
+      "เพิ่มแผนก": "Add department",
+      "อีเมลหัวหน้าแผนก": "Department head email",
+      "บันทึกแผนกแล้ว": "Department saved",
+      "ปิดใช้งาน": "Disable",
+      "ใช้งาน": "Enable",
+      "แก้ไข": "Edit",
+      "ยังไม่มีผู้ใช้": "No users yet",
+      "โหลดผู้ใช้ไม่สำเร็จ:": "Failed to load users:",
+      "แก้ไขผู้ใช้": "Edit user",
+      "เว้นว่างถ้าไม่เปลี่ยน)": "leave blank to keep unchanged)",
+      "ไม่เปลี่ยน": "Unchanged",
+      "ตั้งรหัสผ่าน": "Set password",
+      "กรุณากรอกชื่อและอีเมล": "Please enter the name and email",
+      "กรุณาตั้งรหัสผ่านให้ผู้ใช้ใหม่": "Please set a password for the new user",
+      "บันทึกผู้ใช้แล้ว": "User saved",
+      "กำลังเข้าสู่ระบบ...": "Signing in...",
+      "เข้าสู่ระบบไม่สำเร็จ": "Sign in failed"
+    };
+
+    let LANG = localStorage.getItem('prpo_lang') || 'en';
+    const _tNodes = [];
+    const _tPh = [];
+    let _busy = false;
+
+    function translateTextNodes(root){
+      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
+      let node;
+      while ((node = walker.nextNode())) {
+        const raw = node.nodeValue;
+        if (!raw) continue;
+        const key = raw.trim();
+        if (!key) continue;
+        const en = I18N_TH2EN[key];
+        if (en !== undefined && en !== key && raw.indexOf(key) !== -1 && raw !== en) {
+          if (node.__thOrig === undefined) { node.__thOrig = raw; _tNodes.push(node); }
+          node.nodeValue = raw.replace(key, en);
+        }
+      }
+    }
+
+    function translatePlaceholders(root){
+      const els = root.querySelectorAll('[placeholder]');
+      for (let i = 0; i < els.length; i++) {
+        const el = els[i];
+        const ph = el.getAttribute('placeholder');
+        if (!ph) continue;
+        const key = ph.trim();
+        const en = I18N_TH2EN[key];
+        if (en !== undefined && en !== key) {
+          if (el.dataset.thPh === undefined) { el.dataset.thPh = ph; _tPh.push(el); }
+          el.placeholder = en;
+        }
+      }
+    }
+
+    function translateTree(root){
+      if (!root) return;
+      if (root.nodeType === Node.ELEMENT_NODE || root.nodeType === Node.DOCUMENT_FRAGMENT_NODE) {
+        translatePlaceholders(root);
+      }
+      translateTextNodes(root);
+    }
+
+    function toEN(){
+      LANG = 'en';
+      _busy = true;
+      translateTree(document.body);
+      _busy = false;
+    }
+
+    function toTH(){
+      LANG = 'th';
+      _busy = true;
+      _tNodes.forEach(function(n){ if (n.__thOrig !== undefined) n.nodeValue = n.__thOrig; });
+      _tPh.forEach(function(e){ if (e.dataset.thPh !== undefined) e.placeholder = e.dataset.thPh; });
+      _busy = false;
+    }
+
+    function updateToggleUI(){
+      const box = document.getElementById('lang-toggle');
+      if (!box) return;
+      const btns = box.querySelectorAll('button[data-lang]');
+      btns.forEach(function(b){
+        const active = b.getAttribute('data-lang') === LANG;
+        b.style.background = active ? 'var(--brand)' : 'transparent';
+        b.style.color = active ? '#fff' : 'var(--muted)';
+      });
+    }
+
+    window.setLang = function(l){
+      if (l !== 'en' && l !== 'th') return;
+      localStorage.setItem('prpo_lang', l);
+      if (l === 'en') toEN(); else toTH();
+      updateToggleUI();
+    };
+
+    const _observer = new MutationObserver(function(mutations){
+      if (LANG !== 'en' || _busy) return;
+      _busy = true;
+      for (let i = 0; i < mutations.length; i++) {
+        const m = mutations[i];
+        if (m.type === 'childList') {
+          for (let j = 0; j < m.addedNodes.length; j++) {
+            const n = m.addedNodes[j];
+            if (n.nodeType === Node.ELEMENT_NODE) {
+              translateTree(n);
+            } else if (n.nodeType === Node.TEXT_NODE) {
+              const raw = n.nodeValue, key = raw ? raw.trim() : '';
+              const en = key ? I18N_TH2EN[key] : undefined;
+              if (en !== undefined && en !== key) {
+                if (n.__thOrig === undefined) { n.__thOrig = raw; _tNodes.push(n); }
+                n.nodeValue = raw.replace(key, en);
+              }
+            }
+          }
+        } else if (m.type === 'characterData') {
+          const n = m.target;
+          if (n && n.nodeType === Node.TEXT_NODE) {
+            const raw = n.nodeValue, key = raw ? raw.trim() : '';
+            const en = key ? I18N_TH2EN[key] : undefined;
+            if (en !== undefined && en !== key && raw !== en) {
+              if (n.__thOrig === undefined) { n.__thOrig = raw; _tNodes.push(n); }
+              n.nodeValue = raw.replace(key, en);
+            }
+          }
+        }
+      }
+      _busy = false;
+    });
+
+    function initI18N(){
+      _observer.observe(document.body, { subtree: true, childList: true, characterData: true });
+      if (LANG === 'en') toEN();
+      updateToggleUI();
+      setTimeout(function(){ if (LANG === 'en') toEN(); updateToggleUI(); }, 300);
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initI18N);
+    } else {
+      initI18N();
+    }
+  })();
   </script>
 </body>
 </html>
