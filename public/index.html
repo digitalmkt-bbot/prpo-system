@@ -216,6 +216,37 @@
     .dash-mc .dash-mc-val { font-size:24px; }
     .dash-ic { width:46px; height:46px; border-radius:13px; display:flex; align-items:center; justify-content:center; color:#fff; flex-shrink:0; font-size:20px; font-weight:800; box-shadow:0 4px 10px rgba(16,24,40,.12); }
     .dash-ic svg { width:23px; height:23px; stroke:#fff; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+    /* ===== Solar dashboard layout ===== */
+    .solar-cards { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:18px; }
+    .mc-s { background:#fff; border:var(--card-border); border-radius:18px; padding:16px 18px 6px; box-shadow:var(--card-shadow); position:relative; overflow:hidden; }
+    .mc-s .mc-top { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+    .mc-s .mc-label { font-size:13px; color:#6b7280; font-weight:600; }
+    .mc-badge { font-size:11px; font-weight:700; padding:3px 9px; border-radius:999px; }
+    .mc-badge.up { color:#16a34a; background:#e7f7ee; }
+    .mc-badge.down { color:#e11d48; background:#fde7ec; }
+    .mc-s .mc-val { font-size:24px; font-weight:800; color:#1a1a2e; margin:8px 0 2px; }
+    .mc-spark { height:46px; }
+    .solar-row3 { display:grid; grid-template-columns:1.5fr 1fr 1fr; gap:16px; margin-bottom:18px; align-items:stretch; }
+    .solar-row3 > .pr-card { margin:0; }
+    .rings-wrap { display:flex; align-items:center; gap:12px; }
+    .rings-canvas { position:relative; width:150px; height:150px; flex-shrink:0; }
+    .rings-center { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; pointer-events:none; }
+    .rings-center .rc-t { font-size:11px; color:#9ca3af; } .rings-center .rc-v { font-size:18px; font-weight:800; color:#1a1a2e; }
+    .rings-legend { flex:1; display:flex; flex-direction:column; gap:7px; font-size:12px; }
+    .rings-legend .rl { display:flex; align-items:center; gap:7px; }
+    .rings-legend .rl .dotc { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+    .rings-legend .rl .rl-n { flex:1; color:#4b5563; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .rings-legend .rl .rl-p { font-weight:700; color:#1a1a2e; }
+    .sh-list { display:flex; flex-direction:column; }
+    .sh-row { display:flex; align-items:center; gap:11px; padding:9px 0; border-bottom:1px solid var(--line); }
+    .sh-row:last-child { border-bottom:none; }
+    .sh-av { width:34px; height:34px; border-radius:50%; background:linear-gradient(135deg,#E91E63,#7C3AED); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:14px; flex-shrink:0; }
+    .sh-main { flex:1; min-width:0; } .sh-name { font-weight:700; font-size:13px; color:#1a1a2e; } .sh-sub { font-size:11px; color:#9ca3af; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .sh-amt { font-weight:700; font-size:13px; color:#1a1a2e; }
+    .cta-card { background:linear-gradient(150deg,#C2185B,#7C3AED); border-radius:18px; padding:22px; color:#fff; display:flex; flex-direction:column; justify-content:center; box-shadow:var(--card-shadow); }
+    .cta-card h3 { margin:0 0 6px; font-size:18px; } .cta-card p { margin:0 0 16px; font-size:13px; opacity:.9; line-height:1.5; }
+    .cta-card .cta-btn { background:#fff; color:#C2185B; border:none; border-radius:999px; padding:10px 18px; font-weight:700; font-size:13px; cursor:pointer; align-self:flex-start; }
+    @media (max-width:1100px){ .solar-cards{grid-template-columns:repeat(2,1fr);} .solar-row3{grid-template-columns:1fr;} }
     /* Convertex palette: lead with yellow, teal secondary */
     .ic-purple { background:linear-gradient(135deg,#E91E63,#C2185B); color:#fff; box-shadow:0 4px 10px rgba(194,24,91,.30); }
     .ic-purple svg { stroke:#fff; }
@@ -313,41 +344,29 @@
           <button class="btn secondary" onclick="resetDashFilter()">ล้าง</button>
         </div>
 
-        <div class="dash-section">📄 ใบขอซื้อ (PR)</div>
-        <div class="dash-metrics dash-metrics-5">
-          <div class="dash-mc"><div><div class="dash-mc-label">PR ทั้งหมด</div><div class="dash-mc-val" id="pr-total-count">0</div></div><div class="dash-ic ic-purple"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg></div></div>
-          <div class="dash-mc"><div><div class="dash-mc-label">มูลค่ารวม (บาท)</div><div class="dash-mc-val teal" id="pr-total-amount">0</div></div><div class="dash-ic ic-blue">฿</div></div>
-          <div class="dash-mc"><div><div class="dash-mc-label">อนุมัติแล้ว</div><div class="dash-mc-val green" id="pr-approved">0</div></div><div class="dash-ic ic-green"><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg></div></div>
-          <div class="dash-mc"><div><div class="dash-mc-label">รออนุมัติ</div><div class="dash-mc-val amber" id="pr-pending">0</div></div><div class="dash-ic ic-amber"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></div></div>
-          <div class="dash-mc"><div><div class="dash-mc-label">ปฏิเสธ</div><div class="dash-mc-val red" id="pr-rejected">0</div></div><div class="dash-ic ic-red"><svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></div></div>
+        <!-- Row 1: metric cards with sparklines -->
+        <div class="solar-cards">
+          <div class="mc-s"><div class="mc-top"><span class="mc-label">Total PRs</span><span class="mc-badge up" id="b-pr">+0%</span></div><div class="mc-val" id="pr-total-count">0</div><div class="mc-spark"><canvas id="spark-pr"></canvas></div></div>
+          <div class="mc-s"><div class="mc-top"><span class="mc-label">PR Value (THB)</span><span class="mc-badge up" id="b-prval">+0%</span></div><div class="mc-val" id="pr-total-amount">0</div><div class="mc-spark"><canvas id="spark-prval"></canvas></div></div>
+          <div class="mc-s"><div class="mc-top"><span class="mc-label">Total POs</span><span class="mc-badge up" id="b-po">+0%</span></div><div class="mc-val" id="po-total-count">0</div><div class="mc-spark"><canvas id="spark-po"></canvas></div></div>
+          <div class="mc-s"><div class="mc-top"><span class="mc-label">PO Value (THB)</span><span class="mc-badge up" id="b-poval">+0%</span></div><div class="mc-val" id="po-total-amount">0</div><div class="mc-spark"><canvas id="spark-poval"></canvas></div></div>
         </div>
-        <div class="dash-row r-2-1">
-          <div class="pr-card"><div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> PR รายวัน</div></div><div class="pr-card-body"><div class="dash-chart-box"><canvas id="pr-chart"></canvas></div></div></div>
-          <div class="pr-card"><div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> สถานะ PR</div></div><div class="pr-card-body"><div class="dash-chart-box"><canvas id="pr-donut"></canvas></div></div></div>
+
+        <!-- Row 2: big line | balance bars | concentric rings -->
+        <div class="solar-row3">
+          <div class="pr-card"><div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> Analytics Report — PR รายวัน</div></div><div class="pr-card-body"><div class="dash-chart-box"><canvas id="pr-chart"></canvas></div></div></div>
+          <div class="pr-card"><div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> Balance Flow (PR / PO)</div></div><div class="pr-card-body"><div class="dash-chart-box"><canvas id="balance-chart"></canvas></div></div></div>
+          <div class="pr-card"><div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> Top แผนก (มูลค่า)</div></div><div class="pr-card-body"><div class="rings-wrap"><div class="rings-canvas"><canvas id="rings-chart"></canvas><div class="rings-center"><div class="rc-t">Total</div><div class="rc-v" id="rings-total">0</div></div></div><div class="rings-legend" id="rings-legend"></div></div></div></div>
         </div>
-        <div class="dash-row r-1-1">
-          <div class="pr-card"><div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> Top แผนก (มูลค่า)</div></div><div class="pr-card-body"><div class="dash-chart-box sm"><canvas id="pr-top"></canvas></div></div></div>
+
+        <!-- Row 3: recent PR table | CTA | recent PO list -->
+        <div class="solar-row3">
           <div class="pr-card"><div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> PR ล่าสุด</div></div><div class="pr-card-body"><table class="pr-items"><thead><tr><th>PR No</th><th>แผนก</th><th style="text-align:right">มูลค่า</th><th>สถานะ</th></tr></thead><tbody id="pr-recent"></tbody></table></div></div>
+          <div class="cta-card"><h3>PR/PO System</h3><p>รออนุมัติ <b id="cta-pending">0</b> รายการ — จัดการใบขอซื้อและออกใบสั่งซื้อได้จากที่นี่</p><button class="cta-btn" onclick="document.querySelector('.nav a[data-page=&quot;prs&quot;]').click()">ไปที่ PR List →</button></div>
+          <div class="pr-card"><div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> PO ล่าสุด</div></div><div class="pr-card-body"><div class="sh-list" id="po-recent-list"></div></div></div>
         </div>
 
-        <div class="dash-section">🛒 ใบสั่งซื้อ (PO)</div>
-        <div class="dash-metrics dash-metrics-5">
-          <div class="dash-mc"><div><div class="dash-mc-label">PO ทั้งหมด</div><div class="dash-mc-val" id="po-total-count">0</div></div><div class="dash-ic ic-purple"><svg viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/></svg></div></div>
-          <div class="dash-mc"><div><div class="dash-mc-label">มูลค่ารวม (บาท)</div><div class="dash-mc-val teal" id="po-total-amount">0</div></div><div class="dash-ic ic-blue">฿</div></div>
-          <div class="dash-mc"><div><div class="dash-mc-label">Active</div><div class="dash-mc-val green" id="po-active">0</div></div><div class="dash-ic ic-green"><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg></div></div>
-          <div class="dash-mc"><div><div class="dash-mc-label">เสร็จสิ้น</div><div class="dash-mc-val" id="po-completed">0</div></div><div class="dash-ic ic-blue"><svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg></div></div>
-          <div class="dash-mc"><div><div class="dash-mc-label">ยกเลิก</div><div class="dash-mc-val red" id="po-cancelled">0</div></div><div class="dash-ic ic-red"><svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></div></div>
-        </div>
-        <div class="dash-row r-2-1">
-          <div class="pr-card"><div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> PO รายวัน</div></div><div class="pr-card-body"><div class="dash-chart-box"><canvas id="po-chart"></canvas></div></div></div>
-          <div class="pr-card"><div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> สถานะ PO</div></div><div class="pr-card-body"><div class="dash-chart-box"><canvas id="po-donut"></canvas></div></div></div>
-        </div>
-        <div class="dash-row r-1-1">
-          <div class="pr-card"><div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> Top ผู้ขาย (มูลค่า)</div></div><div class="pr-card-body"><div class="dash-chart-box sm"><canvas id="po-top"></canvas></div></div></div>
-          <div class="pr-card"><div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> PO ล่าสุด</div></div><div class="pr-card-body"><table class="pr-items"><thead><tr><th>PO No</th><th>ผู้ขาย</th><th style="text-align:right">มูลค่า</th><th>สถานะ</th></tr></thead><tbody id="po-recent"></tbody></table></div></div>
-        </div>
-
-        <div class="dash-section">📦 หมวดหมู่สินค้า (รวม PR + PO)</div>
+        <!-- Row 4: product reports -->
         <div class="dash-row r-1-1">
           <div class="pr-card"><div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> สินค้าที่มียอดสูงสุด (มูลค่า)</div></div><div class="pr-card-body"><div class="dash-chart-box sm"><canvas id="prod-value"></canvas></div></div></div>
           <div class="pr-card"><div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> สินค้าที่สั่งซื้อบ่อยสุด (จำนวนครั้ง)</div></div><div class="pr-card-body"><div class="dash-chart-box sm"><canvas id="prod-orders"></canvas></div></div></div>
@@ -724,28 +743,32 @@
         };
         const s = await api.getDashboardStats(filters);
         const money = v => Number(v || 0).toLocaleString('th-TH');
-        // PR
-        document.getElementById('pr-total-count').textContent = s.pr.total_count;
-        document.getElementById('pr-total-amount').textContent = money(Math.round(s.pr.total_amount));
-        document.getElementById('pr-approved').textContent = s.pr.status.Approved || 0;
-        document.getElementById('pr-pending').textContent = s.pr.status.Pending || 0;
-        document.getElementById('pr-rejected').textContent = s.pr.status.Rejected || 0;
-        drawDayChart('pr-chart', s.pr.by_day, '#C2185B');
         const _L = (window.tDyn || (s => s));
-        drawDonut('pr-donut', [[_L('รออนุมัติ'), s.pr.status.Pending || 0, '#d97706'], [_L('อนุมัติแล้ว'), s.pr.status.Approved || 0, '#16a34a'], [_L('ปฏิเสธ'), s.pr.status.Rejected || 0, '#e11d48']]);
-        drawTopBar('pr-top', s.pr.top, '#C2185B');
+        const setTxt = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+        const setBadge = (id, pct) => { const el = document.getElementById(id); if (!el) return; const up = pct >= 0; el.textContent = (up ? '+' : '') + pct + '%'; el.className = 'mc-badge ' + (up ? 'up' : 'down'); };
+        const trend = (arr, key) => { const a = (arr || []).map(r => Number(r[key] || 0)); if (a.length < 2) return 0; const h = Math.floor(a.length / 2); const past = a.slice(0, h).reduce((x, y) => x + y, 0); const now = a.slice(h).reduce((x, y) => x + y, 0); if (past === 0) return now > 0 ? 100 : 0; return Math.round((now - past) / past * 100); };
+        // Row 1: metric cards + sparklines
+        setTxt('pr-total-count', s.pr.total_count);
+        setTxt('pr-total-amount', money(Math.round(s.pr.total_amount)));
+        setTxt('po-total-count', s.po.total_count);
+        setTxt('po-total-amount', money(Math.round(s.po.total_amount)));
+        setBadge('b-pr', trend(s.pr.by_day, 'c'));
+        setBadge('b-prval', trend(s.pr.by_day, 'a'));
+        setBadge('b-po', trend(s.po.by_day, 'c'));
+        setBadge('b-poval', trend(s.po.by_day, 'a'));
+        drawSpark('spark-pr', s.pr.by_day, 'c', '#E91E63');
+        drawSpark('spark-prval', s.pr.by_day, 'a', '#7C3AED');
+        drawSpark('spark-po', s.po.by_day, 'c', '#F59E0B');
+        drawSpark('spark-poval', s.po.by_day, 'a', '#34D399');
+        // Row 2: big smooth line + Balance Flow bars + concentric rings (Top departments)
+        drawDayChart('pr-chart', s.pr.by_day, '#C2185B');
+        drawBalance('balance-chart', s.pr.by_day, s.po.by_day);
+        drawRings('rings-chart', 'rings-legend', 'rings-total', s.pr.top);
+        // Row 3: recent PR table + CTA pending count + recent PO list
         renderDashRecent('pr-recent', s.pr.recent);
-        // PO
-        document.getElementById('po-total-count').textContent = s.po.total_count;
-        document.getElementById('po-total-amount').textContent = money(Math.round(s.po.total_amount));
-        document.getElementById('po-active').textContent = s.po.status.Active || 0;
-        document.getElementById('po-completed').textContent = s.po.status.Completed || 0;
-        document.getElementById('po-cancelled').textContent = s.po.status.Cancelled || 0;
-        drawDayChart('po-chart', s.po.by_day, '#7C3AED');
-        drawDonut('po-donut', [['Active', s.po.status.Active || 0, '#16a34a'], [_L('เสร็จสิ้น'), s.po.status.Completed || 0, '#3b82f6'], [_L('ยกเลิก'), s.po.status.Cancelled || 0, '#e11d48']]);
-        drawTopBar('po-top', s.po.top, '#7C3AED');
-        renderDashRecent('po-recent', s.po.recent);
-        // Product category report (combined PR + PO)
+        setTxt('cta-pending', s.pr.status.Pending || 0);
+        renderPOList('po-recent-list', s.po.recent);
+        // Row 4: product reports (combined PR + PO)
         const prod = s.products || { by_value: [], by_orders: [] };
         drawTopValueBar('prod-value', prod.by_value, '#C2185B', 'value', true);
         drawTopValueBar('prod-orders', prod.by_orders, '#7C3AED', 'orders', false);
@@ -819,6 +842,67 @@
           scales: {
             x: { grid: { display: false }, ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 8 } },
             y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: 'rgba(0,0,0,.05)' }, border: { display: false } } } });
+    }
+
+    // Mini sparkline (Solar metric-card style) — no axes, soft gradient
+    function drawSpark(canvasId, byDay, key, color) {
+      const list = byDay || [];
+      const fillBg = (ctx) => {
+        const ch = ctx.chart, area = ch.chartArea;
+        if (!area) return hexA(color, 0.12);
+        const g = ch.ctx.createLinearGradient(0, area.top, 0, area.bottom);
+        g.addColorStop(0, hexA(color, 0.35)); g.addColorStop(1, hexA(color, 0));
+        return g;
+      };
+      upsertChart(canvasId, 'line',
+        { labels: list.map(r => r.d.slice(5)), datasets: [{
+            data: list.map(r => Number(r[key] || 0)), borderColor: color, backgroundColor: fillBg,
+            fill: true, tension: 0.45, borderWidth: 2, pointRadius: 0 }] },
+        { ...NO_RESIZE, plugins: { legend: { display: false }, tooltip: { enabled: false } },
+          scales: { x: { display: false }, y: { display: false } } });
+    }
+
+    // Balance Flow — vertical bars comparing PR vs PO over the last 7 days
+    function drawBalance(canvasId, prDay, poDay) {
+      const pr = (prDay || []).slice(-7), po = (poDay || []).slice(-7);
+      const _L = (window.tDyn || (s => s));
+      upsertChart(canvasId, 'bar',
+        { labels: pr.map(r => r.d.slice(5)), datasets: [
+            { label: _L('PR'), data: pr.map(r => Number(r.c || 0)), backgroundColor: '#5B1A3A', borderRadius: 6, maxBarThickness: 11 },
+            { label: _L('PO'), data: po.map(r => Number(r.c || 0)), backgroundColor: '#F4744E', borderRadius: 6, maxBarThickness: 11 } ] },
+        { ...NO_RESIZE, plugins: { legend: { display: true, position: 'top', labels: { boxWidth: 10, font: { size: 11 } } } },
+          scales: { x: { grid: { display: false } }, y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: 'rgba(0,0,0,.05)' }, border: { display: false } } } });
+    }
+
+    // Concentric rings (Solar "Customers" style) — one ring per top department
+    function drawRings(canvasId, legendId, totalId, top) {
+      const list = (top || []).slice(0, 5);
+      const colors = ['#C2185B', '#7C3AED', '#F59E0B', '#34D399', '#3B82F6'];
+      const total = list.reduce((x, r) => x + Number(r.a || 0), 0) || 1;
+      const datasets = list.map((r, i) => {
+        const pct = Math.round(Number(r.a || 0) / total * 100);
+        return { data: [pct, 100 - pct], backgroundColor: [colors[i % colors.length], '#F1EDF2'], borderWidth: 0, weight: 1 };
+      });
+      upsertChart(canvasId, 'doughnut',
+        { labels: [], datasets: datasets.length ? datasets : [{ data: [0, 100], backgroundColor: ['#eee', '#F1EDF2'], borderWidth: 0 }] },
+        { ...NO_RESIZE, cutout: '32%', plugins: { legend: { display: false }, tooltip: { enabled: false } } });
+      const tEl = document.getElementById(totalId); if (tEl) tEl.textContent = list.length;
+      const leg = document.getElementById(legendId);
+      if (leg) leg.innerHTML = list.map((r, i) => {
+        const pct = Math.round(Number(r.a || 0) / total * 100);
+        return `<div class="rl"><span class="dotc" style="background:${colors[i % colors.length]}"></span><span class="rl-n">${nz(r.name)}</span><span class="rl-p">${pct}%</span></div>`;
+      }).join('') || '<div class="dash-empty">ยังไม่มีข้อมูล</div>';
+    }
+
+    // Recent PO list (Solar "Sales History" style)
+    function renderPOList(id, rows) {
+      const el = document.getElementById(id); if (!el) return;
+      if (!rows || !rows.length) { el.innerHTML = '<div class="dash-empty">ยังไม่มีข้อมูล</div>'; return; }
+      el.innerHTML = rows.map(r => {
+        const party = nz(r.party) || '-';
+        const av = (party === '-' ? '?' : party).slice(0, 1).toUpperCase();
+        return `<div class="sh-row"><div class="sh-av">${av}</div><div class="sh-main"><div class="sh-name">${r.no}</div><div class="sh-sub">${party}</div></div><div class="sh-amt">฿${Number(r.total_amount || 0).toLocaleString()}</div></div>`;
+      }).join('');
     }
 
     function drawDonut(canvasId, items) {
