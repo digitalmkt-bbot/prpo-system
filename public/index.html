@@ -1003,11 +1003,12 @@
       const list = q
         ? SUPPLIERS.filter(s => (s.name || '').toLowerCase().includes(q) || (s.code || '').toLowerCase().includes(q))
         : SUPPLIERS;
-      const shown = list.slice(0, 500);
+      const CAP = 3000;
+      const shown = list.slice(0, CAP);
       document.getElementById('supplier-table').innerHTML = shown.map(s =>
         `<tr style="cursor:pointer" onclick="editSupplier('${s.id}')" title="คลิกเพื่อแก้ไข"><td>${s.code}</td><td>${s.name}</td><td style="max-width:340px">${nz(s.address)}</td><td>${nz(s.tax_id)}</td><td>${nz(s.phone)}</td></tr>`).join('');
       document.getElementById('supplier-count').textContent =
-        `แสดง ${shown.length} จาก ${list.length} รายการ` + (list.length > 500 ? ' (จำกัด 500 แถว — ใช้ช่องค้นหาเพื่อกรอง)' : '');
+        `แสดง ${shown.length} จาก ${list.length} รายการ` + (list.length > CAP ? ` (จำกัด ${CAP} แถว — ใช้ช่องค้นหาเพื่อกรอง)` : '');
     }
     window.renderSuppliers = renderSuppliers;
 
