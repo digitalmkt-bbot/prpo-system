@@ -1467,24 +1467,46 @@
         const ws = wb.Sheets[wb.SheetNames[0]];
         const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
         const clean = s => (s == null ? '' : String(s)).replace(/\s+/g, ' ').trim();
+        const norm = s => clean(s).toLowerCase();
         const pickEmail = s => { const m = String(s || '').match(/[\w.+-]+@[\w.-]+\.\w+/); return m ? m[0] : ''; };
+        // Map header text (EN/TH) -> supplier field
+        const HMAP = {
+          'code': 'code', 'รหัส': 'code', 'รหัสผู้ติดต่อ': 'code',
+          'name': 'name', 'ชื่อ': 'name',
+          'address': 'address', 'ที่อยู่': 'address',
+          'tax id': 'tax_id', 'taxid': 'tax_id', 'tax': 'tax_id', 'เลขทะเบียนภาษี': 'tax_id', 'เลขภาษี': 'tax_id',
+          'phone': 'phone', 'tel': 'phone', 'telephone': 'phone', 'เบอร์โทร': 'phone', 'เบอร์': 'phone',
+          'email': 'email', 'e-mail': 'email', 'อีเมล': 'email',
+          'ประเภทผู้ติดต่อ': 'contact_type', 'contact type': 'contact_type',
+          'สาขา': 'branch', 'branch': 'branch',
+          'บุคคล/นิติบุคคล': 'entity_type',
+          'ประเภทกิจการ': 'business_type',
+        };
+        // Detect the header row (must contain Code + Name) and build a column map by header name
+        let hdrIdx = -1, colMap = null;
+        for (let i = 0; i < Math.min(rows.length, 6); i++) {
+          const r = rows[i] || [];
+          const m = {};
+          r.forEach((c, idx) => { const f = HMAP[norm(c)]; if (f && m[f] === undefined) m[f] = idx; });
+          if (m.code !== undefined && m.name !== undefined) { hdrIdx = i; colMap = m; break; }
+        }
+        if (!colMap) return toast('ไม่พบหัวตาราง Code/Name ในไฟล์ — ตรวจชื่อหัวข้อ', true);
+        const get = (r, f) => (colMap[f] !== undefined ? clean(r[colMap[f]]) : '');
         const list = [];
-        // ข้าม 2 แถวหัวตาราง — ข้อมูลเริ่ม index 2
-        for (let i = 2; i < rows.length; i++) {
+        for (let i = hdrIdx + 1; i < rows.length; i++) {
           const r = rows[i]; if (!r) continue;
-          const code = clean(r[1]); const name = clean(r[9]);
+          const code = get(r, 'code'), name = get(r, 'name');
           if (!code || !name) continue;
-          const addrParts = [r[12], r[13], r[14], r[15], r[17]].map(clean).filter(Boolean);
           list.push({
             code, name,
-            contact_type: clean(r[2]),
-            tax_id: clean(r[4]),
-            branch: clean(r[5]),
-            entity_type: clean(r[6]),
-            business_type: clean(r[7]),
-            address: addrParts.join(' '),
-            phone: clean(r[25]),
-            email: pickEmail(r[26]),
+            address: get(r, 'address'),
+            tax_id: get(r, 'tax_id'),
+            phone: get(r, 'phone'),
+            email: pickEmail(colMap.email !== undefined ? r[colMap.email] : ''),
+            contact_type: get(r, 'contact_type'),
+            branch: get(r, 'branch'),
+            entity_type: get(r, 'entity_type'),
+            business_type: get(r, 'business_type'),
           });
         }
         if (!list.length) return toast('ไม่พบข้อมูลผู้ขายในไฟล์ (ตรวจรูปแบบคอลัมน์)', true);
