@@ -369,7 +369,7 @@
         <!-- Row 4: product reports -->
         <div class="dash-row r-1-1">
           <div class="pr-card"><div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> สินค้าที่มียอดสูงสุด (มูลค่า)</div></div><div class="pr-card-body"><div class="dash-chart-box sm"><canvas id="prod-value"></canvas></div></div></div>
-          <div class="pr-card"><div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> สินค้าที่สั่งซื้อบ่อยสุด (จำนวนครั้ง)</div></div><div class="pr-card-body"><div class="dash-chart-box sm"><canvas id="prod-orders"></canvas></div></div></div>
+          <div class="pr-card"><div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> อันดับแผนก (มูลค่า)</div></div><div class="pr-card-body"><div class="dash-chart-box sm"><canvas id="prod-orders"></canvas></div></div></div>
         </div>
 
         <div class="panel" style="margin-top:14px;"><div class="status" id="api-status">✅ API Connected</div></div>
@@ -771,7 +771,7 @@
         // Row 4: product reports (combined PR + PO)
         const prod = s.products || { by_value: [], by_orders: [] };
         drawTopValueBar('prod-value', prod.by_value, '#C2185B', 'value', true);
-        drawTopValueBar('prod-orders', prod.by_orders, '#7C3AED', 'orders', false);
+        drawTopValueBar('prod-orders', s.pr.top, '#7C3AED', 'a', true);
       } catch (e) {
         toast('โหลด Dashboard ไม่สำเร็จ: ' + e.message, true);
       }
@@ -2332,6 +2332,7 @@
       "PR ล่าสุด": "Recent PRs",
       "PO ล่าสุด": "Recent POs",
       "Top แผนก (มูลค่า)": "Top Departments (value)",
+      "อันดับแผนก (มูลค่า)": "Top Department by Value",
       "Top ผู้ขาย (มูลค่า)": "Top Suppliers (value)",
       "หมวดหมู่สินค้า (รวม PR + PO)": "Product Categories (PR + PO)"
     };
