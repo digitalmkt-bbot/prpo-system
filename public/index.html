@@ -1000,9 +1000,11 @@
 
     function renderSuppliers() {
       const q = (document.getElementById('supplier-search')?.value || '').toLowerCase().trim();
-      const list = q
+      const baseList = q
         ? SUPPLIERS.filter(s => (s.name || '').toLowerCase().includes(q) || (s.code || '').toLowerCase().includes(q))
         : SUPPLIERS;
+      // sort by Code A→Z
+      const list = [...baseList].sort((a, b) => String(a.code || '').localeCompare(String(b.code || ''), 'en', { numeric: true, sensitivity: 'base' }));
       const CAP = 3000;
       const shown = list.slice(0, CAP);
       document.getElementById('supplier-table').innerHTML = shown.map(s =>
