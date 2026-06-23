@@ -8,9 +8,9 @@
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
     :root {
-      --brand:#7C76F0; --brand-dark:#6A63E0; --panel:#ffffff; --ink:#0f172a; --muted:#6b7280;
-      --line:#eceef1; --green:#16a34a; --amber:#d97706; --red:#e11d48; --bg:#F3F2F9;
-      --accent:#7C76F0; --accent-soft:#EAE8FB; --teal:#34D399;
+      --brand:#B0184E; --brand-dark:#8A1340; --panel:#ffffff; --ink:#0f172a; --muted:#6b7280;
+      --line:#eceef1; --green:#16a34a; --amber:#d97706; --red:#e11d48; --bg:#F5F3F6;
+      --accent:#C2185B; --accent-soft:#FCE4EC; --teal:#34D399;
       --ink2:#14181f; --card-radius:20px; --card-shadow:0 4px 16px rgba(20,30,40,.05); --card-border:1px solid rgba(20,30,40,.06);
       --font:"Segoe UI", Roboto, "Helvetica Neue", sans-serif;
     }
@@ -80,10 +80,10 @@
     .toast.show { display: block; }
     .toast.error { background: var(--red); }
     .empty { text-align: center; color: var(--muted); padding: 40px 20px; }
-    .status { padding: 12px 14px; background: #EAE8FB; border-left: 3px solid var(--brand); border-radius: 10px; color: var(--brand-dark); }
+    .status { padding: 12px 14px; background: #FCE4EC; border-left: 3px solid var(--brand); border-radius: 10px; color: var(--brand-dark); }
     /* Login */
     .login-wrap { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
-      background: linear-gradient(135deg, #8B85F0, #6A63E0); z-index: 1000; }
+      background: linear-gradient(135deg, #C2185B, #7C3AED); z-index: 1000; }
     .login-card { background: #fff; width: 360px; max-width: 90vw; border-radius: 16px; padding: 32px;
       box-shadow: 0 20px 60px rgba(0,0,0,.25); }
     .login-card h2 { margin: 0 0 4px; font-size: 22px; }
@@ -140,7 +140,7 @@
     .typeahead-results > div:hover { background: #f1f5f9; }
     .typeahead-results .code { color: var(--muted); font-size: 11px; }
     /* ===== New PR form (teal) ===== */
-    .pr-form { --teal:#7C76F0; --teal-dark:#6A63E0; }
+    .pr-form { --teal:#C2185B; --teal-dark:#8A1340; }
     .pr-card { background:#fff; border:var(--card-border); border-radius:var(--card-radius); margin-bottom:16px; overflow:hidden; box-shadow:var(--card-shadow); }
     .pr-card-head { display:flex; align-items:center; justify-content:space-between; padding:14px 18px; border-bottom:1px solid #f0f2f5; }
     .pr-card-title { font-size:14px; font-weight:600; color:#1a1a2e; display:flex; align-items:center; gap:8px; }
@@ -170,7 +170,7 @@
     .pr-add { margin-top:12px; background:none; border:1.5px dashed #d1d5db; border-radius:12px; padding:9px; font-size:12px; color:#9ca3af; cursor:pointer; width:100%; }
     .pr-add:hover { border-color:var(--teal); color:var(--teal); background:#f8fffe; }
     .pr-sum { display:flex; justify-content:flex-end; margin-top:16px; }
-    .pr-sum-box { background:linear-gradient(135deg,#EEEDFC,#F5F4FE); border:1.5px solid #C4B5FD; border-radius:14px; padding:12px 24px; text-align:right; }
+    .pr-sum-box { background:linear-gradient(135deg,#FCE4EC,#FDF2F6); border:1.5px solid #F8BBD0; border-radius:14px; padding:12px 24px; text-align:right; }
     .pr-sum-label { font-size:11px; color:var(--teal-dark); font-weight:600; }
     .pr-sum-val { font-size:22px; font-weight:700; color:#065f46; }
     .pr-submit { background:var(--ink2); color:#fff; border:none; border-radius:13px; padding:11px 24px; font-weight:600; cursor:pointer; font-size:14px; }
@@ -217,9 +217,9 @@
     .dash-ic { width:46px; height:46px; border-radius:13px; display:flex; align-items:center; justify-content:center; color:#fff; flex-shrink:0; font-size:20px; font-weight:800; box-shadow:0 4px 10px rgba(16,24,40,.12); }
     .dash-ic svg { width:23px; height:23px; stroke:#fff; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
     /* Convertex palette: lead with yellow, teal secondary */
-    .ic-purple { background:linear-gradient(135deg,#A78BFA,#7C76F0); color:#fff; box-shadow:0 4px 10px rgba(124,118,240,.30); }
+    .ic-purple { background:linear-gradient(135deg,#E91E63,#C2185B); color:#fff; box-shadow:0 4px 10px rgba(194,24,91,.30); }
     .ic-purple svg { stroke:#fff; }
-    .ic-blue { background:linear-gradient(135deg,#C4B5FD,#A78BFA); }
+    .ic-blue { background:linear-gradient(135deg,#A78BFA,#7C3AED); }
     .ic-green { background:linear-gradient(135deg,#6EE7B7,#34D399); }
     .ic-amber { background:linear-gradient(135deg,#fbbf24,#f59e0b); }
     .ic-red { background:linear-gradient(135deg,#fb7185,#e11d48); }
@@ -730,10 +730,10 @@
         document.getElementById('pr-approved').textContent = s.pr.status.Approved || 0;
         document.getElementById('pr-pending').textContent = s.pr.status.Pending || 0;
         document.getElementById('pr-rejected').textContent = s.pr.status.Rejected || 0;
-        drawDayChart('pr-chart', s.pr.by_day, '#7C76F0');
+        drawDayChart('pr-chart', s.pr.by_day, '#C2185B');
         const _L = (window.tDyn || (s => s));
         drawDonut('pr-donut', [[_L('รออนุมัติ'), s.pr.status.Pending || 0, '#d97706'], [_L('อนุมัติแล้ว'), s.pr.status.Approved || 0, '#16a34a'], [_L('ปฏิเสธ'), s.pr.status.Rejected || 0, '#e11d48']]);
-        drawTopBar('pr-top', s.pr.top, '#7C76F0');
+        drawTopBar('pr-top', s.pr.top, '#C2185B');
         renderDashRecent('pr-recent', s.pr.recent);
         // PO
         document.getElementById('po-total-count').textContent = s.po.total_count;
@@ -741,14 +741,14 @@
         document.getElementById('po-active').textContent = s.po.status.Active || 0;
         document.getElementById('po-completed').textContent = s.po.status.Completed || 0;
         document.getElementById('po-cancelled').textContent = s.po.status.Cancelled || 0;
-        drawDayChart('po-chart', s.po.by_day, '#A78BFA');
+        drawDayChart('po-chart', s.po.by_day, '#7C3AED');
         drawDonut('po-donut', [['Active', s.po.status.Active || 0, '#16a34a'], [_L('เสร็จสิ้น'), s.po.status.Completed || 0, '#3b82f6'], [_L('ยกเลิก'), s.po.status.Cancelled || 0, '#e11d48']]);
-        drawTopBar('po-top', s.po.top, '#34D399');
+        drawTopBar('po-top', s.po.top, '#7C3AED');
         renderDashRecent('po-recent', s.po.recent);
         // Product category report (combined PR + PO)
         const prod = s.products || { by_value: [], by_orders: [] };
-        drawTopValueBar('prod-value', prod.by_value, '#7C76F0', 'value', true);
-        drawTopValueBar('prod-orders', prod.by_orders, '#A78BFA', 'orders', false);
+        drawTopValueBar('prod-value', prod.by_value, '#C2185B', 'value', true);
+        drawTopValueBar('prod-orders', prod.by_orders, '#7C3AED', 'orders', false);
       } catch (e) {
         toast('โหลด Dashboard ไม่สำเร็จ: ' + e.message, true);
       }
@@ -792,11 +792,33 @@
       }
     }
 
+    // hex -> rgba with alpha (for soft gradient fills)
+    function hexA(hex, a) {
+      const h = String(hex).replace('#', '');
+      const n = parseInt(h.length === 3 ? h.split('').map(c => c + c).join('') : h, 16);
+      return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
+    }
+    // Smooth area line chart (Solar "Analytics Report" style)
     function drawDayChart(canvasId, byDay, color) {
       const list = byDay || [];
-      upsertChart(canvasId, 'bar',
-        { labels: list.map(r => r.d.slice(5)), datasets: [{ data: list.map(r => r.c), backgroundColor: color, borderRadius: 4, maxBarThickness: 42 }] },
-        { ...NO_RESIZE, plugins: { legend: { display: false } }, scales: { x: { ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 14 } }, y: { beginAtZero: true, ticks: { precision: 0 } } } });
+      const fillBg = (ctx) => {
+        const ch = ctx.chart, area = ch.chartArea;
+        if (!area) return hexA(color, 0.12);
+        const g = ch.ctx.createLinearGradient(0, area.top, 0, area.bottom);
+        g.addColorStop(0, hexA(color, 0.34));
+        g.addColorStop(1, hexA(color, 0.01));
+        return g;
+      };
+      upsertChart(canvasId, 'line',
+        { labels: list.map(r => r.d.slice(5)), datasets: [{
+            data: list.map(r => r.c), borderColor: color, backgroundColor: fillBg,
+            fill: true, tension: 0.45, borderWidth: 2.5, pointRadius: 0,
+            pointHoverRadius: 5, pointHoverBackgroundColor: color,
+            pointHoverBorderColor: '#fff', pointHoverBorderWidth: 2 }] },
+        { ...NO_RESIZE, plugins: { legend: { display: false } },
+          scales: {
+            x: { grid: { display: false }, ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 8 } },
+            y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: 'rgba(0,0,0,.05)' }, border: { display: false } } } });
     }
 
     function drawDonut(canvasId, items) {
