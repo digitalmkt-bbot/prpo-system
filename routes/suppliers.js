@@ -122,5 +122,25 @@ export default function(pool) {
     }
   });
 
+  // Admin: delete ALL suppliers. Removes purchase_orders first (they FK-reference suppliers).
+  router.post('/admin/clear', async (req, res) => {
+    if (!req.user || req.user.role !== 'Admin') {
+      return res.status(403).json({ error: 'เฉพาะ Admin เท่านั้น' });
+    }
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query('DELETE FROM purchase_orders'); // remove FK refs (po_items cascade)
+      const r = await client.query('DELETE FROM suppliers');
+      await client.query('COMMIT');
+      res.json({ ok: true, deletedSuppliers: r.rowCount });
+    } catch (err) {
+      await client.query('ROLLBACK');
+      res.status(500).json({ error: err.message });
+    } finally {
+      client.release();
+    }
+  });
+
   return router;
 }

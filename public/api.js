@@ -148,6 +148,10 @@ class PROPOApi {
     return this.request('POST', '/suppliers/import', { suppliers });
   }
 
+  async clearSuppliers() {
+    return this.request('POST', '/suppliers/admin/clear');
+  }
+
   // ========== PRODUCTS ==========
   async getProducts() {
     return this.request('GET', '/products');
