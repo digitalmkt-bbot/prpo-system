@@ -9,8 +9,8 @@
   <style>
     :root {
       --brand:#16a34a; --brand-dark:#15803d; --panel:#ffffff; --ink:#0f172a; --muted:#6b7280;
-      --line:#eceef1; --green:#16a34a; --amber:#d97706; --red:#e11d48; --bg:#F6F7F9;
-      --accent:#FFD43B; --accent-soft:#FFF3C9; --teal:#22C3C3;
+      --line:#eceef1; --green:#16a34a; --amber:#d97706; --red:#e11d48; --bg:#F6F4F1;
+      --accent:#F4744E; --accent-soft:#FDE7DE; --teal:#5BB0E8;
       --ink2:#14181f; --card-radius:20px; --card-shadow:0 4px 16px rgba(20,30,40,.05); --card-border:1px solid rgba(20,30,40,.06);
       --font:"Segoe UI", Roboto, "Helvetica Neue", sans-serif;
     }
@@ -60,7 +60,7 @@
     .page { display: none; }
     .page.active { display: block; }
     .toolbar { display: flex; gap: 12px; margin-bottom: 16px; }
-    .btn { padding: 10px 20px; border: none; border-radius: 13px; background: var(--accent); color: #14181f; cursor: pointer; font-weight: 700; font-size:13px; transition:background .15s, transform .05s; }
+    .btn { padding: 10px 20px; border: none; border-radius: 13px; background: var(--accent); color: #fff; cursor: pointer; font-weight: 700; font-size:13px; transition:background .15s, transform .05s; }
     .btn:hover { background: #FFCB2E; }
     .btn:active { transform:translateY(1px); }
     .btn.secondary { background: #fff; color: var(--ink); border: 1px solid rgba(20,30,40,.08); }
@@ -209,7 +209,7 @@
     /* Pill filter chips */
     .pill { border:none; border-radius:999px; padding:8px 16px; font-size:13px; font-weight:600; cursor:pointer; background:#f1f3f5; color:var(--ink2); transition:background .15s; }
     .pill:hover { background:#e6e9ec; }
-    .pill.active { background:var(--accent); color:#14181f; }
+    .pill.active { background:var(--accent); color:#fff; }
     @media (max-width:1100px){ .dash-metrics-5{grid-template-columns:repeat(3,1fr);} }
     /* CitrusScan-style metric cards with gradient icon squares */
     .dash-mc { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; border-top:1px solid var(--line); }
@@ -217,10 +217,10 @@
     .dash-ic { width:46px; height:46px; border-radius:13px; display:flex; align-items:center; justify-content:center; color:#fff; flex-shrink:0; font-size:20px; font-weight:800; box-shadow:0 4px 10px rgba(16,24,40,.12); }
     .dash-ic svg { width:23px; height:23px; stroke:#fff; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
     /* Convertex palette: lead with yellow, teal secondary */
-    .ic-purple { background:linear-gradient(135deg,#FFE066,#FFC400); color:#14181f; box-shadow:0 4px 10px rgba(255,196,0,.28); }
-    .ic-purple svg { stroke:#14181f; }
-    .ic-blue { background:linear-gradient(135deg,#4FD8D8,#22C3C3); }
-    .ic-green { background:linear-gradient(135deg,#34d399,#10b981); }
+    .ic-purple { background:linear-gradient(135deg,#FF9472,#F4744E); color:#fff; box-shadow:0 4px 10px rgba(244,116,78,.30); }
+    .ic-purple svg { stroke:#fff; }
+    .ic-blue { background:linear-gradient(135deg,#F6CE4B,#F4C430); }
+    .ic-green { background:linear-gradient(135deg,#7CC6F2,#5BB0E8); }
     .ic-amber { background:linear-gradient(135deg,#fbbf24,#f59e0b); }
     .ic-red { background:linear-gradient(135deg,#fb7185,#e11d48); }
   </style>
@@ -730,10 +730,10 @@
         document.getElementById('pr-approved').textContent = s.pr.status.Approved || 0;
         document.getElementById('pr-pending').textContent = s.pr.status.Pending || 0;
         document.getElementById('pr-rejected').textContent = s.pr.status.Rejected || 0;
-        drawDayChart('pr-chart', s.pr.by_day, '#22C3C3');
+        drawDayChart('pr-chart', s.pr.by_day, '#F4744E');
         const _L = (window.tDyn || (s => s));
         drawDonut('pr-donut', [[_L('รออนุมัติ'), s.pr.status.Pending || 0, '#d97706'], [_L('อนุมัติแล้ว'), s.pr.status.Approved || 0, '#16a34a'], [_L('ปฏิเสธ'), s.pr.status.Rejected || 0, '#e11d48']]);
-        drawTopBar('pr-top', s.pr.top, '#FFCB2E');
+        drawTopBar('pr-top', s.pr.top, '#F4744E');
         renderDashRecent('pr-recent', s.pr.recent);
         // PO
         document.getElementById('po-total-count').textContent = s.po.total_count;
@@ -741,14 +741,14 @@
         document.getElementById('po-active').textContent = s.po.status.Active || 0;
         document.getElementById('po-completed').textContent = s.po.status.Completed || 0;
         document.getElementById('po-cancelled').textContent = s.po.status.Cancelled || 0;
-        drawDayChart('po-chart', s.po.by_day, '#FFCB2E');
+        drawDayChart('po-chart', s.po.by_day, '#F4C430');
         drawDonut('po-donut', [['Active', s.po.status.Active || 0, '#16a34a'], [_L('เสร็จสิ้น'), s.po.status.Completed || 0, '#3b82f6'], [_L('ยกเลิก'), s.po.status.Cancelled || 0, '#e11d48']]);
-        drawTopBar('po-top', s.po.top, '#22C3C3');
+        drawTopBar('po-top', s.po.top, '#5BB0E8');
         renderDashRecent('po-recent', s.po.recent);
         // Product category report (combined PR + PO)
         const prod = s.products || { by_value: [], by_orders: [] };
-        drawTopValueBar('prod-value', prod.by_value, '#22C3C3', 'value', true);
-        drawTopValueBar('prod-orders', prod.by_orders, '#FFCB2E', 'orders', false);
+        drawTopValueBar('prod-value', prod.by_value, '#F4744E', 'value', true);
+        drawTopValueBar('prod-orders', prod.by_orders, '#F4C430', 'orders', false);
       } catch (e) {
         toast('โหลด Dashboard ไม่สำเร็จ: ' + e.message, true);
       }
@@ -2304,7 +2304,7 @@
       const btns = box.querySelectorAll('button[data-lang]');
       btns.forEach(function(b){
         const active = b.getAttribute('data-lang') === LANG;
-        b.style.background = active ? '#101418' : 'transparent';
+        b.style.background = active ? 'var(--accent)' : 'transparent';
         b.style.color = active ? '#fff' : 'var(--muted)';
       });
     }
