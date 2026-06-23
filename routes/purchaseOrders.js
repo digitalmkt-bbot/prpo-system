@@ -180,7 +180,7 @@ export default function(pool) {
       const {
         supplier_id, reference = null, note = null,
         contact_name = null, contact_phone = null, contact_email = null,
-        wht_amount = 0, items: bodyItems,
+        wht_amount = 0, items: bodyItems, date = null,
       } = req.body || {};
 
       const poR = await client.query('SELECT * FROM purchase_orders WHERE po_no = $1 FOR UPDATE', [req.params.poNo]);
@@ -208,10 +208,10 @@ export default function(pool) {
           reference = $2, note = $3,
           contact_name = $4, contact_phone = $5, contact_email = $6,
           subtotal = $7, vat_amount = $8, wht_amount = $9, total_amount = $10,
-          net_amount = $11, has_vat = $12, updated_at = NOW()
-        WHERE id = $13
+          net_amount = $11, has_vat = $12, date = COALESCE($13::date, date), updated_at = NOW()
+        WHERE id = $14
       `, [supplier_id || null, reference, note, contact_name, contact_phone, contact_email,
-          subtotal, vat_amount, wht, total, net, vat_amount > 0, po.id]);
+          subtotal, vat_amount, wht, total, net, vat_amount > 0, date || null, po.id]);
 
       await client.query('DELETE FROM po_items WHERE po_id = $1', [po.id]);
       for (const it of items) {
