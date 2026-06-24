@@ -288,7 +288,7 @@
         <li><a class="active" data-page="dashboard">Dashboard</a></li>
         <li><a data-page="create">Create PR</a></li>
         <li><a data-page="prs">PR List</a></li>
-        <li><a data-page="pos">PO List</a></li>
+        <li id="nav-pos"><a data-page="pos">PO List</a></li>
         <li><a data-page="approvals">My Approvals</a></li>
         <li class="nav-label">Tools</li>
         <li><a data-page="suppliers">Suppliers</a></li>
@@ -348,14 +348,14 @@
         <div class="solar-cards">
           <div class="mc-s"><div class="mc-top"><span class="mc-label">Total PRs</span><span class="mc-badge up" id="b-pr">+0%</span></div><div class="mc-val" id="pr-total-count">0</div><div class="mc-spark"><canvas id="spark-pr"></canvas></div></div>
           <div class="mc-s"><div class="mc-top"><span class="mc-label">PR Value (THB)</span><span class="mc-badge up" id="b-prval">+0%</span></div><div class="mc-val" id="pr-total-amount">0</div><div class="mc-spark"><canvas id="spark-prval"></canvas></div></div>
-          <div class="mc-s"><div class="mc-top"><span class="mc-label">Total POs</span><span class="mc-badge up" id="b-po">+0%</span></div><div class="mc-val" id="po-total-count">0</div><div class="mc-spark"><canvas id="spark-po"></canvas></div></div>
-          <div class="mc-s"><div class="mc-top"><span class="mc-label">PO Value (THB)</span><span class="mc-badge up" id="b-poval">+0%</span></div><div class="mc-val" id="po-total-amount">0</div><div class="mc-spark"><canvas id="spark-poval"></canvas></div></div>
+          <div class="mc-s po-only"><div class="mc-top"><span class="mc-label">Total POs</span><span class="mc-badge up" id="b-po">+0%</span></div><div class="mc-val" id="po-total-count">0</div><div class="mc-spark"><canvas id="spark-po"></canvas></div></div>
+          <div class="mc-s po-only"><div class="mc-top"><span class="mc-label">PO Value (THB)</span><span class="mc-badge up" id="b-poval">+0%</span></div><div class="mc-val" id="po-total-amount">0</div><div class="mc-spark"><canvas id="spark-poval"></canvas></div></div>
         </div>
 
         <!-- Row 2: big line | balance bars | concentric rings -->
         <div class="solar-row3">
           <div class="pr-card"><div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> Analytics Report — PR รายวัน</div></div><div class="pr-card-body"><div class="dash-chart-box"><canvas id="pr-chart"></canvas></div></div></div>
-          <div class="pr-card"><div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> Balance Flow (PR / PO)</div></div><div class="pr-card-body"><div class="dash-chart-box"><canvas id="balance-chart"></canvas></div></div></div>
+          <div class="pr-card po-only"><div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> Balance Flow (PR / PO)</div></div><div class="pr-card-body"><div class="dash-chart-box"><canvas id="balance-chart"></canvas></div></div></div>
           <div class="pr-card"><div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> Top แผนก (มูลค่า)</div></div><div class="pr-card-body"><div class="rings-wrap"><div class="rings-canvas"><canvas id="rings-chart"></canvas><div class="rings-center"><div class="rc-t">Total</div><div class="rc-v" id="rings-total">0</div></div></div><div class="rings-legend" id="rings-legend"></div></div></div></div>
         </div>
 
@@ -363,7 +363,7 @@
         <div class="solar-row3">
           <div class="pr-card"><div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> PR ล่าสุด</div></div><div class="pr-card-body"><table class="pr-items"><thead><tr><th>PR No</th><th>แผนก</th><th style="text-align:right">มูลค่า</th><th>สถานะ</th></tr></thead><tbody id="pr-recent"></tbody></table></div></div>
           <div class="cta-card"><h3>PR/PO System</h3><p>รออนุมัติ <b id="cta-pending">0</b> รายการ — จัดการใบขอซื้อและออกใบสั่งซื้อได้จากที่นี่</p><button class="cta-btn" onclick="document.querySelector('.nav a[data-page=&quot;prs&quot;]').click()">ไปที่ PR List →</button></div>
-          <div class="pr-card"><div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> PO ล่าสุด</div></div><div class="pr-card-body"><div class="sh-list" id="po-recent-list"></div></div></div>
+          <div class="pr-card po-only"><div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> PO ล่าสุด</div></div><div class="pr-card-body"><div class="sh-list" id="po-recent-list"></div></div></div>
         </div>
 
         <!-- Row 4: product reports -->
@@ -623,7 +623,7 @@
         <div class="panel" style="margin-top:16px;">
           <table>
             <thead>
-              <tr><th>ชื่อ</th><th>อีเมล</th><th>Role</th><th>สถานะ</th><th>จัดการ</th></tr>
+              <tr><th>ชื่อ</th><th>อีเมล</th><th>Role</th><th>แผนก</th><th>สถานะ</th><th>จัดการ</th></tr>
             </thead>
             <tbody id="user-table"></tbody>
           </table>
@@ -946,7 +946,7 @@
           const unissued = Number(p.unissued_count || 0);
           const poReady = p.status !== 'Rejected' && Number(p.current_approval_step || 1) > PO_AFTER_STEP; // ผ่านขั้น 3 แล้ว
           const parts = [];
-          if (poReady && unissued > 0) parts.push(`<button class="btn-issue" onclick="event.stopPropagation();showIssuePO('${p.pr_no}')">ออก PO${p.po_no ? ' (รายการที่เหลือ)' : ''}</button>`);
+          if (poReady && unissued > 0 && canSeePO()) parts.push(`<button class="btn-issue" onclick="event.stopPropagation();showIssuePO('${p.pr_no}')">ออก PO${p.po_no ? ' (รายการที่เหลือ)' : ''}</button>`);
           if (p.po_no) parts.push(`<span style="color:var(--green);font-weight:600">${p.po_no}</span>`);
           if (parts.length) action = parts.join(' ');
           return `<tr style="cursor:pointer" onclick="showPRDetail('${p.pr_no}')">
@@ -1921,7 +1921,10 @@
     window.showDeptModal = showDeptModal;
 
     // ===== Users & Roles =====
-    const ROLES = ['Admin', 'Manager', 'Executive', 'Managing Director', 'Owner', 'Purchasing', 'Approver', 'Viewer'];
+    const ROLES = ['Admin', 'Manager', 'Executive', 'Managing Director', 'Owner', 'Purchase Manager', 'Admin Store', 'Purchasing', 'Approver', 'Viewer'];
+    const PO_ROLES = ['Admin', 'Purchase Manager', 'Admin Store']; // can view + issue PO
+    const PR_SEE_ALL = ['Admin', 'Manager', 'Executive', 'Managing Director', 'Owner', 'Purchase Manager', 'Admin Store']; // see PRs across all departments
+    const canSeePO = () => PO_ROLES.includes(currentUser && currentUser.role);
     const APPROVER_ROLES = ['Admin', 'Manager', 'Executive', 'Managing Director', 'Owner'];
     const APPROVAL_CHAIN = ['Manager', 'Executive', 'Managing Director', 'Owner']; // role required at step 1..4
     const PO_AFTER_STEP = 3; // PO issuable once step 3 (MD) passed
@@ -1934,9 +1937,10 @@
             <td>${nz(u.name)}</td>
             <td>${u.email}</td>
             <td><span class="tag ${APPROVER_ROLES.includes(u.role) ? 'approved' : 'pending'}">${u.role}</span></td>
+            <td>${nz(u.department_name)}</td>
             <td>${u.active === false ? 'ปิดใช้งาน' : 'ใช้งาน'}</td>
             <td><button class="btn secondary" style="padding:4px 10px;" onclick="showUserModal('${u.id}')">แก้ไข</button></td>
-          </tr>`).join('') || '<tr><td colspan="5" class="dash-empty">ยังไม่มีผู้ใช้</td></tr>';
+          </tr>`).join('') || '<tr><td colspan="6" class="dash-empty">ยังไม่มีผู้ใช้</td></tr>';
       } catch (e) {
         toast('โหลดผู้ใช้ไม่สำเร็จ: ' + e.message, true);
       }
@@ -1946,14 +1950,18 @@
     async function showUserModal(id) {
       let u = null;
       if (id) { try { u = (await api.getUsers()).find(x => x.id === id); } catch {} }
+      let depts = [];
+      try { depts = await api.getDepartments(); } catch {}
       const roleOpts = ROLES.map(r => `<option value="${r}" ${u && u.role === r ? 'selected' : ''}>${r}</option>`).join('');
+      const deptOpts = '<option value="">— ไม่ระบุ —</option>' + depts.map(d => `<option value="${d.id}" ${u && u.department_id === d.id ? 'selected' : ''}>${d.name}</option>`).join('');
       openModal(id ? 'แก้ไขผู้ใช้' : 'เพิ่มผู้ใช้', `
         <label>ชื่อ-นามสกุล *</label><input id="u-name" value="${u ? (u.name || '') : ''}">
         <label style="margin-top:8px;">อีเมล *</label><input id="u-email" type="email" value="${u ? u.email : ''}">
         <label style="margin-top:8px;">Role *</label><select id="u-role">${roleOpts}</select>
+        <label style="margin-top:8px;">แผนก / ฝ่าย</label><select id="u-dept">${deptOpts}</select>
         <label style="margin-top:8px;">รหัสผ่าน ${id ? '(เว้นว่างถ้าไม่เปลี่ยน)' : '*'}</label><input id="u-pass" type="text" placeholder="${id ? 'ไม่เปลี่ยน' : 'ตั้งรหัสผ่าน'}">
       `, async () => {
-        const payload = { name: val('u-name'), email: val('u-email'), role: val('u-role') };
+        const payload = { name: val('u-name'), email: val('u-email'), role: val('u-role'), department_id: val('u-dept') || null };
         if (!payload.name || !payload.email) return toast('กรุณากรอกชื่อและอีเมล', true);
         const pass = val('u-pass');
         if (pass) payload.password = pass;
@@ -1983,6 +1991,11 @@
       document.getElementById('app-container').style.display = 'flex';
       // Only Admin sees Users & Roles management
       document.getElementById('nav-users').style.display = (user.role === 'Admin') ? '' : 'none';
+      // Only Purchase Manager / Admin Store / Admin see the PO menu
+      const navPos = document.getElementById('nav-pos');
+      if (navPos) navPos.style.display = PO_ROLES.includes(user.role) ? '' : 'none';
+      // Hide PO-only dashboard widgets for roles that can't see PO
+      document.querySelectorAll('.po-only').forEach(el => { el.style.display = PO_ROLES.includes(user.role) ? '' : 'none'; });
       init();
     }
 

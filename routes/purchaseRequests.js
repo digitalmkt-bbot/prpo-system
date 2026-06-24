@@ -50,6 +50,13 @@ export default function(pool) {
         params.push(supplier_id);
       }
 
+      // Department scoping: non-privileged roles only see their own department's PRs
+      const SEE_ALL_PR = ['Admin', 'Manager', 'Executive', 'Managing Director', 'Owner', 'Purchase Manager', 'Admin Store'];
+      if (!SEE_ALL_PR.includes(req.user?.role)) {
+        params.push(req.user?.department_id || '00000000-0000-0000-0000-000000000000');
+        query += ` AND pr.department_id = $${params.length}`;
+      }
+
       query += ` GROUP BY pr.id, s.name, d.name
                  ORDER BY pr.created_at DESC
                  LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
@@ -97,7 +104,14 @@ export default function(pool) {
         return res.status(404).json({ error: 'PR not found' });
       }
 
-      res.json(result.rows[0]);
+      // Department scoping: non-privileged roles can only open their own department's PR
+      const SEE_ALL_PR = ['Admin', 'Manager', 'Executive', 'Managing Director', 'Owner', 'Purchase Manager', 'Admin Store'];
+      const pr = result.rows[0];
+      if (!SEE_ALL_PR.includes(req.user?.role) && String(pr.department_id) !== String(req.user?.department_id)) {
+        return res.status(403).json({ error: 'ไม่มีสิทธิ์ดูใบขอซื้อของแผนกอื่น' });
+      }
+
+      res.json(pr);
     } catch (err) {
       res.status(500).json({ error: err.message });
     }

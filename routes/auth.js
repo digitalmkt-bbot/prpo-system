@@ -18,7 +18,7 @@ export default function (pool) {
         return res.status(400).json({ error: 'กรุณากรอกอีเมลและรหัสผ่าน' });
       }
       const r = await pool.query(
-        'SELECT id, email, name, role, password_hash, active FROM users WHERE lower(email) = lower($1)',
+        'SELECT id, email, name, role, password_hash, active, department_id FROM users WHERE lower(email) = lower($1)',
         [email]
       );
       const u = r.rows[0];
@@ -28,7 +28,7 @@ export default function (pool) {
       const ok = u.password_hash && (await bcrypt.compare(password, u.password_hash));
       if (!ok) return res.status(401).json(badCreds);
 
-      const payload = { id: u.id, email: u.email, name: u.name, role: u.role };
+      const payload = { id: u.id, email: u.email, name: u.name, role: u.role, department_id: u.department_id || null };
       const token = jwt.sign(payload, SECRET, { expiresIn: TOKEN_TTL });
       res.json({ token, user: payload });
     } catch (err) {

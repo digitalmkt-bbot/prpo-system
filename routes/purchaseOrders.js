@@ -5,8 +5,13 @@ import { v4 as uuid } from 'uuid';
 export default function(pool) {
   const router = Router();
 
+  // Only these roles may view / issue / edit Purchase Orders
+  const PO_ROLES = ['Admin', 'Purchase Manager', 'Admin Store'];
+  const canPO = (req) => PO_ROLES.includes(req.user?.role);
+
   // Issue a PO from an approved PR — supplier is chosen at this step
   router.post('/issue', async (req, res) => {
+    if (!canPO(req)) return res.status(403).json({ error: 'เฉพาะ Purchase Manager / Admin Store เท่านั้นที่ออก PO ได้' });
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
@@ -87,6 +92,7 @@ export default function(pool) {
   });
 
   router.get('/', async (req, res) => {
+    if (!canPO(req)) return res.status(403).json({ error: 'ไม่มีสิทธิ์ดูใบสั่งซื้อ (PO)' });
     try {
       const { status, limit = 100, offset = 0 } = req.query;
 
@@ -125,6 +131,7 @@ export default function(pool) {
   });
 
   router.get('/:poNo', async (req, res) => {
+    if (!canPO(req)) return res.status(403).json({ error: 'ไม่มีสิทธิ์ดูใบสั่งซื้อ (PO)' });
     try {
       const result = await pool.query(`
         SELECT
@@ -160,6 +167,7 @@ export default function(pool) {
   });
 
   router.put('/:id', async (req, res) => {
+    if (!canPO(req)) return res.status(403).json({ error: 'ไม่มีสิทธิ์แก้ไขใบสั่งซื้อ (PO)' });
     try {
       const { status } = req.body;
       const result = await pool.query(
@@ -174,6 +182,7 @@ export default function(pool) {
 
   // Full update of an issued PO: header + items, with totals recalculated
   router.put('/:poNo/full', async (req, res) => {
+    if (!canPO(req)) return res.status(403).json({ error: 'ไม่มีสิทธิ์แก้ไขใบสั่งซื้อ (PO)' });
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
