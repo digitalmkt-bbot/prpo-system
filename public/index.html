@@ -83,13 +83,37 @@
     .status { padding: 12px 14px; background: #FCE4EC; border-left: 3px solid var(--brand); border-radius: 10px; color: var(--brand-dark); }
     /* Login */
     .login-wrap { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
-      background: linear-gradient(135deg, #C2185B, #7C3AED); z-index: 1000; }
-    .login-card { background: #fff; width: 360px; max-width: 90vw; border-radius: 16px; padding: 32px;
-      box-shadow: 0 20px 60px rgba(0,0,0,.25); }
-    .login-card h2 { margin: 0 0 4px; font-size: 22px; }
-    .login-card .sub { color: var(--muted); font-size: 13px; margin-bottom: 20px; }
-    .login-card .btn { width: 100%; margin-top: 18px; padding: 11px; font-size: 15px; }
-    .login-err { color: var(--red); font-size: 13px; margin-top: 12px; min-height: 18px; }
+      background: linear-gradient(135deg,#FFE3EF 0%,#ECE4FF 45%,#FFF0E2 100%); background-size:200% 200%;
+      animation: lg-bg 14s ease infinite; z-index: 1000; overflow:hidden; }
+    @keyframes lg-bg { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
+    .lg-blob { position:absolute; border-radius:50%; opacity:.5; filter:blur(1px); animation:lg-float 9s ease-in-out infinite; }
+    .lg-blob.b1{ width:120px;height:120px; background:#FFC2DC; top:12%; left:13%; }
+    .lg-blob.b2{ width:90px;height:90px; background:#C9B8FF; bottom:15%; left:20%; animation-delay:1.5s; }
+    .lg-blob.b3{ width:150px;height:150px; background:#FFD9B0; top:16%; right:11%; animation-delay:.8s; }
+    .lg-blob.b4{ width:70px;height:70px; background:#B8E1FF; bottom:18%; right:16%; animation-delay:2.2s; }
+    @keyframes lg-float { 0%,100%{transform:translate(0,0)} 50%{transform:translate(12px,-26px)} }
+    .login-card { position:relative; z-index:2; background:#fff; width:360px; max-width:90vw; border-radius:28px; padding:24px 32px 32px;
+      box-shadow:0 24px 70px rgba(124,58,237,.22); animation:lg-pop .6s cubic-bezier(.34,1.56,.64,1); }
+    @keyframes lg-pop { 0%{transform:scale(.85) translateY(20px); opacity:0} 100%{transform:scale(1) translateY(0); opacity:1} }
+    .login-card h2 { margin:0 0 4px; font-size:22px; text-align:center; }
+    .login-card .sub { color: var(--muted); font-size: 13px; margin-bottom: 18px; text-align:center; }
+    .login-card label { font-size:12px; color:#6b7280; font-weight:600; }
+    .login-card input { width:100%; padding:12px 16px; border:2px solid #F0E9F7; border-radius:14px; font-size:14px; margin-top:5px; background:#FBF8FE; box-sizing:border-box; transition:all .2s; }
+    .login-card input:focus { outline:none; border-color:#C2185B; background:#fff; box-shadow:0 0 0 4px rgba(194,24,91,.10); }
+    .login-card .btn { width:100%; margin-top:18px; padding:12px; font-size:15px; border-radius:14px; transition:transform .15s, box-shadow .2s; }
+    .login-card .btn:hover { transform:translateY(-2px); box-shadow:0 8px 20px rgba(194,24,91,.30); }
+    .login-card .btn:active { transform:translateY(0) scale(.97); }
+    .login-err { color: var(--red); font-size: 13px; margin-top: 12px; min-height: 18px; text-align:center; }
+    /* cute mascot */
+    .lg-mascot { width:124px; height:112px; margin:0 auto 4px; }
+    .lg-face { animation:lg-bob 3.2s ease-in-out infinite; transform-box:fill-box; transform-origin:center bottom; }
+    @keyframes lg-bob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)} }
+    .lg-eye { transform-box:fill-box; transform-origin:center; animation:lg-blink 4.5s infinite; }
+    @keyframes lg-blink { 0%,92%,100%{transform:scaleY(1)} 96%{transform:scaleY(.12)} }
+    .lg-paw { transform-box:fill-box; transform-origin:center; transition:transform .38s cubic-bezier(.34,1.56,.64,1); }
+    .lg-mascot.peek .lg-paw-l { transform:translate(16px,-40px); }
+    .lg-mascot.peek .lg-paw-r { transform:translate(-16px,-40px); }
+    .lg-mascot.peek .lg-eye { animation:none; transform:scaleY(.08); }
     .logout-btn { display: block; width: 100%; margin-top: 12px; padding: 8px; border: 1px solid rgba(20,30,40,.08);
       background: #f8fafc; color: var(--ink); border-radius: 10px; cursor: pointer; font-size: 12px; font-weight:600; }
     .logout-btn:hover { background: #f1f3f5; }
@@ -260,14 +284,34 @@
 <body>
   <!-- LOGIN -->
   <div class="login-wrap" id="login-wrap" style="display:none;">
+    <div class="lg-blob b1"></div><div class="lg-blob b2"></div><div class="lg-blob b3"></div><div class="lg-blob b4"></div>
     <div class="login-card">
-      <h2>🚀 PR/PO System</h2>
+      <div class="lg-mascot" id="lg-mascot">
+        <svg viewBox="0 0 124 112" width="124" height="112" xmlns="http://www.w3.org/2000/svg">
+          <g class="lg-face">
+            <circle cx="30" cy="26" r="12" fill="#FFB6D5"/>
+            <circle cx="94" cy="26" r="12" fill="#FFB6D5"/>
+            <ellipse cx="62" cy="56" rx="44" ry="42" fill="#FFB6D5"/>
+            <ellipse cx="62" cy="60" rx="32" ry="30" fill="#FFD7E8"/>
+            <ellipse cx="40" cy="66" rx="7" ry="5" fill="#FF8FB8" opacity=".65"/>
+            <ellipse cx="84" cy="66" rx="7" ry="5" fill="#FF8FB8" opacity=".65"/>
+            <g><circle class="lg-eye" cx="50" cy="54" r="6" fill="#3a2a3f"/><circle cx="52" cy="52" r="2" fill="#fff"/></g>
+            <g><circle class="lg-eye" cx="74" cy="54" r="6" fill="#3a2a3f"/><circle cx="76" cy="52" r="2" fill="#fff"/></g>
+            <path d="M54 70 Q62 78 70 70" stroke="#A85A78" stroke-width="3" fill="none" stroke-linecap="round"/>
+          </g>
+          <ellipse class="lg-paw lg-paw-l" cx="36" cy="98" rx="12" ry="10" fill="#FFB6D5"/>
+          <ellipse class="lg-paw lg-paw-r" cx="88" cy="98" rx="12" ry="10" fill="#FFB6D5"/>
+        </svg>
+      </div>
+      <h2>PR/PO System</h2>
       <div class="sub">Love Andaman — เข้าสู่ระบบเพื่อใช้งาน</div>
       <form id="login-form" autocomplete="on">
         <label>อีเมล</label>
         <input type="email" id="login-email" placeholder="you@loveandaman.com" required>
         <label style="margin-top:10px;">รหัสผ่าน</label>
-        <input type="password" id="login-password" placeholder="••••••••" required>
+        <input type="password" id="login-password" placeholder="••••••••" required
+          onfocus="document.getElementById('lg-mascot').classList.add('peek')"
+          onblur="document.getElementById('lg-mascot').classList.remove('peek')">
         <button class="btn" type="submit" id="login-btn">เข้าสู่ระบบ</button>
         <div class="login-err" id="login-err"></div>
       </form>
