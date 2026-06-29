@@ -11,9 +11,16 @@ export default function (pool) {
     try {
       const { from, to, status } = req.query;
 
-      // Department scoping: non-privileged roles only see their own department's PR stats
-      const SEE_ALL_PR = ['Admin', 'Manager', 'Executive', 'Managing Director', 'Owner', 'Purchase Manager', 'Admin Store'];
-      const prDept = !SEE_ALL_PR.includes(req.user?.role) ? (req.user?.department_id || '00000000-0000-0000-0000-000000000000') : null;
+      // Visibility scope for PR stats: company-wide (senior) / own department (Manager) / own PRs (Staff)
+      const SEE_ALL_PR = ['Admin', 'Executive', 'Managing Director', 'Owner', 'Purchase Manager', 'Admin Store'];
+      const vrole = req.user?.role;
+      let prScopeCol = null, prScopeVal = null;
+      if (SEE_ALL_PR.includes(vrole)) { /* sees all */ }
+      else if (vrole === 'Manager') { prScopeCol = 'department_id'; prScopeVal = req.user?.department_id || '00000000-0000-0000-0000-000000000000'; }
+      else { prScopeCol = 'requested_by'; prScopeVal = req.user?.email || ''; }
+      const prCondSql = (alias, idx) => prScopeCol === 'requested_by'
+        ? `lower(${alias}.requested_by) = lower($${idx})`
+        : `${alias}.${prScopeCol} = $${idx}`;
 
       // Build filter conditions for a table alias + its allowed status list
       const buildFilter = (alias, allowed) => {
@@ -22,7 +29,7 @@ export default function (pool) {
         if (from) { params.push(from); cond.push(`${alias}.date >= $${params.length}`); }
         if (to) { params.push(to); cond.push(`${alias}.date <= $${params.length}`); }
         if (status && allowed.includes(status)) { params.push(status); cond.push(`${alias}.status = $${params.length}`); }
-        if (alias === 'pr' && prDept) { params.push(prDept); cond.push(`${alias}.department_id = $${params.length}`); }
+        if (alias === 'pr' && prScopeCol) { params.push(prScopeVal); cond.push(prCondSql(alias, params.length)); }
         return { cond, params, where: cond.length ? 'WHERE ' + cond.join(' AND ') : '' };
       };
 
@@ -45,7 +52,7 @@ export default function (pool) {
         if (to) { dayParams.push(to); endSql = `$${dayParams.length}::date`; } else { endSql = 'CURRENT_DATE'; }
         let statusJoin = '';
         if (status && allowed.includes(status)) { dayParams.push(status); statusJoin = ` AND ${alias}.status = $${dayParams.length}`; }
-        if (alias === 'pr' && prDept) { dayParams.push(prDept); statusJoin += ` AND ${alias}.department_id = $${dayParams.length}`; }
+        if (alias === 'pr' && prScopeCol) { dayParams.push(prScopeVal); statusJoin += ` AND ` + prCondSql(alias, dayParams.length); }
         out.by_day = (await pool.query(`
           SELECT to_char(gs.d,'YYYY-MM-DD') d, COUNT(${alias}.id)::int c, COALESCE(SUM(${alias}.total_amount),0)::float a
           FROM generate_series(${startSql}, ${endSql}, INTERVAL '1 day') gs(d)
@@ -82,7 +89,7 @@ export default function (pool) {
         if (from) { prodParams.push(from); cond.push(`${alias}.date >= $${prodParams.length}`); }
         if (to) { prodParams.push(to); cond.push(`${alias}.date <= $${prodParams.length}`); }
         if (status && allowed.includes(status)) { prodParams.push(status); cond.push(`${alias}.status = $${prodParams.length}`); }
-        if (alias === 'pr' && prDept) { prodParams.push(prDept); cond.push(`${alias}.department_id = $${prodParams.length}`); }
+        if (alias === 'pr' && prScopeCol) { prodParams.push(prScopeVal); cond.push(prCondSql(alias, prodParams.length)); }
         return cond.length ? 'WHERE ' + cond.join(' AND ') : '';
       };
       const wPr = mkWhere('pr', PR_STATUSES);

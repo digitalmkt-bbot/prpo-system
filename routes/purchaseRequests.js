@@ -50,11 +50,17 @@ export default function(pool) {
         params.push(supplier_id);
       }
 
-      // Department scoping: non-privileged roles only see their own department's PRs
-      const SEE_ALL_PR = ['Admin', 'Manager', 'Executive', 'Managing Director', 'Owner', 'Purchase Manager', 'Admin Store'];
-      if (!SEE_ALL_PR.includes(req.user?.role)) {
+      // Visibility: company-wide (senior) / own department (Manager) / own PRs only (Staff)
+      const SEE_ALL_PR = ['Admin', 'Executive', 'Managing Director', 'Owner', 'Purchase Manager', 'Admin Store'];
+      const vrole = req.user?.role;
+      if (SEE_ALL_PR.includes(vrole)) {
+        // sees everything — no extra filter
+      } else if (vrole === 'Manager') {
         params.push(req.user?.department_id || '00000000-0000-0000-0000-000000000000');
         query += ` AND pr.department_id = $${params.length}`;
+      } else {
+        params.push(req.user?.email || '');
+        query += ` AND lower(pr.requested_by) = lower($${params.length})`;
       }
 
       query += ` GROUP BY pr.id, s.name, d.name
@@ -104,12 +110,14 @@ export default function(pool) {
         return res.status(404).json({ error: 'PR not found' });
       }
 
-      // Department scoping: non-privileged roles can only open their own department's PR
-      const SEE_ALL_PR = ['Admin', 'Manager', 'Executive', 'Managing Director', 'Owner', 'Purchase Manager', 'Admin Store'];
+      // Visibility: company-wide (senior) / own department (Manager) / own PRs only (Staff)
+      const SEE_ALL_PR = ['Admin', 'Executive', 'Managing Director', 'Owner', 'Purchase Manager', 'Admin Store'];
       const pr = result.rows[0];
-      if (!SEE_ALL_PR.includes(req.user?.role) && String(pr.department_id) !== String(req.user?.department_id)) {
-        return res.status(403).json({ error: 'ไม่มีสิทธิ์ดูใบขอซื้อของแผนกอื่น' });
-      }
+      const vrole = req.user?.role;
+      let allowed = SEE_ALL_PR.includes(vrole);
+      if (!allowed && vrole === 'Manager') allowed = String(pr.department_id) === String(req.user?.department_id);
+      if (!allowed && vrole !== 'Manager') allowed = String(pr.requested_by || '').toLowerCase() === String(req.user?.email || '').toLowerCase();
+      if (!allowed) return res.status(403).json({ error: 'ไม่มีสิทธิ์ดูใบขอซื้อนี้' });
 
       res.json(pr);
     } catch (err) {
