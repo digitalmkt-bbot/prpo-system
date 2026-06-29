@@ -17,7 +17,8 @@ export default function(pool) {
     try {
       const result = await pool.query(`
         SELECT u.id, u.email, u.name, u.role, u.active, u.department_id,
-               u.employee_code, u.company, u.first_approver, d.name AS department_name
+               u.employee_code, u.company, u.first_approver, d.name AS department_name,
+               (u.password_hash IS NOT NULL) AS has_password
         FROM users u LEFT JOIN departments d ON u.department_id = d.id
         ORDER BY u.name ASC`);
       res.json(result.rows);
@@ -65,6 +66,28 @@ export default function(pool) {
     try {
       await pool.query('DELETE FROM users WHERE id = $1', [req.params.id]);
       res.json({ ok: true });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Admin generates a random temporary password for a user and returns it once (to hand out)
+  router.post('/:id/reset-password', async (req, res) => {
+    try {
+      if (!req.user || req.user.role !== 'Admin') {
+        return res.status(403).json({ error: 'เฉพาะ Admin เท่านั้น' });
+      }
+      // Readable temp password (no ambiguous chars like 0/O, 1/l)
+      const chars = 'abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      let temp = '';
+      for (let i = 0; i < 10; i++) temp += chars[Math.floor(Math.random() * chars.length)];
+      const hash = await bcrypt.hash(temp, 10);
+      const r = await pool.query(
+        'UPDATE users SET password_hash = $1, updated_at = NOW() WHERE id = $2 RETURNING email, name',
+        [hash, req.params.id]
+      );
+      if (!r.rows[0]) return res.status(404).json({ error: 'ไม่พบผู้ใช้' });
+      res.json({ ok: true, email: r.rows[0].email, name: r.rows[0].name, password: temp });
     } catch (err) {
       res.status(500).json({ error: err.message });
     }

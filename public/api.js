@@ -268,6 +268,10 @@ class PROPOApi {
     return this.request('DELETE', `/users/${id}`);
   }
 
+  async resetUserPassword(id) {
+    return this.request('POST', `/users/${id}/reset-password`);
+  }
+
   // ========== PURCHASE TYPES ==========
   async getPurchaseTypes() {
     return this.request('GET', '/purchase-types');
