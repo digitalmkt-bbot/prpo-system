@@ -10,6 +10,8 @@ export default function(pool) {
   // Ensure per-item approval status + per-item issued-PO columns exist
   pool.query("ALTER TABLE pr_items ADD COLUMN IF NOT EXISTS item_status VARCHAR(20) DEFAULT 'approved'").catch(() => {});
   pool.query("ALTER TABLE pr_items ADD COLUMN IF NOT EXISTS po_no VARCHAR(50)").catch(() => {});
+  // Designated first approver (Manager email) copied from the creator at PR creation; null = auto (same-dept manager)
+  pool.query("ALTER TABLE purchase_requests ADD COLUMN IF NOT EXISTS first_approver VARCHAR(150)").catch(() => {});
 
   // Get all PRs with optional filters
   router.get('/', async (req, res) => {
@@ -165,17 +167,24 @@ export default function(pool) {
       // Fixed 4-step approval chain (Manager → Executive → Managing Director → Owner); PO issuable after step 3
       const totalSteps = 4;
 
+      // Resolve the creator's designated first approver (null = auto / same-dept manager)
+      let firstApprover = null;
+      try {
+        const ur = await client.query('SELECT first_approver FROM users WHERE id = $1', [req.user?.id]);
+        firstApprover = ur.rows[0]?.first_approver || null;
+      } catch { /* ignore */ }
+
       // Create PR (supplier chosen later at the PO stage)
       await client.query(`
         INSERT INTO purchase_requests
         (id, pr_no, date, supplier_id, department_id, status, total_amount, has_vat,
          requested_by, current_approval_step, total_approval_steps, approval_chain,
-         requester_name, needed_date, purchase_type, purpose)
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
+         requester_name, needed_date, purchase_type, purpose, first_approver)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)
       `, [
         pr_id, pr_no, date, supplier_id, department_id, 'Pending',
         total, has_vat, requested_by, 1, totalSteps, '[]',
-        requester_name, needed_date || null, purchase_type, purpose
+        requester_name, needed_date || null, purchase_type, purpose, firstApprover
       ]);
 
       // Add items (total_price is a generated column — do not insert it)

@@ -184,6 +184,22 @@ class PROPOApi {
     return this.request('DELETE', `/departments/${id}`);
   }
 
+  // ========== COMPANIES (multi-company master) ==========
+  async getCompanies() {
+    return this.request('GET', '/companies');
+  }
+
+  async saveCompany(company) {
+    if (company.id) {
+      return this.request('PUT', `/companies/${company.id}`, company);
+    }
+    return this.request('POST', '/companies', company);
+  }
+
+  async deleteCompany(id) {
+    return this.request('DELETE', `/companies/${id}`);
+  }
+
   // ========== APPROVAL MATRIX ==========
   async getApprovalMatrix() {
     return this.request('GET', '/approval-matrix');

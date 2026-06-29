@@ -338,6 +338,7 @@
         <li class="nav-label">Tools</li>
         <li><a data-page="suppliers">Suppliers</a></li>
         <li><a data-page="departments">Departments</a></li>
+        <li id="nav-companies"><a data-page="companies">Companies</a></li>
         <li id="nav-users"><a data-page="users">Users &amp; Roles</a></li>
         <li><a data-page="settings">Settings</a></li>
       </ul>
@@ -660,6 +661,21 @@
         </div>
       </div>
 
+      <!-- COMPANIES -->
+      <div class="page" id="page-companies">
+        <h1>Companies</h1>
+        <p class="subtitle">จัดการรายชื่อบริษัท / นิติบุคคล (ใช้เลือกตอนสร้างผู้ใช้)</p>
+        <button class="btn" onclick="showCompanyModal()">+ New Company</button>
+        <div class="panel" style="margin-top: 20px;">
+          <table>
+            <thead>
+              <tr><th>Code</th><th>Name</th><th>Tax ID</th><th>จัดการ</th></tr>
+            </thead>
+            <tbody id="company-table"></tbody>
+          </table>
+        </div>
+      </div>
+
       <!-- USERS & ROLES -->
       <div class="page" id="page-users">
         <h1>Users &amp; Roles</h1>
@@ -760,6 +776,7 @@
         if (page === 'approvals') loadApprovals();
         if (page === 'suppliers') switchSupTab('suppliers');
         if (page === 'departments') loadDepartments();
+        if (page === 'companies') loadCompanies();
         if (page === 'users') loadUsers();
       });
     });
@@ -2005,8 +2022,40 @@
     }
     window.showDeptModal = showDeptModal;
 
+    // ===== Companies (multi-company master) =====
+    async function loadCompanies() {
+      try {
+        const list = await api.getCompanies();
+        document.getElementById('company-table').innerHTML = list.length
+          ? list.map(c => `<tr><td><b style="color:var(--brand)">${nz(c.code)}</b></td><td>${nz(c.name)}</td><td>${nz(c.tax_id)}</td><td><button class="btn secondary" style="padding:4px 10px" onclick="showCompanyModal('${c.id}')">แก้ไข</button></td></tr>`).join('')
+          : '<tr><td colspan="4" class="dash-empty">ยังไม่มีบริษัท</td></tr>';
+      } catch (e) {
+        toast('โหลดบริษัทไม่สำเร็จ: ' + e.message, true);
+      }
+    }
+    window.loadCompanies = loadCompanies;
+
+    async function showCompanyModal(id) {
+      let c = null;
+      if (id) { try { c = (await api.getCompanies()).find(x => x.id === id); } catch {} }
+      openModal(id ? 'แก้ไขบริษัท' : 'เพิ่มบริษัท', `
+        <label>รหัสบริษัท</label><input id="co-code" value="${c ? (c.code || '') : ''}">
+        <label style="margin-top:8px;">ชื่อบริษัท *</label><input id="co-name" value="${c ? (c.name || '') : ''}">
+        <label style="margin-top:8px;">เลขที่ภาษี</label><input id="co-tax" value="${c ? (c.tax_id || '') : ''}">
+      `, async () => {
+        const payload = { code: val('co-code') || null, name: val('co-name'), tax_id: val('co-tax') || null };
+        if (!payload.name) return toast('กรุณากรอกชื่อบริษัท', true);
+        if (id) payload.id = id;
+        await api.saveCompany(payload);
+        toast('บันทึกบริษัทแล้ว');
+        closeModal();
+        loadCompanies();
+      });
+    }
+    window.showCompanyModal = showCompanyModal;
+
     // ===== Users & Roles =====
-    const ROLES = ['Admin', 'Manager', 'Executive', 'Managing Director', 'Owner', 'Purchase Manager', 'Admin Store', 'Purchasing', 'Approver', 'Viewer'];
+    const ROLES = ['Staff', 'Manager', 'Executive', 'Managing Director', 'Owner', 'Purchase Manager', 'Admin Store', 'Purchasing', 'Approver', 'Admin', 'Viewer'];
     const PO_ROLES = ['Admin', 'Purchase Manager', 'Admin Store']; // can view + issue PO
     const PR_SEE_ALL = ['Admin', 'Manager', 'Executive', 'Managing Director', 'Owner', 'Purchase Manager', 'Admin Store']; // see PRs across all departments
     const canSeePO = () => PO_ROLES.includes(currentUser && currentUser.role);
@@ -2033,21 +2082,38 @@
     window.loadUsers = loadUsers;
 
     async function showUserModal(id) {
-      let u = null;
-      if (id) { try { u = (await api.getUsers()).find(x => x.id === id); } catch {} }
-      let depts = [];
+      let users = [], depts = [], companies = [];
+      try { users = await api.getUsers(); } catch {}
       try { depts = await api.getDepartments(); } catch {}
-      const roleOpts = ROLES.map(r => `<option value="${r}" ${u && u.role === r ? 'selected' : ''}>${r}</option>`).join('');
-      const deptOpts = '<option value="">— ไม่ระบุ —</option>' + depts.map(d => `<option value="${d.id}" ${u && u.department_id === d.id ? 'selected' : ''}>${d.name}</option>`).join('');
+      try { companies = await api.getCompanies(); } catch {}
+      const u = id ? users.find(x => x.id === id) : null;
+      const sel = (cond) => cond ? 'selected' : '';
+      const roleOpts = ROLES.map(r => `<option value="${r}" ${sel(u ? u.role === r : r === 'Staff')}>${r}</option>`).join('');
+      const compOpts = '<option value="">— Select —</option>' + companies.map(c => `<option value="${c.name}" ${sel(u && u.company === c.name)}>${c.name}</option>`).join('');
+      const deptOpts = '<option value="">—</option>' + depts.map(d => `<option value="${d.id}" ${sel(u && u.department_id === d.id)}>${d.code ? d.code + ' · ' : ''}${d.name}</option>`).join('');
+      const managers = users.filter(x => x.role === 'Manager');
+      const faOpts = '<option value="">— Auto (same-dept manager) —</option>' + managers.map(m => `<option value="${m.email}" ${sel(u && u.first_approver === m.email)}>${m.name}${m.department_name ? ' · ' + m.department_name : ''}</option>`).join('');
+      const fld = (label, inner) => `<div><label style="font-size:12px;color:#6b7280;font-weight:600">${label}</label>${inner}</div>`;
       openModal(id ? 'แก้ไขผู้ใช้' : 'เพิ่มผู้ใช้', `
-        <label>ชื่อ-นามสกุล *</label><input id="u-name" value="${u ? (u.name || '') : ''}">
-        <label style="margin-top:8px;">อีเมล *</label><input id="u-email" type="email" value="${u ? u.email : ''}">
-        <label style="margin-top:8px;">Role *</label><select id="u-role">${roleOpts}</select>
-        <label style="margin-top:8px;">แผนก / ฝ่าย</label><select id="u-dept">${deptOpts}</select>
-        <label style="margin-top:8px;">รหัสผ่าน ${id ? '(เว้นว่างถ้าไม่เปลี่ยน)' : '*'}</label><input id="u-pass" type="text" placeholder="${id ? 'ไม่เปลี่ยน' : 'ตั้งรหัสผ่าน'}">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px 16px">
+          ${fld('Employee code *', `<input id="u-emp" value="${u ? (u.employee_code || '') : ''}">`)}
+          ${fld('Name *', `<input id="u-name" value="${u ? (u.name || '') : ''}">`)}
+          ${fld('Email *', `<input id="u-email" type="email" value="${u ? u.email : ''}">`)}
+          ${fld(`Password ${id ? '(เว้นว่างถ้าไม่เปลี่ยน)' : '*'}`, `<div style="position:relative"><input id="u-pass" type="password" style="padding-right:36px" placeholder="${id ? 'ไม่เปลี่ยน' : 'ตั้งรหัสผ่าน'}"><button type="button" onclick="const i=document.getElementById('u-pass');i.type=i.type==='password'?'text':'password'" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:15px">👁</button></div>`)}
+          ${fld('Company *', `<select id="u-company">${compOpts}</select>`)}
+          ${fld('Department', `<select id="u-dept">${deptOpts}</select>`)}
+          ${fld('Role *', `<select id="u-role">${roleOpts}</select>`)}
+          ${fld('First approver (manager)', `<select id="u-fa">${faOpts}</select>`)}
+        </div>
       `, async () => {
-        const payload = { name: val('u-name'), email: val('u-email'), role: val('u-role'), department_id: val('u-dept') || null };
+        const payload = {
+          name: val('u-name'), email: val('u-email'), role: val('u-role'),
+          employee_code: val('u-emp') || null, company: val('u-company') || null,
+          department_id: val('u-dept') || null, first_approver: val('u-fa') || null,
+        };
         if (!payload.name || !payload.email) return toast('กรุณากรอกชื่อและอีเมล', true);
+        if (!payload.employee_code) return toast('กรุณากรอก Employee code', true);
+        if (!payload.company) return toast('กรุณาเลือก Company', true);
         const pass = val('u-pass');
         if (pass) payload.password = pass;
         if (id) { payload.id = id; }
@@ -2074,8 +2140,10 @@
       document.getElementById('sidebar-email').textContent = user.email;
       document.getElementById('login-wrap').style.display = 'none';
       document.getElementById('app-container').style.display = 'flex';
-      // Only Admin sees Users & Roles management
+      // Only Admin sees Users & Roles + Companies management
       document.getElementById('nav-users').style.display = (user.role === 'Admin') ? '' : 'none';
+      const navCo = document.getElementById('nav-companies');
+      if (navCo) navCo.style.display = (user.role === 'Admin') ? '' : 'none';
       // Only Purchase Manager / Admin Store / Admin see the PO menu
       const navPos = document.getElementById('nav-pos');
       if (navPos) navPos.style.display = PO_ROLES.includes(user.role) ? '' : 'none';

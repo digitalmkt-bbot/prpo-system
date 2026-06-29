@@ -97,19 +97,24 @@ export default function(pool) {
         SELECT
           pr.pr_no, pr.date, pr.status, pr.total_amount,
           pr.current_approval_step, pr.total_approval_steps,
-          pr.department_id, d.name as department_name
+          pr.department_id, pr.first_approver, d.name as department_name
         FROM purchase_requests pr
         LEFT JOIN departments d ON pr.department_id = d.id
         WHERE pr.status = 'Pending'
         ORDER BY pr.created_at ASC
       `);
       // Admin sees all; others see only PRs whose current step matches their role.
-      // Manager is additionally scoped to their own department.
+      // Manager (step 1): show PRs assigned specifically to them, else PRs of their own department (auto).
       const isAdmin = req.user.role === 'Admin';
       const isManager = req.user.role === 'Manager';
+      const myEmail = String(req.user.email || '').toLowerCase();
       const rows = result.rows
         .filter(r => isAdmin || roleForStep(r.current_approval_step) === req.user.role)
-        .filter(r => !isManager || String(r.department_id) === String(req.user.department_id))
+        .filter(r => {
+          if (!isManager) return true;
+          if (r.first_approver) return String(r.first_approver).toLowerCase() === myEmail;
+          return String(r.department_id) === String(req.user.department_id);
+        })
         .map(r => ({ ...r, required_role: roleForStep(r.current_approval_step) }));
       res.json(rows);
     } catch (err) {
@@ -158,10 +163,19 @@ export default function(pool) {
         await client.query('ROLLBACK');
         return res.status(403).json({ error: `ขั้นที่ ${pr.current_approval_step} ต้องอนุมัติโดย ${requiredRole}` });
       }
-      // Manager can only approve PRs of their own department
-      if (req.user.role === 'Manager' && String(pr.department_id) !== String(req.user.department_id)) {
-        await client.query('ROLLBACK');
-        return res.status(403).json({ error: 'Manager อนุมัติได้เฉพาะแผนกของตนเองเท่านั้น' });
+      // Step-1 routing for Managers (Admin bypasses):
+      //  - if the PR has a designated first approver, only that person may approve
+      //  - otherwise, only a Manager of the PR's own department may approve
+      if (requiredRole === 'Manager' && req.user.role !== 'Admin') {
+        if (pr.first_approver) {
+          if (String(pr.first_approver).toLowerCase() !== String(req.user.email).toLowerCase()) {
+            await client.query('ROLLBACK');
+            return res.status(403).json({ error: 'ใบนี้กำหนดผู้อนุมัติคนแรกเป็นบุคคลที่ระบุไว้เท่านั้น' });
+          }
+        } else if (String(pr.department_id) !== String(req.user.department_id)) {
+          await client.query('ROLLBACK');
+          return res.status(403).json({ error: 'Manager อนุมัติได้เฉพาะแผนกของตนเองเท่านั้น' });
+        }
       }
 
       // Apply per-item approve/reject decisions (if provided) and recompute total
@@ -287,10 +301,17 @@ export default function(pool) {
         await client.query('ROLLBACK');
         return res.status(403).json({ error: `ขั้นที่ ${pr.current_approval_step} ปฏิเสธได้โดย ${rejectRole} เท่านั้น` });
       }
-      // Manager can only reject PRs of their own department
-      if (req.user.role === 'Manager' && String(pr.department_id) !== String(req.user.department_id)) {
-        await client.query('ROLLBACK');
-        return res.status(403).json({ error: 'Manager ปฏิเสธได้เฉพาะแผนกของตนเองเท่านั้น' });
+      // Step-1 routing for Managers (Admin bypasses) — same rule as approve
+      if (rejectRole === 'Manager' && req.user.role !== 'Admin') {
+        if (pr.first_approver) {
+          if (String(pr.first_approver).toLowerCase() !== String(req.user.email).toLowerCase()) {
+            await client.query('ROLLBACK');
+            return res.status(403).json({ error: 'ใบนี้กำหนดผู้อนุมัติคนแรกเป็นบุคคลที่ระบุไว้เท่านั้น' });
+          }
+        } else if (String(pr.department_id) !== String(req.user.department_id)) {
+          await client.query('ROLLBACK');
+          return res.status(403).json({ error: 'Manager ปฏิเสธได้เฉพาะแผนกของตนเองเท่านั้น' });
+        }
       }
 
       if (pr.status !== 'Pending') {
