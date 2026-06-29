@@ -653,7 +653,7 @@
         <div class="panel" style="margin-top: 20px;">
           <table>
             <thead>
-              <tr><th>Code</th><th>Name</th><th>Manager Email</th><th>Status</th></tr>
+              <tr><th>Code</th><th>Name</th><th>Manager Email</th><th>จัดการ</th></tr>
             </thead>
             <tbody id="dept-table"></tbody>
           </table>
@@ -1217,13 +1217,23 @@
     });
 
     // Load Departments
+    const DIVISIONS = ['Executive Office', 'Human Resources', 'Finance & Procurement', 'Marketing & Communications', 'Sales & Reservation', 'Operations & Service', 'Piers'];
+    const DIVISION_TH = { 'Executive Office': 'สำนักบริหาร', 'Human Resources': 'ทรัพยากรบุคคล', 'Finance & Procurement': 'การเงินและจัดซื้อ', 'Marketing & Communications': 'การตลาดและสื่อสาร', 'Sales & Reservation': 'ขายและสำรองที่นั่ง', 'Operations & Service': 'ปฏิบัติการและบริการ', 'Piers': 'ท่าเรือ' };
+
     async function loadDepartments() {
       try {
         const depts = await api.getDepartments();
-        const tbody = document.getElementById('dept-table');
-        tbody.innerHTML = depts.map(d => `
-          <tr><td>${d.code}</td><td>${d.name}</td><td>${nz(d.manager_email)}</td><td>${d.status}</td></tr>
-        `).join('');
+        const byDiv = {};
+        depts.forEach(d => { const k = d.division || 'อื่นๆ'; (byDiv[k] = byDiv[k] || []).push(d); });
+        const order = [...DIVISIONS, ...Object.keys(byDiv).filter(k => !DIVISIONS.includes(k))];
+        let html = '', n = 1;
+        order.forEach(div => {
+          const list = (byDiv[div] || []).sort((a, b) => String(a.code || '').localeCompare(String(b.code || ''), 'en', { numeric: true }));
+          if (!list.length) return;
+          html += `<tr><td colspan="4" style="background:var(--accent-soft);font-weight:700;color:#14181f;padding:9px 12px">${n++}. ${div}${DIVISION_TH[div] ? ' · ' + DIVISION_TH[div] : ''} <span style="font-weight:500;color:var(--muted)">(${list.length})</span></td></tr>`;
+          html += list.map(d => `<tr><td><b style="color:var(--brand)">${nz(d.code)}</b></td><td>${d.name}</td><td>${nz(d.manager_email)}</td><td><button class="btn secondary" style="padding:4px 10px" onclick="showDeptModal('${d.id}')">แก้ไข</button></td></tr>`).join('');
+        });
+        document.getElementById('dept-table').innerHTML = html || '<tr><td colspan="4" class="dash-empty">ยังไม่มีแผนก</td></tr>';
       } catch (e) {
         toast('Error loading departments: ' + e.message, true);
       }
@@ -1584,9 +1594,18 @@
     async function loadCreateForm() {
       try {
         const depts = await api.getDepartments();
-        document.getElementById('cr-dept').innerHTML = depts.length
-          ? depts.map(d => `<option value="${d.id}">${d.code} - ${d.name}</option>`).join('')
-          : '<option value="">— ยังไม่มีแผนก —</option>';
+        if (depts.length) {
+          const byDiv = {};
+          depts.forEach(d => { const k = d.division || 'อื่นๆ'; (byDiv[k] = byDiv[k] || []).push(d); });
+          const order = [...DIVISIONS, ...Object.keys(byDiv).filter(k => !DIVISIONS.includes(k))];
+          document.getElementById('cr-dept').innerHTML = order.filter(div => byDiv[div]).map(div => {
+            const opts = byDiv[div].sort((a, b) => String(a.code || '').localeCompare(String(b.code || ''), 'en', { numeric: true }))
+              .map(d => `<option value="${d.id}">${d.code} - ${d.name}</option>`).join('');
+            return `<optgroup label="${div}${DIVISION_TH[div] ? ' · ' + DIVISION_TH[div] : ''}">${opts}</optgroup>`;
+          }).join('');
+        } else {
+          document.getElementById('cr-dept').innerHTML = '<option value="">— ยังไม่มีแผนก —</option>';
+        }
         // Purchase types (dynamic, managed in Settings)
         try {
           const types = await api.getPurchaseTypes();
@@ -1965,15 +1984,20 @@
     }
     window.editSupplier = editSupplier;
 
-    function showDeptModal() {
-      openModal('เพิ่มแผนก', `
-        <label>รหัส *</label><input id="dp-code">
-        <label style="margin-top:8px;">ชื่อ *</label><input id="dp-name">
-        <label style="margin-top:8px;">อีเมลหัวหน้าแผนก</label><input id="dp-manager" placeholder="manager@loveandaman.com">
+    async function showDeptModal(id) {
+      let d = null;
+      if (id) { try { d = (await api.getDepartments()).find(x => x.id === id); } catch {} }
+      const divOpts = '<option value="">— ไม่ระบุ —</option>' + DIVISIONS.map(v => `<option value="${v}" ${d && d.division === v ? 'selected' : ''}>${v}${DIVISION_TH[v] ? ' · ' + DIVISION_TH[v] : ''}</option>`).join('');
+      openModal(id ? 'แก้ไขแผนก' : 'เพิ่มแผนก', `
+        <label>รหัส *</label><input id="dp-code" value="${d ? (d.code || '') : ''}">
+        <label style="margin-top:8px;">ชื่อ *</label><input id="dp-name" value="${d ? (d.name || '') : ''}">
+        <label style="margin-top:8px;">Division</label><select id="dp-div">${divOpts}</select>
+        <label style="margin-top:8px;">อีเมลหัวหน้าแผนก</label><input id="dp-manager" placeholder="manager@loveandaman.com" value="${d ? (d.manager_email || '') : ''}">
       `, async () => {
-        const d = { code: val('dp-code'), name: val('dp-name'), manager_email: val('dp-manager') };
-        if (!d.code || !d.name) return toast('กรุณากรอกรหัสและชื่อ', true);
-        await api.saveDepartment(d);
+        const payload = { code: val('dp-code'), name: val('dp-name'), division: val('dp-div') || null, manager_email: val('dp-manager') };
+        if (!payload.code || !payload.name) return toast('กรุณากรอกรหัสและชื่อ', true);
+        if (id) payload.id = id;
+        await api.saveDepartment(payload);
         toast('บันทึกแผนกแล้ว');
         closeModal();
         loadDepartments();
