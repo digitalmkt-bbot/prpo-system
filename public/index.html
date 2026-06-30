@@ -510,6 +510,10 @@
                 <div class="typeahead-results" id="issue-supplier-results"></div>
               </div>
               <div class="pr-field"><label>อ้างอิง</label><input id="iss-reference" placeholder="เลขอ้างอิง (ถ้ามี)"></div>
+              <div class="pr-field"><label>เลขที่ใบเสนอราคา</label><input id="iss-quotation" placeholder="เลขใบเสนอราคา"></div>
+              <div class="pr-field"><label>เลขที่ใบแจ้งหนี้</label><input id="iss-invoice" placeholder="เลขใบแจ้งหนี้"></div>
+              <div class="pr-field"><label>เลขผู้เสียภาษี</label><input id="iss-taxno" placeholder="เลขประจำตัวผู้เสียภาษี"></div>
+              <div class="pr-field"><label>เงื่อนไขการชำระเงิน</label><input id="iss-payment" placeholder="เช่น เครดิต 30 วัน / เงินสด"></div>
               <div class="pr-field"><label>ภาษีมูลค่าเพิ่ม</label>
                 <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#374151;margin-top:6px;"><input type="checkbox" id="iss-vat-all" style="width:auto;" checked onchange="applyIssueVatAll()"> มี VAT 7% (ทั้งใบ)</label>
               </div>
@@ -1413,6 +1417,10 @@
                 <div><span class="mk">เลขที่เอกสาร:</span><b>${po.po_no}</b></div>
                 <div><span class="mk">วันที่ออก:</span>${dt}</div>
                 <div><span class="mk">อ้างอิง:</span>${nz(po.reference)}</div>
+                ${po.quotation_no ? `<div><span class="mk">เลขใบเสนอราคา:</span>${po.quotation_no}</div>` : ''}
+                ${po.invoice_no ? `<div><span class="mk">เลขใบแจ้งหนี้:</span>${po.invoice_no}</div>` : ''}
+                ${po.tax_no ? `<div><span class="mk">เลขผู้เสียภาษี:</span>${po.tax_no}</div>` : ''}
+                ${po.payment_terms ? `<div><span class="mk">เงื่อนไขชำระเงิน:</span>${po.payment_terms}</div>` : ''}
                 <div style="margin-top:8px" class="lbl">ติดต่อกลับที่:</div>
                 <div><span class="mk">ชื่อ:</span>${nz(po.contact_name)}</div>
                 <div><span class="mk">โทร:</span>${nz(po.contact_phone)}</div>
@@ -1489,6 +1497,10 @@
           <p class="subtitle" style="margin:0 0 16px">ผู้ขาย: ${nz(po.supplier_code)} ${nz(po.supplier_name)} · แก้รายการแล้วยอดคำนวณใหม่อัตโนมัติ</p>
           <div class="pr-grid">
             <div class="pr-field"><label>อ้างอิง</label><input id="ed-reference" value="${esc(po.reference)}"></div>
+            <div class="pr-field"><label>เลขที่ใบเสนอราคา</label><input id="ed-quotation" value="${esc(po.quotation_no)}"></div>
+            <div class="pr-field"><label>เลขที่ใบแจ้งหนี้</label><input id="ed-invoice" value="${esc(po.invoice_no)}"></div>
+            <div class="pr-field"><label>เลขผู้เสียภาษี</label><input id="ed-taxno" value="${esc(po.tax_no)}"></div>
+            <div class="pr-field"><label>เงื่อนไขการชำระเงิน</label><input id="ed-payment" value="${esc(po.payment_terms)}"></div>
             <div class="pr-field"><label>ภาษีมูลค่าเพิ่ม</label>
               <label style="display:flex;align-items:center;gap:8px;font-size:13px;margin-top:6px"><input type="checkbox" id="ed-vat-all" style="width:auto" ${(po.vat_amount > 0 || po.has_vat) ? 'checked' : ''} onchange="applyEditVatAll()"> มี VAT 7% (ทั้งใบ)</label>
             </div>
@@ -1594,6 +1606,8 @@
         if (!items.length) return toast('ต้องมีรายการอย่างน้อย 1 รายการ', true);
         await api.updatePO(poNo, {
           reference: val('ed-reference'), note: val('ed-note'),
+          quotation_no: val('ed-quotation') || null, invoice_no: val('ed-invoice') || null,
+          tax_no: val('ed-taxno') || null, payment_terms: val('ed-payment') || null,
           contact_name: val('ed-contact-name'), contact_phone: val('ed-contact-phone'), contact_email: val('ed-contact-email'),
           wht_amount: +document.getElementById('ed-wht').value || 0,
           items,
@@ -1951,6 +1965,8 @@
         const res = await api.issuePO({
           pr_no: _issuePR.pr_no, supplier_id, items, pr_item_ids,
           reference: val('iss-reference'), note: val('iss-note'),
+          quotation_no: val('iss-quotation') || null, invoice_no: val('iss-invoice') || null,
+          tax_no: val('iss-taxno') || null, payment_terms: val('iss-payment') || null,
           contact_name: val('iss-contact-name'), contact_phone: val('iss-contact-phone'), contact_email: val('iss-contact-email'),
           wht_amount: +document.getElementById('iss-wht').value || 0,
         });

@@ -9,6 +9,13 @@ export default function(pool) {
   const PO_ROLES = ['Admin', 'Purchase Manager', 'Admin Store'];
   const canPO = (req) => PO_ROLES.includes(req.user?.role);
 
+  // Extra document fields (idempotent)
+  pool.query(`ALTER TABLE purchase_orders
+    ADD COLUMN IF NOT EXISTS quotation_no VARCHAR(80),
+    ADD COLUMN IF NOT EXISTS invoice_no VARCHAR(80),
+    ADD COLUMN IF NOT EXISTS tax_no VARCHAR(80),
+    ADD COLUMN IF NOT EXISTS payment_terms VARCHAR(200)`).catch(() => {});
+
   // Issue a PO from an approved PR — supplier is chosen at this step
   router.post('/issue', async (req, res) => {
     if (!canPO(req)) return res.status(403).json({ error: 'เฉพาะ Purchase Manager / Admin Store เท่านั้นที่ออก PO ได้' });
@@ -19,6 +26,7 @@ export default function(pool) {
         pr_no, supplier_id, reference = null, note = null,
         contact_name = null, contact_phone = null, contact_email = null,
         wht_amount = 0, items: bodyItems, pr_item_ids = [],
+        quotation_no = null, invoice_no = null, tax_no = null, payment_terms = null,
       } = req.body || {};
       if (!pr_no || !supplier_id) {
         await client.query('ROLLBACK');
@@ -62,11 +70,13 @@ export default function(pool) {
         INSERT INTO purchase_orders
           (id, po_no, date, pr_id, supplier_id, status, total_amount, has_vat,
            reference, note, contact_name, contact_phone, contact_email,
-           subtotal, vat_amount, wht_amount, net_amount, issued_by)
-        VALUES ($1,$2,CURRENT_DATE,$3,$4,'Active',$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
+           subtotal, vat_amount, wht_amount, net_amount, issued_by,
+           quotation_no, invoice_no, tax_no, payment_terms)
+        VALUES ($1,$2,CURRENT_DATE,$3,$4,'Active',$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20)
       `, [po_id, po_no, pr.id, supplier_id, total, vat_amount > 0, reference, note,
           contact_name, contact_phone, contact_email, subtotal, vat_amount, wht, net,
-          (req.user && (req.user.name || req.user.email)) || null]);
+          (req.user && (req.user.name || req.user.email)) || null,
+          quotation_no, invoice_no, tax_no, payment_terms]);
 
       for (const it of items) {
         await client.query(`
@@ -190,6 +200,7 @@ export default function(pool) {
         supplier_id, reference = null, note = null,
         contact_name = null, contact_phone = null, contact_email = null,
         wht_amount = 0, items: bodyItems, date = null,
+        quotation_no = null, invoice_no = null, tax_no = null, payment_terms = null,
       } = req.body || {};
 
       const poR = await client.query('SELECT * FROM purchase_orders WHERE po_no = $1 FOR UPDATE', [req.params.poNo]);
@@ -217,10 +228,12 @@ export default function(pool) {
           reference = $2, note = $3,
           contact_name = $4, contact_phone = $5, contact_email = $6,
           subtotal = $7, vat_amount = $8, wht_amount = $9, total_amount = $10,
-          net_amount = $11, has_vat = $12, date = COALESCE($13::date, date), updated_at = NOW()
+          net_amount = $11, has_vat = $12, date = COALESCE($13::date, date),
+          quotation_no = $15, invoice_no = $16, tax_no = $17, payment_terms = $18, updated_at = NOW()
         WHERE id = $14
       `, [supplier_id || null, reference, note, contact_name, contact_phone, contact_email,
-          subtotal, vat_amount, wht, total, net, vat_amount > 0, date || null, po.id]);
+          subtotal, vat_amount, wht, total, net, vat_amount > 0, date || null, po.id,
+          quotation_no, invoice_no, tax_no, payment_terms]);
 
       await client.query('DELETE FROM po_items WHERE po_id = $1', [po.id]);
       for (const it of items) {
