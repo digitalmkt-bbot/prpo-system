@@ -119,9 +119,15 @@ export default function(pool) {
       const SEE_ALL_PR = ['Admin', 'Executive', 'Managing Director', 'Owner', 'Purchase Manager', 'Admin Store'];
       const pr = result.rows[0];
       const vrole = req.user?.role;
+      const myEmail = String(req.user?.email || '').toLowerCase();
       let allowed = SEE_ALL_PR.includes(vrole);
-      if (!allowed && vrole === 'Manager') allowed = String(pr.department_id) === String(req.user?.department_id);
-      if (!allowed && vrole !== 'Manager') allowed = String(pr.requested_by || '').toLowerCase() === String(req.user?.email || '').toLowerCase();
+      // Manager: own department OR explicitly assigned as this PR's first approver
+      if (!allowed && vrole === 'Manager') {
+        allowed = String(pr.department_id) === String(req.user?.department_id)
+          || String(pr.first_approver || '').toLowerCase() === myEmail;
+      }
+      // The creator can always view their own PR (covers Staff and any role)
+      if (!allowed) allowed = String(pr.requested_by || '').toLowerCase() === myEmail;
       if (!allowed) return res.status(403).json({ error: 'ไม่มีสิทธิ์ดูใบขอซื้อนี้' });
 
       res.json(pr);
