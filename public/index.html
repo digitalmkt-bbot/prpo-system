@@ -439,6 +439,7 @@
             <div class="pr-grid">
               <div class="pr-field"><label>วันที่ขอซื้อ</label><input type="date" id="cr-date"></div>
               <div class="pr-field"><label>ผู้ขอซื้อ</label><input type="text" id="cr-requester" placeholder="ชื่อ-นามสกุล"></div>
+              <div class="pr-field"><label>เบอร์ติดต่อผู้ขอซื้อ</label><input type="text" id="cr-phone" placeholder="เบอร์โทรผู้ขอซื้อ"></div>
               <div class="pr-field"><label>แผนก / ฝ่าย</label><select id="cr-dept"></select></div>
               <div class="pr-field"><label>วันที่ต้องการ</label><input type="date" id="cr-needed"></div>
               <div class="pr-field"><label>ประเภทการจัดซื้อ</label>
@@ -446,7 +447,13 @@
                   <option>ซื้อทั่วไป</option><option>บริการ / จ้างเหมา</option><option>วัสดุสิ้นเปลือง</option><option>ครุภัณฑ์</option>
                 </select>
               </div>
-              <div class="pr-field full"><label>วัตถุประสงค์ / เหตุผลในการขอซื้อ</label><textarea id="cr-purpose" placeholder="ระบุเหตุผลและความจำเป็น..."></textarea></div>
+              <div class="pr-field"><label>สถานที่จัดส่งของ</label>
+                <select id="cr-delivery">
+                  <option value="">— เลือกสถานที่ —</option>
+                  <option>ออฟฟิศภูเก็ต</option><option>ท่าเรือภูเก็ต</option><option>ท่าเรือทับละมุ</option><option>ท่าเรือระนอง</option>
+                </select>
+              </div>
+              <div class="pr-field full"><label>วัตถุประสงค์ / เหตุผลในการขอซื้อ *</label><textarea id="cr-purpose" placeholder="ระบุเหตุผลและความจำเป็น... (บังคับกรอก)"></textarea></div>
             </div>
           </div>
         </div>
@@ -1094,7 +1101,9 @@
             <div><div class="k">วันที่ขอซื้อ</div>${nz(pr.date && String(pr.date).slice(0,10))}</div>
             <div><div class="k">วันที่ต้องการ</div>${nz(pr.needed_date && String(pr.needed_date).slice(0,10))}</div>
             <div><div class="k">ผู้ขอซื้อ</div>${nz(pr.requester_name || pr.requested_by)}</div>
+            <div><div class="k">เบอร์ติดต่อผู้ขอซื้อ</div>${nz(pr.requester_phone)}</div>
             <div><div class="k">แผนก</div>${nz(pr.department_name)}</div>
+            <div><div class="k">สถานที่จัดส่งของ</div>${nz(pr.delivery_location)}</div>
             <div><div class="k">ประเภทการจัดซื้อ</div>${nz(pr.purchase_type)}</div>
             <div><div class="k">ขั้นอนุมัติ</div>${pr.status === 'Approved' ? `อนุมัติครบ ✓ (${pr.total_approval_steps || 4}/${pr.total_approval_steps || 4})` : `${Math.min(pr.current_approval_step || 1, pr.total_approval_steps || 1)}/${pr.total_approval_steps || 1}${pr.status === 'Pending' && stepRole ? ` · รอ <b style="color:var(--brand-dark)">${stepRole}</b>` : ''}`}${pr.status !== 'Rejected' && (pr.current_approval_step || 1) > 3 && pr.status !== 'Approved' ? ' <span class="tag approved" style="font-size:10px">ออก PO ได้แล้ว</span>' : ''}</div>
             <div style="grid-column:1/-1"><div class="k">วัตถุประสงค์</div>${nz(pr.purpose)}</div>
@@ -1818,6 +1827,8 @@
           unit_price: parseFloat(tr.querySelector('.it-price').value) || 0,
         })).filter(i => i.product_name && i.quantity > 0);
         if (!items.length) return toast('กรุณาเพิ่มรายการสินค้าอย่างน้อย 1 รายการ', true);
+        const purpose = document.getElementById('cr-purpose').value.trim();
+        if (!purpose) return toast('กรุณากรอกวัตถุประสงค์ / เหตุผลในการขอซื้อ', true);
 
         const res = await api.savePR({
           date: document.getElementById('cr-date').value || new Date().toISOString().slice(0, 10),
@@ -1825,9 +1836,11 @@
           has_vat: false,
           requested_by: currentUser.email,
           requester_name: document.getElementById('cr-requester').value.trim(),
+          requester_phone: document.getElementById('cr-phone').value.trim() || null,
           needed_date: document.getElementById('cr-needed').value || null,
           purchase_type: document.getElementById('cr-type').value,
-          purpose: document.getElementById('cr-purpose').value.trim(),
+          delivery_location: document.getElementById('cr-delivery').value || null,
+          purpose,
         });
         toast(`สร้าง PR สำเร็จ: ${res.pr_no} (รออนุมัติ ${res.totalSteps} ขั้น)`);
         document.querySelector('.nav a[data-page="prs"]').click();

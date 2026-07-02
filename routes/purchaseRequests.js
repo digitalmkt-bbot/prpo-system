@@ -12,6 +12,9 @@ export default function(pool) {
   pool.query("ALTER TABLE pr_items ADD COLUMN IF NOT EXISTS po_no VARCHAR(50)").catch(() => {});
   // Designated first approver (Manager email) copied from the creator at PR creation; null = auto (same-dept manager)
   pool.query("ALTER TABLE purchase_requests ADD COLUMN IF NOT EXISTS first_approver VARCHAR(150)").catch(() => {});
+  // Requester contact phone + delivery location
+  pool.query("ALTER TABLE purchase_requests ADD COLUMN IF NOT EXISTS requester_phone VARCHAR(50)").catch(() => {});
+  pool.query("ALTER TABLE purchase_requests ADD COLUMN IF NOT EXISTS delivery_location VARCHAR(150)").catch(() => {});
 
   // Get all PRs with optional filters
   router.get('/', async (req, res) => {
@@ -137,6 +140,7 @@ export default function(pool) {
         date, supplier_id = null, department_id, items, has_vat,
         requested_by, requester_name = null, needed_date = null,
         purchase_type = null, purpose = null,
+        requester_phone = null, delivery_location = null,
       } = req.body;
       const pr_id = uuid();
 
@@ -179,12 +183,14 @@ export default function(pool) {
         INSERT INTO purchase_requests
         (id, pr_no, date, supplier_id, department_id, status, total_amount, has_vat,
          requested_by, current_approval_step, total_approval_steps, approval_chain,
-         requester_name, needed_date, purchase_type, purpose, first_approver)
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)
+         requester_name, needed_date, purchase_type, purpose, first_approver,
+         requester_phone, delivery_location)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)
       `, [
         pr_id, pr_no, date, supplier_id, department_id, 'Pending',
         total, has_vat, requested_by, 1, totalSteps, '[]',
-        requester_name, needed_date || null, purchase_type, purpose, firstApprover
+        requester_name, needed_date || null, purchase_type, purpose, firstApprover,
+        requester_phone, delivery_location
       ]);
 
       // Add items (total_price is a generated column — do not insert it)
