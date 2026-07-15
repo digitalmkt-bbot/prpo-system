@@ -106,14 +106,18 @@ export default function(pool) {
       // Admin sees all; others see only PRs whose current step matches their role.
       // Manager (step 1): show PRs assigned specifically to them, else PRs of their own department (auto).
       const isAdmin = req.user.role === 'Admin';
-      const isManager = req.user.role === 'Manager';
       const myEmail = String(req.user.email || '').toLowerCase();
       const rows = result.rows
-        .filter(r => isAdmin || roleForStep(r.current_approval_step) === req.user.role)
         .filter(r => {
-          if (!isManager) return true;
-          if (r.first_approver) return String(r.first_approver).toLowerCase() === myEmail;
-          return String(r.department_id) === String(req.user.department_id);
+          if (isAdmin) return true;
+          // Step 1 with a named first approver → only that specific person, any role
+          if (r.current_approval_step === 1 && r.first_approver) {
+            return String(r.first_approver).toLowerCase() === myEmail;
+          }
+          // Otherwise role-based; Manager (auto step 1) scoped to their own department
+          if (roleForStep(r.current_approval_step) !== req.user.role) return false;
+          if (req.user.role === 'Manager') return String(r.department_id) === String(req.user.department_id);
+          return true;
         })
         .map(r => ({ ...r, required_role: roleForStep(r.current_approval_step) }));
       res.json(rows);
@@ -157,24 +161,27 @@ export default function(pool) {
         return res.status(400).json({ error: 'PR is not pending' });
       }
 
-      // Enforce the role required for the current approval step (Admin can act on any step)
+      // Determine who may act on the current step (Admin can act on any step)
       const requiredRole = roleForStep(pr.current_approval_step);
-      if (req.user.role !== 'Admin' && req.user.role !== requiredRole) {
-        await client.query('ROLLBACK');
-        return res.status(403).json({ error: `ขั้นที่ ${pr.current_approval_step} ต้องอนุมัติโดย ${requiredRole}` });
-      }
-      // Step-1 routing for Managers (Admin bypasses):
-      //  - if the PR has a designated first approver, only that person may approve
-      //  - otherwise, only a Manager of the PR's own department may approve
-      if (requiredRole === 'Manager' && req.user.role !== 'Admin') {
-        if (pr.first_approver) {
+      const isStep1 = pr.current_approval_step === 1;
+      if (req.user.role !== 'Admin') {
+        if (isStep1 && pr.first_approver) {
+          // Named first approver — only that specific person, regardless of their role
           if (String(pr.first_approver).toLowerCase() !== String(req.user.email).toLowerCase()) {
             await client.query('ROLLBACK');
-            return res.status(403).json({ error: 'ใบนี้กำหนดผู้อนุมัติคนแรกเป็นบุคคลที่ระบุไว้เท่านั้น' });
+            return res.status(403).json({ error: 'ขั้นแรกของใบนี้ต้องอนุมัติโดยผู้อนุมัติที่ถูกกำหนดไว้เท่านั้น' });
           }
-        } else if (String(pr.department_id) !== String(req.user.department_id)) {
-          await client.query('ROLLBACK');
-          return res.status(403).json({ error: 'Manager อนุมัติได้เฉพาะแผนกของตนเองเท่านั้น' });
+        } else {
+          // Standard role-based gate
+          if (req.user.role !== requiredRole) {
+            await client.query('ROLLBACK');
+            return res.status(403).json({ error: `ขั้นที่ ${pr.current_approval_step} ต้องอนุมัติโดย ${requiredRole}` });
+          }
+          // Manager (auto step-1) is scoped to their own department
+          if (requiredRole === 'Manager' && String(pr.department_id) !== String(req.user.department_id)) {
+            await client.query('ROLLBACK');
+            return res.status(403).json({ error: 'Manager อนุมัติได้เฉพาะแผนกของตนเองเท่านั้น' });
+          }
         }
       }
 
@@ -295,22 +302,24 @@ export default function(pool) {
 
       const pr = prResult.rows[0];
 
-      // Only the role for the current step (or Admin) can reject
+      // Who may reject at the current step (Admin can act on any step)
       const rejectRole = roleForStep(pr.current_approval_step);
-      if (req.user.role !== 'Admin' && req.user.role !== rejectRole) {
-        await client.query('ROLLBACK');
-        return res.status(403).json({ error: `ขั้นที่ ${pr.current_approval_step} ปฏิเสธได้โดย ${rejectRole} เท่านั้น` });
-      }
-      // Step-1 routing for Managers (Admin bypasses) — same rule as approve
-      if (rejectRole === 'Manager' && req.user.role !== 'Admin') {
-        if (pr.first_approver) {
+      const isRejStep1 = pr.current_approval_step === 1;
+      if (req.user.role !== 'Admin') {
+        if (isRejStep1 && pr.first_approver) {
           if (String(pr.first_approver).toLowerCase() !== String(req.user.email).toLowerCase()) {
             await client.query('ROLLBACK');
-            return res.status(403).json({ error: 'ใบนี้กำหนดผู้อนุมัติคนแรกเป็นบุคคลที่ระบุไว้เท่านั้น' });
+            return res.status(403).json({ error: 'ขั้นแรกของใบนี้จัดการได้โดยผู้อนุมัติที่ถูกกำหนดไว้เท่านั้น' });
           }
-        } else if (String(pr.department_id) !== String(req.user.department_id)) {
-          await client.query('ROLLBACK');
-          return res.status(403).json({ error: 'Manager ปฏิเสธได้เฉพาะแผนกของตนเองเท่านั้น' });
+        } else {
+          if (req.user.role !== rejectRole) {
+            await client.query('ROLLBACK');
+            return res.status(403).json({ error: `ขั้นที่ ${pr.current_approval_step} ปฏิเสธได้โดย ${rejectRole} เท่านั้น` });
+          }
+          if (rejectRole === 'Manager' && String(pr.department_id) !== String(req.user.department_id)) {
+            await client.query('ROLLBACK');
+            return res.status(403).json({ error: 'Manager ปฏิเสธได้เฉพาะแผนกของตนเองเท่านั้น' });
+          }
         }
       }
 
