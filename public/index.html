@@ -537,6 +537,7 @@
               <div class="pr-field"><label>เบอร์โทรผู้ติดต่อ</label><input id="iss-contact-phone"></div>
               <div class="pr-field"><label>อีเมลผู้ติดต่อ</label><input id="iss-contact-email"></div>
               <div class="pr-field full"><label>หมายเหตุ</label><textarea id="iss-note" placeholder="หมายเหตุในใบสั่งซื้อ..."></textarea></div>
+              <div class="pr-field full"><label>แนบไฟล์ในเอกสารนี้ (เช่น ใบเสนอราคา/ใบแจ้งหนี้ · สูงสุด 20MB/ไฟล์)</label><input type="file" id="iss-files" multiple></div>
             </div>
           </div>
         </div>
@@ -1475,12 +1476,21 @@
               <div><div class="line">ผู้รับเอกสาร (ผู้ขาย)</div></div>
             </div>
           </div>
+          <div class="po-print-hide" style="margin-top:18px;border-top:1px solid var(--line);padding-top:12px">
+            <div style="font-weight:700;font-size:14px;margin-bottom:8px">📎 ไฟล์แนบในเอกสารนี้</div>
+            <div id="po-att-list">กำลังโหลด...</div>
+            ${canSeePO() ? `<div style="margin-top:10px;display:flex;gap:8px;align-items:center">
+              <input type="file" id="po-att-input" multiple>
+              <button class="btn secondary" style="padding:5px 12px" onclick="uploadFromDetail('${po.po_no}','po-att-input','po-att-list')">⬆ อัปโหลด</button>
+            </div>` : ''}
+          </div>
           <div class="detail-actions po-print-hide" style="margin-top:20px;text-align:right">
             ${canEditPO() ? `<button class="btn secondary" style="border-color:#16a34a;color:#16a34a" onclick="closePODetail();showEditPO('${po.po_no}')">✏️ แก้ไขใบ PO</button>` : ''}
             <button class="btn secondary" onclick="printDoc('po-detail-overlay')">🖨 พิมพ์ใบ PO</button>
             <button class="btn" onclick="closePODetail()">ปิด</button>
           </div>
           <button class="detail-close po-print-hide" onclick="closePODetail()" style="position:absolute;top:18px;right:24px">✕</button>`;
+        loadPoAttachments(po.po_no, 'po-att-list');
         document.getElementById('po-detail-overlay').style.display = 'flex';
       } catch (e) {
         toast('โหลดใบ PO ไม่สำเร็จ: ' + e.message, true);
@@ -1937,7 +1947,7 @@
         if (!items.length) { toast('รายการในใบนี้ออก PO ครบแล้ว', true); return; }
         await ensureAcctOpts();
         await fillCatSelect('iss-cat-dept');
-        ['iss-cat-branch', 'iss-cat-program', 'iss-tags'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+        ['iss-cat-branch', 'iss-cat-program', 'iss-tags', 'iss-files'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
         const dt = document.getElementById('iss-pricetype'); if (dt) dt.value = 'exclusive';
         const dd = document.getElementById('iss-docdisc'); if (dd) dd.value = '0';
         document.getElementById('iss-items').innerHTML = '';
@@ -1950,6 +1960,59 @@
       }
     }
     window.showIssuePO = showIssuePO;
+
+    // ===== PO attachments =====
+    function fileToB64(file) {
+      return new Promise((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => { const s = String(r.result); resolve({ filename: file.name, mimetype: file.type || 'application/octet-stream', data: s.slice(s.indexOf(',') + 1) }); };
+        r.onerror = reject;
+        r.readAsDataURL(file);
+      });
+    }
+    async function uploadPoFiles(poNo, inputId) {
+      const inp = document.getElementById(inputId);
+      if (!inp || !inp.files || !inp.files.length) return 0;
+      let ok = 0;
+      for (const f of [...inp.files]) {
+        if (f.size > 20 * 1024 * 1024) { toast(`ไฟล์ ${f.name} ใหญ่เกิน 20MB`, true); continue; }
+        try { const b = await fileToB64(f); await api.uploadPoAttachment(poNo, b); ok++; } catch (e) { toast('อัปโหลด ' + f.name + ' ไม่สำเร็จ', true); }
+      }
+      if (inp) inp.value = '';
+      return ok;
+    }
+    window.uploadPoFiles = uploadPoFiles;
+    async function loadPoAttachments(poNo, elId) {
+      const el = document.getElementById(elId); if (!el) return;
+      let list = [];
+      try { list = await api.getPoAttachments(poNo); } catch {}
+      const kb = n => n >= 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB';
+      el.innerHTML = list.length ? list.map(a => `<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--line)">
+        <span style="flex:1">📎 <a href="#" onclick="downloadPoAtt('${poNo}','${a.id}');return false;" style="color:var(--brand);font-weight:600">${nz(a.filename)}</a> <span style="color:#9ca3af;font-size:11px">(${kb(a.size || 0)})</span></span>
+        ${canSeePO() ? `<button class="btn secondary" style="padding:2px 8px" onclick="deletePoAtt('${poNo}','${a.id}','${elId}')">ลบ</button>` : ''}
+      </div>`).join('') : '<div style="color:#9ca3af;font-size:13px">ยังไม่มีไฟล์แนบ</div>';
+    }
+    window.loadPoAttachments = loadPoAttachments;
+    async function downloadPoAtt(poNo, id) {
+      try {
+        const f = await api.downloadPoAttachment(poNo, id);
+        const a = document.createElement('a');
+        a.href = `data:${f.mimetype || 'application/octet-stream'};base64,${f.data}`;
+        a.download = f.filename || 'file';
+        document.body.appendChild(a); a.click(); a.remove();
+      } catch (e) { toast('ดาวน์โหลดไม่สำเร็จ: ' + e.message, true); }
+    }
+    window.downloadPoAtt = downloadPoAtt;
+    async function deletePoAtt(poNo, id, elId) {
+      if (!confirm('ลบไฟล์แนบนี้?')) return;
+      try { await api.deletePoAttachment(poNo, id); loadPoAttachments(poNo, elId); } catch (e) { toast('ลบไม่สำเร็จ: ' + e.message, true); }
+    }
+    window.deletePoAtt = deletePoAtt;
+    async function uploadFromDetail(poNo, inputId, elId) {
+      const n = await uploadPoFiles(poNo, inputId);
+      if (n) { toast('แนบไฟล์แล้ว ' + n + ' ไฟล์'); loadPoAttachments(poNo, elId); }
+    }
+    window.uploadFromDetail = uploadFromDetail;
 
     // Load chart-of-accounts options once (shared across item rows)
     async function ensureAcctOpts() {
@@ -2053,6 +2116,7 @@
           doc_discount: +document.getElementById('iss-docdisc').value || 0,
           tags: val('iss-tags') || null, is_draft: !!draft,
         });
+        try { const nf = await uploadPoFiles(res.po_no, 'iss-files'); if (nf) toast('แนบไฟล์แล้ว ' + nf + ' ไฟล์'); } catch {}
         toast(draft ? ('บันทึกร่าง PO แล้ว: ' + res.po_no) : ('ออก PO สำเร็จ: ' + res.po_no));
         showPage('prs'); loadPRs(); loadPOs();
       } catch (e) {

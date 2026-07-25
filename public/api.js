@@ -259,6 +259,20 @@ class PROPOApi {
     return this.request('POST', '/pos/admin/cleanup');
   }
 
+  // ---- PO attachments (base64 in DB) ----
+  async getPoAttachments(poNo) {
+    return this.request('GET', `/pos/${encodeURIComponent(poNo)}/attachments`);
+  }
+  async uploadPoAttachment(poNo, file) {
+    return this.request('POST', `/pos/${encodeURIComponent(poNo)}/attachments`, file);
+  }
+  async downloadPoAttachment(poNo, id) {
+    return this.request('GET', `/pos/${encodeURIComponent(poNo)}/attachments/${id}/download`);
+  }
+  async deletePoAttachment(poNo, id) {
+    return this.request('DELETE', `/pos/${encodeURIComponent(poNo)}/attachments/${id}`);
+  }
+
   // ========== COMPANY ==========
   async getCompanyInfo() {
     return this.request('GET', '/company');

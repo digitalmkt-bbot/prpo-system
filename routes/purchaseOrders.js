@@ -25,6 +25,17 @@ export default function(pool) {
     ADD COLUMN IF NOT EXISTS tags VARCHAR(300),
     ADD COLUMN IF NOT EXISTS is_draft BOOLEAN DEFAULT false`).catch(() => {});
   pool.query("ALTER TABLE po_items ADD COLUMN IF NOT EXISTS account_code VARCHAR(40)").catch(() => {});
+  // Attachments stored inline (base64) — avoids external object storage
+  pool.query(`CREATE TABLE IF NOT EXISTS po_attachments (
+    id UUID PRIMARY KEY,
+    po_no VARCHAR(50),
+    filename VARCHAR(255),
+    mimetype VARCHAR(120),
+    size INTEGER,
+    data TEXT,
+    uploaded_by VARCHAR(150),
+    created_at TIMESTAMP DEFAULT NOW()
+  )`).catch(() => {});
 
   // Issue a PO from an approved PR — supplier is chosen at this step
   router.post('/issue', async (req, res) => {
@@ -311,6 +322,50 @@ export default function(pool) {
     } finally {
       client.release();
     }
+  });
+
+  // ===== Attachments (stored as base64 in DB) =====
+  router.get('/:poNo/attachments', async (req, res) => {
+    if (!canPO(req)) return res.status(403).json({ error: 'ไม่มีสิทธิ์ดูใบสั่งซื้อ (PO)' });
+    try {
+      const r = await pool.query(
+        'SELECT id, filename, mimetype, size, uploaded_by, created_at FROM po_attachments WHERE po_no=$1 ORDER BY created_at',
+        [req.params.poNo]);
+      res.json(r.rows);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  router.post('/:poNo/attachments', async (req, res) => {
+    if (!canPO(req)) return res.status(403).json({ error: 'ไม่มีสิทธิ์แก้ไขใบสั่งซื้อ (PO)' });
+    try {
+      const { filename, mimetype, data } = req.body || {};
+      if (!filename || !data) return res.status(400).json({ error: 'ต้องมีชื่อไฟล์และข้อมูล' });
+      const size = Math.round((String(data).length * 3) / 4); // approx bytes from base64
+      if (size > 20 * 1024 * 1024) return res.status(413).json({ error: 'ไฟล์ใหญ่เกิน 20MB' });
+      const id = uuid();
+      await pool.query(
+        'INSERT INTO po_attachments (id, po_no, filename, mimetype, size, data, uploaded_by) VALUES ($1,$2,$3,$4,$5,$6,$7)',
+        [id, req.params.poNo, filename, mimetype || null, size, data, (req.user && (req.user.name || req.user.email)) || null]);
+      res.status(201).json({ id, filename, mimetype, size });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  router.get('/:poNo/attachments/:id/download', async (req, res) => {
+    if (!canPO(req)) return res.status(403).json({ error: 'ไม่มีสิทธิ์ดูใบสั่งซื้อ (PO)' });
+    try {
+      const r = await pool.query('SELECT filename, mimetype, data FROM po_attachments WHERE id=$1 AND po_no=$2',
+        [req.params.id, req.params.poNo]);
+      if (!r.rows[0]) return res.status(404).json({ error: 'ไม่พบไฟล์' });
+      res.json(r.rows[0]);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  router.delete('/:poNo/attachments/:id', async (req, res) => {
+    if (!canPO(req)) return res.status(403).json({ error: 'ไม่มีสิทธิ์แก้ไขใบสั่งซื้อ (PO)' });
+    try {
+      await pool.query('DELETE FROM po_attachments WHERE id=$1 AND po_no=$2', [req.params.id, req.params.poNo]);
+      res.json({ ok: true });
+    } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
   return router;
