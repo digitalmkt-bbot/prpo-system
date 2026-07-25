@@ -192,6 +192,11 @@
     .po-vendor-meta { margin-top:10px; display:flex; flex-wrap:wrap; gap:22px; font-size:13px; }
     .po-vendor-meta .k { font-size:11px; color:#9aa8a1; display:block; margin-bottom:2px; }
     .po-vendor-meta .v { color:#0d1f18; font-weight:600; }
+    /* Section header inside the Edit-PO modal */
+    .po-modal-sec { display:flex; align-items:center; gap:10px; font-size:15px; font-weight:800; color:#0d1f18; margin:22px 0 12px; padding-top:16px; border-top:1px solid #eef2f0; }
+    .po-modal-sec:first-of-type { border-top:none; padding-top:0; margin-top:6px; }
+    .po-modal-sec .chk { width:22px; height:22px; border-radius:50%; background:var(--brand); color:#fff; display:flex; align-items:center; justify-content:center; flex-shrink:0; box-shadow:0 2px 6px rgba(16,185,129,.3); }
+    .po-modal-sec .chk svg { width:13px; height:13px; stroke:#fff; fill:none; stroke-width:3; stroke-linecap:round; stroke-linejoin:round; }
     .pr-card-body { padding:18px; }
     .pr-wf { display:flex; background:#fff; border:1px solid #e8eaed; border-radius:16px; overflow:hidden; margin-bottom:16px; }
     .pr-wf-step { flex:1; padding:12px 14px; display:flex; align-items:center; gap:10px; border-right:1px solid #f0f2f5; }
@@ -1693,40 +1698,54 @@
         const items = (po.items || []).filter(i => i && i.product_name);
         document.getElementById('po-edit-card').innerHTML = `
           <h2 style="margin:0 0 4px">แก้ไขใบสั่งซื้อ ${po.po_no}</h2>
-          <p class="subtitle" style="margin:0 0 16px">ผู้ขาย: ${nz(po.supplier_code)} ${nz(po.supplier_name)} · แก้รายการแล้วยอดคำนวณใหม่อัตโนมัติ</p>
+          <p class="subtitle" style="margin:0 0 8px">ผู้ขาย: ${nz(po.supplier_code)} ${nz(po.supplier_name)} · แก้รายการแล้วยอดคำนวณใหม่อัตโนมัติ</p>
+
+          <div class="po-modal-sec"><span class="chk"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></span> ข้อมูลผู้ขาย</div>
           <div class="pr-grid">
             <div class="pr-field full typeahead" style="position:relative">
-              <label>ผู้ขาย (Supplier) *</label>
+              <label>ชื่อผู้ขาย (Supplier) *</label>
               <input id="ed-supplier-search" placeholder="คลิกเพื่อเลือก หรือพิมพ์ค้นหา..." autocomplete="off" value="${esc((po.supplier_code ? po.supplier_code + ' ' : '') + (po.supplier_name || ''))}" oninput="filterEditSupplier()" onfocus="openEditSupplier()">
               <span onclick="openEditSupplier(true)" style="position:absolute;right:12px;top:34px;cursor:pointer;color:#9ca3af;font-size:12px">▼</span>
               <input type="hidden" id="ed-supplier" value="${esc(po.supplier_id)}">
               <div class="typeahead-results" id="ed-supplier-results"></div>
+              <div class="po-vendor-meta">
+                <div><span class="k">ที่อยู่</span><span class="v" id="ed-vendor-addr">${nz(po.supplier_address)}</span></div>
+                <div><span class="k">เบอร์โทร</span><span class="v" id="ed-vendor-phone">${nz(po.supplier_phone)}</span></div>
+                <div><span class="k">เลขผู้เสียภาษี</span><span class="v" id="ed-vendor-tax">${nz(po.supplier_tax_id)}</span></div>
+              </div>
             </div>
             <div class="pr-field"><label>อ้างอิง</label><input id="ed-reference" value="${esc(po.reference)}"></div>
             <div class="pr-field"><label>เลขที่ใบเสนอราคา</label><input id="ed-quotation" value="${esc(po.quotation_no)}"></div>
             <div class="pr-field"><label>เลขที่ใบแจ้งหนี้</label><input id="ed-invoice" value="${esc(po.invoice_no)}"></div>
             <div class="pr-field"><label>เลขผู้เสียภาษี</label><input id="ed-taxno" value="${esc(po.tax_no || po.supplier_tax_id)}"></div>
             <div class="pr-field"><label>เงื่อนไขการชำระเงิน</label><input id="ed-payment" value="${esc(po.payment_terms)}"></div>
-            <div class="pr-field"><label>ประเภทราคา</label>
+            <div class="pr-field"><label>ผู้ติดต่อ (ฝั่งผู้ขาย)</label><input id="ed-contact-name" value="${esc(po.contact_name || po.supplier_name)}"></div>
+            <div class="pr-field"><label>เบอร์โทรผู้ติดต่อ</label><input id="ed-contact-phone" value="${esc(po.contact_phone || po.supplier_phone)}"></div>
+            <div class="pr-field"><label>อีเมลผู้ติดต่อ</label><input id="ed-contact-email" value="${esc(po.contact_email || po.supplier_email)}"></div>
+          </div>
+
+          <div class="po-modal-sec"><span class="chk"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></span> กลุ่มจัดประเภท</div>
+          <div class="pr-grid" style="grid-template-columns:1fr 1fr 1fr">
+            <div class="pr-field"><label>แผนก</label><select id="ed-cat-dept"><option value="">ยังไม่ระบุ</option></select></div>
+            <div class="pr-field"><label>สาขา</label><input id="ed-cat-branch" value="${esc(po.cat_branch)}" placeholder="ยังไม่ระบุ"></div>
+            <div class="pr-field"><label>โปรแกรม</label><input id="ed-cat-program" value="${esc(po.cat_program)}" placeholder="ยังไม่ระบุ"></div>
+            <div class="pr-field full"><label>แท็ก</label><input id="ed-tags" value="${esc(po.tags)}" placeholder="แท็ก คั่นด้วย ,"></div>
+          </div>
+
+          <div class="po-modal-sec"><span class="chk"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></span> ข้อมูลราคาและภาษี</div>
+          <div class="pr-grid">
+            <div class="pr-field"><label>ประเภทราคา *</label>
               <select id="ed-pricetype" onchange="recalcEdit()">
                 <option value="exclusive" ${po.price_type !== 'inclusive' ? 'selected' : ''}>แยกภาษี</option>
                 <option value="inclusive" ${po.price_type === 'inclusive' ? 'selected' : ''}>รวมภาษี</option>
               </select>
             </div>
-            <div class="pr-field"><label>กลุ่มจัดประเภท: แผนก</label><select id="ed-cat-dept"><option value="">— ยังไม่ระบุ —</option></select></div>
-            <div class="pr-field"><label>สาขา</label><input id="ed-cat-branch" value="${esc(po.cat_branch)}"></div>
-            <div class="pr-field"><label>โปรแกรม</label><input id="ed-cat-program" value="${esc(po.cat_program)}"></div>
-            <div class="pr-field"><label>แท็ก</label><input id="ed-tags" value="${esc(po.tags)}"></div>
             <div class="pr-field"><label>ภาษีมูลค่าเพิ่ม</label>
               <label style="display:flex;align-items:center;gap:8px;font-size:13px;margin-top:6px"><input type="checkbox" id="ed-vat-all" style="width:auto" ${(po.vat_amount > 0 || po.has_vat) ? 'checked' : ''} onchange="applyEditVatAll()"> มี VAT 7% (ทั้งใบ)</label>
             </div>
-            <div class="pr-field"><label>ผู้ติดต่อ (ฝั่งผู้ขาย)</label><input id="ed-contact-name" value="${esc(po.contact_name || po.supplier_name)}"></div>
-            <div class="pr-field"><label>เบอร์โทรผู้ติดต่อ</label><input id="ed-contact-phone" value="${esc(po.contact_phone || po.supplier_phone)}"></div>
-            <div class="pr-field"><label>อีเมลผู้ติดต่อ</label><input id="ed-contact-email" value="${esc(po.contact_email || po.supplier_email)}"></div>
-            <div class="pr-field full"><label>ที่อยู่ผู้ขาย</label><textarea id="ed-supplier-address" style="min-height:48px">${escT(po.supplier_address)}</textarea></div>
-            <div class="pr-field full"><label>หมายเหตุ</label><textarea id="ed-note">${escT(po.note)}</textarea></div>
           </div>
-          <h3 style="margin:18px 0 6px;font-size:14px">รายการสินค้า / บริการ</h3>
+
+          <div class="po-modal-sec"><span class="chk"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></span> รายการ</div>
           <table class="pr-items"><thead><tr>
             <th style="width:26px">#</th><th>รายการ</th><th style="width:150px">บัญชี</th>
             <th style="width:60px;text-align:center">จำนวน</th><th style="width:56px;text-align:center">หน่วย</th>
@@ -1734,6 +1753,8 @@
             <th style="width:52px;text-align:center">VAT%</th><th style="width:100px;text-align:right">มูลค่า</th><th style="width:30px"></th>
           </tr></thead><tbody id="ed-items"></tbody></table>
           <button class="pr-add" onclick="addEditRow({})">+ เพิ่มรายการ</button>
+
+          <div class="po-modal-sec"><span class="chk"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></span> สรุปข้อมูล</div>
           <div class="pr-sum">
             <div class="pr-sum-box" style="text-align:left;min-width:300px">
               <div style="display:flex;justify-content:space-between;font-size:13px"><span>มูลค่าก่อนภาษี</span><span>฿<span id="ed-subtotal">0.00</span></span></div>
@@ -1744,6 +1765,13 @@
               <div style="display:flex;justify-content:space-between;font-weight:700;font-size:15px;margin-top:4px;color:#16a34a"><span>ยอดชำระสุทธิ</span><span>฿<span id="ed-net">0.00</span></span></div>
             </div>
           </div>
+
+          <div class="po-modal-sec"><span class="chk"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></span> หมายเหตุสำหรับผู้ขาย</div>
+          <div class="pr-grid">
+            <div class="pr-field full"><label>ที่อยู่ผู้ขาย</label><textarea id="ed-supplier-address" style="min-height:48px">${escT(po.supplier_address)}</textarea></div>
+            <div class="pr-field full"><label>หมายเหตุ</label><textarea id="ed-note">${escT(po.note)}</textarea></div>
+          </div>
+
           <div style="margin-top:20px;text-align:right">
             <button class="btn secondary" onclick="closeEditPO()">ยกเลิก</button>
             <button class="btn" onclick="submitEditPO('${po.po_no}')">💾 บันทึกการแก้ไข</button>
@@ -2148,6 +2176,10 @@
         set('ed-contact-phone', s.phone);
         set('ed-contact-email', s.email);
         set('ed-supplier-address', s.address);
+        const meta = (fid, v) => { const f = document.getElementById(fid); if (f) f.textContent = (v && String(v).trim()) ? v : '-'; };
+        meta('ed-vendor-addr', s.address);
+        meta('ed-vendor-phone', s.phone);
+        meta('ed-vendor-tax', s.tax_id);
       }
     }
     window.pickEditSupplier = pickEditSupplier;
