@@ -521,6 +521,15 @@
               <div class="pr-field"><label>เลขที่ใบแจ้งหนี้</label><input id="iss-invoice" placeholder="เลขใบแจ้งหนี้"></div>
               <div class="pr-field"><label>เลขผู้เสียภาษี</label><input id="iss-taxno" placeholder="เลขประจำตัวผู้เสียภาษี"></div>
               <div class="pr-field"><label>เงื่อนไขการชำระเงิน</label><input id="iss-payment" placeholder="เช่น เครดิต 30 วัน / เงินสด"></div>
+              <div class="pr-field"><label>ประเภทราคา</label>
+                <select id="iss-pricetype" onchange="recalcIssue()">
+                  <option value="exclusive">แยกภาษี</option><option value="inclusive">รวมภาษี</option>
+                </select>
+              </div>
+              <div class="pr-field"><label>กลุ่มจัดประเภท: แผนก</label><select id="iss-cat-dept"><option value="">— ยังไม่ระบุ —</option></select></div>
+              <div class="pr-field"><label>สาขา</label><input id="iss-cat-branch" placeholder="สาขา (ถ้ามี)"></div>
+              <div class="pr-field"><label>โปรแกรม</label><input id="iss-cat-program" placeholder="โปรแกรม (ถ้ามี)"></div>
+              <div class="pr-field"><label>แท็ก</label><input id="iss-tags" placeholder="แท็ก คั่นด้วย ,"></div>
               <div class="pr-field"><label>ภาษีมูลค่าเพิ่ม</label>
                 <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#374151;margin-top:6px;"><input type="checkbox" id="iss-vat-all" style="width:auto;" checked onchange="applyIssueVatAll()"> มี VAT 7% (ทั้งใบ)</label>
               </div>
@@ -537,10 +546,10 @@
           <div class="pr-card-body">
             <table class="pr-items">
               <thead><tr>
-                <th style="width:26px">#</th><th>รายการ</th><th>รายละเอียด</th>
-                <th style="width:72px;text-align:center">จำนวน</th><th style="width:110px">ราคา/หน่วย</th>
-                <th style="width:100px">ส่วนลด</th><th style="width:64px;text-align:center">VAT%</th>
-                <th style="width:120px;text-align:right">มูลค่าก่อนภาษี</th>
+                <th style="width:26px">#</th><th>รายการ</th><th style="width:150px">บัญชี</th>
+                <th style="width:72px;text-align:center">จำนวน</th><th style="width:100px">ราคา/หน่วย</th>
+                <th style="width:90px">ส่วนลด</th><th style="width:60px;text-align:center">VAT%</th>
+                <th style="width:110px;text-align:right">มูลค่าก่อนภาษี</th>
               </tr></thead>
               <tbody id="iss-items"></tbody>
             </table>
@@ -549,6 +558,7 @@
               <div class="pr-sum-box" style="text-align:left; min-width:300px;">
                 <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--teal-dark)"><span>มูลค่าก่อนภาษี</span><span>฿<span id="iss-subtotal">0.00</span></span></div>
                 <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--teal-dark);margin-top:4px"><span>ภาษีมูลค่าเพิ่ม (VAT)</span><span>฿<span id="iss-vat">0.00</span></span></div>
+                <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;margin-top:6px;color:var(--teal-dark)"><span>ส่วนลดรวม</span><input type="number" id="iss-docdisc" value="0" min="0" step="0.01" style="width:120px;text-align:right;padding:5px 8px" oninput="recalcIssue()"></div>
                 <div style="display:flex;justify-content:space-between;font-weight:700;font-size:17px;border-top:1px solid #a7f3d0;margin-top:8px;padding-top:8px;color:#065f46"><span>จำนวนเงินทั้งสิ้น</span><span>฿<span id="iss-total">0.00</span></span></div>
                 <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;margin-top:10px;color:var(--teal-dark)"><span>หัก ณ ที่จ่าย</span><input type="number" id="iss-wht" value="0" min="0" step="0.01" style="width:120px;text-align:right;padding:5px 8px" oninput="recalcIssue()"></div>
                 <div style="display:flex;justify-content:space-between;font-weight:700;font-size:15px;margin-top:4px;color:#065f46"><span>ยอดชำระ</span><span>฿<span id="iss-net">0.00</span></span></div>
@@ -557,7 +567,8 @@
           </div>
         </div>
 
-        <button class="pr-submit" onclick="submitIssuePO()">ออก PO</button>
+        <button class="pr-submit" onclick="submitIssuePO(false)">ออก PO</button>
+        <button class="btn secondary" style="margin-left:8px" onclick="submitIssuePO(true)">บันทึกร่าง</button>
         <button class="btn secondary" style="margin-left:8px" onclick="cancelIssue()">ยกเลิก</button>
       </div>
 
@@ -1396,7 +1407,7 @@
           const base = gross - (it.discount || 0);
           grossTotal += gross; discountTotal += Number(it.discount || 0);
           return `<tr>
-            <td>${i + 1}. ${nz(it.product_name)}${it.description ? '<div style="color:#6b7280;font-size:11px">' + it.description + '</div>' : ''}</td>
+            <td>${i + 1}. ${nz(it.product_name)}${it.account_code ? '<div style="color:#4f46e5;font-size:11px">บัญชี: ' + it.account_code + '</div>' : ''}${it.description ? '<div style="color:#6b7280;font-size:11px">' + it.description + '</div>' : ''}</td>
             <td style="text-align:center">${Number(it.quantity).toLocaleString()}</td>
             <td style="text-align:center">${nz(it.unit)}</td>
             <td style="text-align:right">${money(it.unit_price)}</td>
@@ -1430,6 +1441,8 @@
                 ${po.invoice_no ? `<div><span class="mk">เลขใบแจ้งหนี้:</span>${po.invoice_no}</div>` : ''}
                 ${po.tax_no ? `<div><span class="mk">เลขผู้เสียภาษี:</span>${po.tax_no}</div>` : ''}
                 ${po.payment_terms ? `<div><span class="mk">เงื่อนไขชำระเงิน:</span>${po.payment_terms}</div>` : ''}
+                ${po.cat_department ? `<div><span class="mk">แผนก:</span>${po.cat_department}</div>` : ''}
+                ${po.tags ? `<div><span class="mk">แท็ก:</span>${po.tags}</div>` : ''}
                 <div style="margin-top:8px" class="lbl">ติดต่อกลับที่:</div>
                 <div><span class="mk">ชื่อ:</span>${nz(po.contact_name)}</div>
                 <div><span class="mk">โทร:</span>${nz(po.contact_phone)}</div>
@@ -1510,6 +1523,16 @@
             <div class="pr-field"><label>เลขที่ใบแจ้งหนี้</label><input id="ed-invoice" value="${esc(po.invoice_no)}"></div>
             <div class="pr-field"><label>เลขผู้เสียภาษี</label><input id="ed-taxno" value="${esc(po.tax_no)}"></div>
             <div class="pr-field"><label>เงื่อนไขการชำระเงิน</label><input id="ed-payment" value="${esc(po.payment_terms)}"></div>
+            <div class="pr-field"><label>ประเภทราคา</label>
+              <select id="ed-pricetype" onchange="recalcEdit()">
+                <option value="exclusive" ${po.price_type !== 'inclusive' ? 'selected' : ''}>แยกภาษี</option>
+                <option value="inclusive" ${po.price_type === 'inclusive' ? 'selected' : ''}>รวมภาษี</option>
+              </select>
+            </div>
+            <div class="pr-field"><label>กลุ่มจัดประเภท: แผนก</label><select id="ed-cat-dept"><option value="">— ยังไม่ระบุ —</option></select></div>
+            <div class="pr-field"><label>สาขา</label><input id="ed-cat-branch" value="${esc(po.cat_branch)}"></div>
+            <div class="pr-field"><label>โปรแกรม</label><input id="ed-cat-program" value="${esc(po.cat_program)}"></div>
+            <div class="pr-field"><label>แท็ก</label><input id="ed-tags" value="${esc(po.tags)}"></div>
             <div class="pr-field"><label>ภาษีมูลค่าเพิ่ม</label>
               <label style="display:flex;align-items:center;gap:8px;font-size:13px;margin-top:6px"><input type="checkbox" id="ed-vat-all" style="width:auto" ${(po.vat_amount > 0 || po.has_vat) ? 'checked' : ''} onchange="applyEditVatAll()"> มี VAT 7% (ทั้งใบ)</label>
             </div>
@@ -1520,16 +1543,17 @@
           </div>
           <h3 style="margin:18px 0 6px;font-size:14px">รายการสินค้า / บริการ</h3>
           <table class="pr-items"><thead><tr>
-            <th style="width:26px">#</th><th>รายการ</th><th>รายละเอียด</th>
-            <th style="width:66px;text-align:center">จำนวน</th><th style="width:60px;text-align:center">หน่วย</th>
-            <th style="width:100px">ราคา/หน่วย</th><th style="width:90px">ส่วนลด</th>
-            <th style="width:58px;text-align:center">VAT%</th><th style="width:110px;text-align:right">มูลค่า</th><th style="width:30px"></th>
+            <th style="width:26px">#</th><th>รายการ</th><th style="width:150px">บัญชี</th>
+            <th style="width:60px;text-align:center">จำนวน</th><th style="width:56px;text-align:center">หน่วย</th>
+            <th style="width:92px">ราคา/หน่วย</th><th style="width:82px">ส่วนลด</th>
+            <th style="width:52px;text-align:center">VAT%</th><th style="width:100px;text-align:right">มูลค่า</th><th style="width:30px"></th>
           </tr></thead><tbody id="ed-items"></tbody></table>
           <button class="pr-add" onclick="addEditRow({})">+ เพิ่มรายการ</button>
           <div class="pr-sum">
             <div class="pr-sum-box" style="text-align:left;min-width:300px">
               <div style="display:flex;justify-content:space-between;font-size:13px"><span>มูลค่าก่อนภาษี</span><span>฿<span id="ed-subtotal">0.00</span></span></div>
               <div style="display:flex;justify-content:space-between;font-size:13px;margin-top:4px"><span>ภาษีมูลค่าเพิ่ม (VAT)</span><span>฿<span id="ed-vat">0.00</span></span></div>
+              <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;margin-top:6px"><span>ส่วนลดรวม</span><input type="number" id="ed-docdisc" value="${po.doc_discount != null ? po.doc_discount : 0}" min="0" step="0.01" style="width:120px;text-align:right;padding:5px 8px" oninput="recalcEdit()"></div>
               <div style="display:flex;justify-content:space-between;font-weight:700;font-size:16px;border-top:1px solid #a7f3d0;margin-top:8px;padding-top:8px;color:#065f46"><span>จำนวนเงินทั้งสิ้น</span><span>฿<span id="ed-total">0.00</span></span></div>
               <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;margin-top:10px"><span>หัก ณ ที่จ่าย</span><input type="number" id="ed-wht" value="${po.wht_amount != null ? po.wht_amount : 0}" min="0" step="0.01" style="width:120px;text-align:right;padding:5px 8px" oninput="recalcEdit()"></div>
               <div style="display:flex;justify-content:space-between;font-weight:700;font-size:15px;margin-top:4px;color:#16a34a"><span>ยอดชำระสุทธิ</span><span>฿<span id="ed-net">0.00</span></span></div>
@@ -1540,6 +1564,9 @@
             <button class="btn" onclick="submitEditPO('${po.po_no}')">💾 บันทึกการแก้ไข</button>
           </div>
           <button class="detail-close" onclick="closeEditPO()" style="position:absolute;top:18px;right:24px">✕</button>`;
+        await ensureAcctOpts();
+        await fillCatSelect('ed-cat-dept');
+        const edc = document.getElementById('ed-cat-dept'); if (edc && po.cat_department) edc.value = po.cat_department;
         document.getElementById('ed-items').innerHTML = '';
         (items.length ? items : [{}]).forEach(it => addEditRow(it));
         recalcEdit();
@@ -1556,8 +1583,8 @@
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td class="ei-no" style="text-align:center;color:#cbd5e1"></td>
-        <td><input class="ei-name" value="${esc(it.product_name)}" placeholder="ชื่อรายการ"></td>
-        <td><input class="ei-desc" value="${esc(it.description)}" placeholder="รายละเอียด"></td>
+        <td><input class="ei-name" value="${esc(it.product_name)}" placeholder="ชื่อรายการ"><input type="hidden" class="ei-desc" value="${esc(it.description)}"></td>
+        <td><select class="ei-acct">${window.__acctOpts || '<option value=""></option>'}</select></td>
         <td><input class="ei-qty" type="number" min="0" step="1" value="${it.quantity != null ? it.quantity : 1}" style="text-align:center" oninput="recalcEdit()"></td>
         <td><input class="ei-unit" value="${esc(it.unit)}" style="text-align:center" placeholder="หน่วย"></td>
         <td><input class="ei-price" type="number" min="0" step="0.01" value="${it.unit_price != null ? it.unit_price : 0}" oninput="recalcEdit()"></td>
@@ -1566,21 +1593,26 @@
         <td class="ei-line" style="text-align:right;font-weight:600">0.00</td>
         <td style="text-align:center"><button style="background:none;border:none;color:#fca5a5;cursor:pointer;font-size:15px" onclick="this.closest('tr').remove();recalcEdit()">🗑</button></td>`;
       document.getElementById('ed-items').appendChild(tr);
+      if (it.account_code) { const sel = tr.querySelector('.ei-acct'); if (sel) sel.value = it.account_code; }
       recalcEdit();
     }
     window.addEditRow = addEditRow;
 
     function recalcEdit() {
+      const inclusive = (document.getElementById('ed-pricetype') || {}).value === 'inclusive';
       let subtotal = 0, vat = 0, n = 0;
       document.querySelectorAll('#ed-items tr').forEach(tr => {
         n++; tr.querySelector('.ei-no').textContent = n;
         const q = +tr.querySelector('.ei-qty').value || 0, p = +tr.querySelector('.ei-price').value || 0,
               d = +tr.querySelector('.ei-disc').value || 0, v = +tr.querySelector('.ei-vat').value || 0;
-        const base = q * p - d;
-        subtotal += base; vat += base * v / 100;
+        const gross = q * p - d;
+        let base;
+        if (inclusive) { base = v ? gross / (1 + v / 100) : gross; subtotal += base; vat += gross - base; }
+        else { base = gross; subtotal += gross; vat += gross * v / 100; }
         tr.querySelector('.ei-line').textContent = base.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
       });
-      const total = subtotal + vat;
+      const docDisc = +(document.getElementById('ed-docdisc') || {}).value || 0;
+      const total = subtotal + vat - docDisc;
       const wht = +document.getElementById('ed-wht').value || 0;
       const net = total - wht;
       const f = x => x.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -1606,6 +1638,7 @@
         const items = [...document.querySelectorAll('#ed-items tr')].map(tr => ({
           product_name: tr.querySelector('.ei-name').value.trim(),
           description: tr.querySelector('.ei-desc').value.trim(),
+          account_code: (tr.querySelector('.ei-acct') || {}).value || null,
           unit: tr.querySelector('.ei-unit').value.trim(),
           quantity: +tr.querySelector('.ei-qty').value || 0,
           unit_price: +tr.querySelector('.ei-price').value || 0,
@@ -1619,6 +1652,10 @@
           tax_no: val('ed-taxno') || null, payment_terms: val('ed-payment') || null,
           contact_name: val('ed-contact-name'), contact_phone: val('ed-contact-phone'), contact_email: val('ed-contact-email'),
           wht_amount: +document.getElementById('ed-wht').value || 0,
+          cat_department: val('ed-cat-dept') || null, cat_branch: val('ed-cat-branch') || null, cat_program: val('ed-cat-program') || null,
+          price_type: (document.getElementById('ed-pricetype') || {}).value || 'exclusive',
+          doc_discount: +document.getElementById('ed-docdisc').value || 0,
+          tags: val('ed-tags') || null,
           items,
         });
         toast('บันทึกการแก้ไขใบ PO แล้ว');
@@ -1898,6 +1935,11 @@
         document.getElementById('iss-vat-all').checked = true;
         const items = (pr.items || []).filter(i => i && i.product_name && i.item_status !== 'rejected' && !i.po_no);
         if (!items.length) { toast('รายการในใบนี้ออก PO ครบแล้ว', true); return; }
+        await ensureAcctOpts();
+        await fillCatSelect('iss-cat-dept');
+        ['iss-cat-branch', 'iss-cat-program', 'iss-tags'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+        const dt = document.getElementById('iss-pricetype'); if (dt) dt.value = 'exclusive';
+        const dd = document.getElementById('iss-docdisc'); if (dd) dd.value = '0';
         document.getElementById('iss-items').innerHTML = '';
         const defVat = 7;
         (items.length ? items : [{}]).forEach(it => addIssueRow(it, defVat));
@@ -1909,14 +1951,32 @@
     }
     window.showIssuePO = showIssuePO;
 
+    // Load chart-of-accounts options once (shared across item rows)
+    async function ensureAcctOpts() {
+      if (window.__acctOpts) return;
+      let accts = [];
+      try { accts = await api.getAccounts(); } catch {}
+      window.__acctOpts = '<option value="">— เลือกบัญชี —</option>' + accts.map(a => `<option value="${a.code}">${a.code} - ${a.name}</option>`).join('');
+    }
+    window.ensureAcctOpts = ensureAcctOpts;
+    async function fillCatSelect(id, group) {
+      const el = document.getElementById(id); if (!el) return;
+      let cats = [];
+      try { cats = await api.getPoCategories(group || 'department'); } catch {}
+      const cur = el.value;
+      el.innerHTML = '<option value="">— ยังไม่ระบุ —</option>' + cats.map(c => `<option value="${c.name}">${c.code ? c.code + ' · ' : ''}${c.name}</option>`).join('');
+      if (cur) el.value = cur;
+    }
+    window.fillCatSelect = fillCatSelect;
+
     function addIssueRow(it, defVat) {
       it = it || {};
       const esc = v => (v == null ? '' : String(v).replace(/"/g, '&quot;'));
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td class="ii-no" style="text-align:center;color:#cbd5e1"></td>
-        <td><input class="ii-name" value="${esc(it.product_name)}" placeholder="ชื่อรายการ"></td>
-        <td><input class="ii-desc" value="${esc(it.description)}" placeholder="รายละเอียด"></td>
+        <td><input class="ii-name" value="${esc(it.product_name)}" placeholder="ชื่อรายการ"><input type="hidden" class="ii-desc" value="${esc(it.description)}"></td>
+        <td><select class="ii-acct">${window.__acctOpts || '<option value=""></option>'}</select></td>
         <td><input class="ii-qty" type="number" min="0" step="1" value="${it.quantity != null ? it.quantity : 1}" style="text-align:center" oninput="recalcIssue()"></td>
         <td><input class="ii-price" type="number" min="0" step="0.01" value="${it.unit_price != null ? it.unit_price : 0}" oninput="recalcIssue()"></td>
         <td><input class="ii-disc" type="number" min="0" step="0.01" value="${it.discount != null ? it.discount : 0}" oninput="recalcIssue()"></td>
@@ -1925,21 +1985,26 @@
         <td style="text-align:center"><button title="ลบรายการนี้ออกจากใบ PO ใบนี้ (ออกใบใหม่ได้ทีหลัง)" style="background:none;border:none;color:#fca5a5;cursor:pointer;font-size:15px" onclick="this.closest('tr').remove();recalcIssue()">🗑</button></td>`;
       tr.dataset.prid = it.id || '';
       document.getElementById('iss-items').appendChild(tr);
+      if (it.account_code) { const sel = tr.querySelector('.ii-acct'); if (sel) sel.value = it.account_code; }
       recalcIssue();
     }
     window.addIssueRow = addIssueRow;
 
     function recalcIssue() {
+      const inclusive = (document.getElementById('iss-pricetype') || {}).value === 'inclusive';
       let subtotal = 0, vat = 0, n = 0;
       document.querySelectorAll('#iss-items tr').forEach(tr => {
         n++; tr.querySelector('.ii-no').textContent = n;
         const q = +tr.querySelector('.ii-qty').value || 0, p = +tr.querySelector('.ii-price').value || 0,
               d = +tr.querySelector('.ii-disc').value || 0, v = +tr.querySelector('.ii-vat').value || 0;
-        const base = q * p - d;
-        subtotal += base; vat += base * v / 100;
+        const gross = q * p - d;
+        let base;
+        if (inclusive) { base = v ? gross / (1 + v / 100) : gross; subtotal += base; vat += gross - base; }
+        else { base = gross; subtotal += gross; vat += gross * v / 100; }
         tr.querySelector('.ii-line').textContent = base.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
       });
-      const total = subtotal + vat;
+      const docDisc = +(document.getElementById('iss-docdisc') || {}).value || 0;
+      const total = subtotal + vat - docDisc;
       const wht = +document.getElementById('iss-wht').value || 0;
       const net = total - wht;
       const f = x => x.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -1960,7 +2025,7 @@
     function cancelIssue() { showPage('prs'); loadPRs(); }
     window.cancelIssue = cancelIssue;
 
-    async function submitIssuePO() {
+    async function submitIssuePO(draft) {
       try {
         const supplier_id = document.getElementById('issue-supplier').value;
         if (!supplier_id) return toast('กรุณาเลือกผู้ขาย', true);
@@ -1968,6 +2033,7 @@
         const items = trs.map(tr => ({
           product_name: tr.querySelector('.ii-name').value.trim(),
           description: tr.querySelector('.ii-desc').value.trim(),
+          account_code: (tr.querySelector('.ii-acct') || {}).value || null,
           quantity: +tr.querySelector('.ii-qty').value || 0,
           unit_price: +tr.querySelector('.ii-price').value || 0,
           discount: +tr.querySelector('.ii-disc').value || 0,
@@ -1982,8 +2048,12 @@
           tax_no: val('iss-taxno') || null, payment_terms: val('iss-payment') || null,
           contact_name: val('iss-contact-name'), contact_phone: val('iss-contact-phone'), contact_email: val('iss-contact-email'),
           wht_amount: +document.getElementById('iss-wht').value || 0,
+          cat_department: val('iss-cat-dept') || null, cat_branch: val('iss-cat-branch') || null, cat_program: val('iss-cat-program') || null,
+          price_type: (document.getElementById('iss-pricetype') || {}).value || 'exclusive',
+          doc_discount: +document.getElementById('iss-docdisc').value || 0,
+          tags: val('iss-tags') || null, is_draft: !!draft,
         });
-        toast('ออก PO สำเร็จ: ' + res.po_no);
+        toast(draft ? ('บันทึกร่าง PO แล้ว: ' + res.po_no) : ('ออก PO สำเร็จ: ' + res.po_no));
         showPage('prs'); loadPRs(); loadPOs();
       } catch (e) {
         toast('ออก PO ไม่สำเร็จ: ' + e.message, true);

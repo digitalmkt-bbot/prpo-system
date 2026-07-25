@@ -80,6 +80,8 @@ pool.on('error', (err) => {
     // Protected data routes (require a valid Bearer token)
     app.use('/api/company', requireAuth, (await import('./routes/company.js')).default(pool));
     app.use('/api/companies', requireAuth, (await import('./routes/companies.js')).default(pool));
+    app.use('/api/accounts', requireAuth, (await import('./routes/accounts.js')).default(pool));
+    app.use('/api/po-categories', requireAuth, (await import('./routes/poCategories.js')).default(pool));
     app.use('/api/users', requireAuth, (await import('./routes/users.js')).default(pool));
     app.use('/api/departments', requireAuth, (await import('./routes/departments.js')).default(pool));
     app.use('/api/suppliers', requireAuth, (await import('./routes/suppliers.js')).default(pool));

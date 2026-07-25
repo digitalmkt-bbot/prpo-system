@@ -15,6 +15,16 @@ export default function(pool) {
     ADD COLUMN IF NOT EXISTS invoice_no VARCHAR(80),
     ADD COLUMN IF NOT EXISTS tax_no VARCHAR(80),
     ADD COLUMN IF NOT EXISTS payment_terms VARCHAR(200)`).catch(() => {});
+  // PEAK-style fields: categorization, price type, doc discount, tags, draft
+  pool.query(`ALTER TABLE purchase_orders
+    ADD COLUMN IF NOT EXISTS cat_department VARCHAR(150),
+    ADD COLUMN IF NOT EXISTS cat_branch VARCHAR(150),
+    ADD COLUMN IF NOT EXISTS cat_program VARCHAR(150),
+    ADD COLUMN IF NOT EXISTS price_type VARCHAR(20) DEFAULT 'exclusive',
+    ADD COLUMN IF NOT EXISTS doc_discount NUMERIC(14,2) DEFAULT 0,
+    ADD COLUMN IF NOT EXISTS tags VARCHAR(300),
+    ADD COLUMN IF NOT EXISTS is_draft BOOLEAN DEFAULT false`).catch(() => {});
+  pool.query("ALTER TABLE po_items ADD COLUMN IF NOT EXISTS account_code VARCHAR(40)").catch(() => {});
 
   // Issue a PO from an approved PR — supplier is chosen at this step
   router.post('/issue', async (req, res) => {
@@ -27,6 +37,8 @@ export default function(pool) {
         contact_name = null, contact_phone = null, contact_email = null,
         wht_amount = 0, items: bodyItems, pr_item_ids = [],
         quotation_no = null, invoice_no = null, tax_no = null, payment_terms = null,
+        cat_department = null, cat_branch = null, cat_program = null,
+        price_type = 'exclusive', doc_discount = 0, tags = null, is_draft = false,
       } = req.body || {};
       if (!pr_no || !supplier_id) {
         await client.query('ROLLBACK');
@@ -47,16 +59,24 @@ export default function(pool) {
       items = items.filter(it => it && it.product_name);
 
       const r2 = (n) => Math.round((Number(n) || 0) * 100) / 100;
+      const priceType = price_type === 'inclusive' ? 'inclusive' : 'exclusive';
       let subtotal = 0, vat_amount = 0;
       items.forEach(it => {
-        const base = (Number(it.quantity) || 0) * (Number(it.unit_price) || 0) - (Number(it.discount) || 0);
-        subtotal += base;
-        vat_amount += base * (Number(it.vat_rate) || 0) / 100;
+        const gross = (Number(it.quantity) || 0) * (Number(it.unit_price) || 0) - (Number(it.discount) || 0);
+        const rate = Number(it.vat_rate) || 0;
+        if (priceType === 'inclusive') {
+          const base = rate ? gross / (1 + rate / 100) : gross;
+          subtotal += base; vat_amount += gross - base;
+        } else {
+          subtotal += gross; vat_amount += gross * rate / 100;
+        }
       });
       subtotal = r2(subtotal); vat_amount = r2(vat_amount);
-      const total = r2(subtotal + vat_amount);
+      const docDisc = r2(doc_discount);
+      const total = r2(subtotal + vat_amount - docDisc);
       const wht = r2(wht_amount);
       const net = r2(total - wht);
+      const poStatus = is_draft ? 'Draft' : 'Active';
 
       const now = new Date();
       const yyyymm = now.toISOString().slice(0, 7).replace('-', '');
@@ -71,19 +91,21 @@ export default function(pool) {
           (id, po_no, date, pr_id, supplier_id, status, total_amount, has_vat,
            reference, note, contact_name, contact_phone, contact_email,
            subtotal, vat_amount, wht_amount, net_amount, issued_by,
-           quotation_no, invoice_no, tax_no, payment_terms)
-        VALUES ($1,$2,CURRENT_DATE,$3,$4,'Active',$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20)
-      `, [po_id, po_no, pr.id, supplier_id, total, vat_amount > 0, reference, note,
+           quotation_no, invoice_no, tax_no, payment_terms,
+           cat_department, cat_branch, cat_program, price_type, doc_discount, tags, is_draft)
+        VALUES ($1,$2,CURRENT_DATE,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28)
+      `, [po_id, po_no, pr.id, supplier_id, poStatus, total, vat_amount > 0, reference, note,
           contact_name, contact_phone, contact_email, subtotal, vat_amount, wht, net,
           (req.user && (req.user.name || req.user.email)) || null,
-          quotation_no, invoice_no, tax_no, payment_terms]);
+          quotation_no, invoice_no, tax_no, payment_terms,
+          cat_department, cat_branch, cat_program, priceType, docDisc, tags, !!is_draft]);
 
       for (const it of items) {
         await client.query(`
-          INSERT INTO po_items (po_id, product_name, description, unit, quantity, unit_price, discount, vat_rate)
-          VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+          INSERT INTO po_items (po_id, product_name, description, unit, quantity, unit_price, discount, vat_rate, account_code)
+          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
         `, [po_id, it.product_name, it.description || null, it.unit || null,
-            it.quantity || 0, it.unit_price || 0, it.discount || 0, it.vat_rate ?? (pr.has_vat ? 7 : 0)]);
+            it.quantity || 0, it.unit_price || 0, it.discount || 0, it.vat_rate ?? (pr.has_vat ? 7 : 0), it.account_code || null]);
       }
 
       // Mark the issued PR items so they are not issued again (enables multiple POs per PR)
@@ -155,7 +177,8 @@ export default function(pool) {
             'quantity', poi.quantity,
             'unit_price', poi.unit_price,
             'discount', poi.discount,
-            'vat_rate', poi.vat_rate
+            'vat_rate', poi.vat_rate,
+            'account_code', poi.account_code
           ) ORDER BY poi.created_at) as items
         FROM purchase_orders po
         LEFT JOIN suppliers s ON po.supplier_id = s.id
@@ -201,6 +224,8 @@ export default function(pool) {
         contact_name = null, contact_phone = null, contact_email = null,
         wht_amount = 0, items: bodyItems, date = null,
         quotation_no = null, invoice_no = null, tax_no = null, payment_terms = null,
+        cat_department = null, cat_branch = null, cat_program = null,
+        price_type = 'exclusive', doc_discount = 0, tags = null, is_draft = null,
       } = req.body || {};
 
       const poR = await client.query('SELECT * FROM purchase_orders WHERE po_no = $1 FOR UPDATE', [req.params.poNo]);
@@ -211,14 +236,21 @@ export default function(pool) {
       if (!items.length) { await client.query('ROLLBACK'); return res.status(400).json({ error: 'ต้องมีรายการอย่างน้อย 1 รายการ' }); }
 
       const r2 = (n) => Math.round((Number(n) || 0) * 100) / 100;
+      const priceType = price_type === 'inclusive' ? 'inclusive' : 'exclusive';
       let subtotal = 0, vat_amount = 0;
       items.forEach(it => {
-        const base = (Number(it.quantity) || 0) * (Number(it.unit_price) || 0) - (Number(it.discount) || 0);
-        subtotal += base;
-        vat_amount += base * (Number(it.vat_rate) || 0) / 100;
+        const gross = (Number(it.quantity) || 0) * (Number(it.unit_price) || 0) - (Number(it.discount) || 0);
+        const rate = Number(it.vat_rate) || 0;
+        if (priceType === 'inclusive') {
+          const base = rate ? gross / (1 + rate / 100) : gross;
+          subtotal += base; vat_amount += gross - base;
+        } else {
+          subtotal += gross; vat_amount += gross * rate / 100;
+        }
       });
       subtotal = r2(subtotal); vat_amount = r2(vat_amount);
-      const total = r2(subtotal + vat_amount);
+      const docDisc = r2(doc_discount);
+      const total = r2(subtotal + vat_amount - docDisc);
       const wht = r2(wht_amount);
       const net = r2(total - wht);
 
@@ -229,19 +261,25 @@ export default function(pool) {
           contact_name = $4, contact_phone = $5, contact_email = $6,
           subtotal = $7, vat_amount = $8, wht_amount = $9, total_amount = $10,
           net_amount = $11, has_vat = $12, date = COALESCE($13::date, date),
-          quotation_no = $15, invoice_no = $16, tax_no = $17, payment_terms = $18, updated_at = NOW()
+          quotation_no = $15, invoice_no = $16, tax_no = $17, payment_terms = $18,
+          cat_department = $19, cat_branch = $20, cat_program = $21,
+          price_type = $22, doc_discount = $23, tags = $24,
+          is_draft = COALESCE($25, is_draft), status = CASE WHEN $25 = false THEN 'Active' ELSE status END,
+          updated_at = NOW()
         WHERE id = $14
       `, [supplier_id || null, reference, note, contact_name, contact_phone, contact_email,
           subtotal, vat_amount, wht, total, net, vat_amount > 0, date || null, po.id,
-          quotation_no, invoice_no, tax_no, payment_terms]);
+          quotation_no, invoice_no, tax_no, payment_terms,
+          cat_department, cat_branch, cat_program, priceType, docDisc, tags,
+          (is_draft === null ? null : !!is_draft)]);
 
       await client.query('DELETE FROM po_items WHERE po_id = $1', [po.id]);
       for (const it of items) {
         await client.query(`
-          INSERT INTO po_items (po_id, product_name, description, unit, quantity, unit_price, discount, vat_rate)
-          VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+          INSERT INTO po_items (po_id, product_name, description, unit, quantity, unit_price, discount, vat_rate, account_code)
+          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
         `, [po.id, it.product_name, it.description || null, it.unit || null,
-            it.quantity || 0, it.unit_price || 0, it.discount || 0, it.vat_rate ?? 0]);
+            it.quantity || 0, it.unit_price || 0, it.discount || 0, it.vat_rate ?? 0, it.account_code || null]);
       }
 
       await client.query('COMMIT');

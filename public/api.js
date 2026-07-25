@@ -200,6 +200,22 @@ class PROPOApi {
     return this.request('DELETE', `/companies/${id}`);
   }
 
+  // ========== CHART OF ACCOUNTS + PO CATEGORIES ==========
+  async getAccounts() {
+    return this.request('GET', '/accounts');
+  }
+  async saveAccount(a) {
+    if (a.id) return this.request('PUT', `/accounts/${a.id}`, a);
+    return this.request('POST', '/accounts', a);
+  }
+  async getPoCategories(group) {
+    return this.request('GET', '/po-categories' + (group ? `?group=${encodeURIComponent(group)}` : ''));
+  }
+  async savePoCategory(c) {
+    if (c.id) return this.request('PUT', `/po-categories/${c.id}`, c);
+    return this.request('POST', '/po-categories', c);
+  }
+
   // ========== APPROVAL MATRIX ==========
   async getApprovalMatrix() {
     return this.request('GET', '/approval-matrix');
