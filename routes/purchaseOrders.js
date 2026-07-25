@@ -181,6 +181,7 @@ export default function(pool) {
           po.*,
           s.code as supplier_code, s.name as supplier_name, s.address as supplier_address,
           s.tax_id as supplier_tax_id, s.phone as supplier_phone, s.email as supplier_email,
+          pr.pr_no as source_pr_no,
           json_agg(json_build_object(
             'product_name', poi.product_name,
             'description', poi.description,
@@ -193,9 +194,10 @@ export default function(pool) {
           ) ORDER BY poi.created_at) as items
         FROM purchase_orders po
         LEFT JOIN suppliers s ON po.supplier_id = s.id
+        LEFT JOIN purchase_requests pr ON po.pr_id = pr.id
         LEFT JOIN po_items poi ON po.id = poi.po_id
         WHERE po.po_no = $1
-        GROUP BY po.id, s.code, s.name, s.address, s.tax_id, s.phone, s.email
+        GROUP BY po.id, s.code, s.name, s.address, s.tax_id, s.phone, s.email, pr.pr_no
       `, [req.params.poNo]);
 
       if (result.rows.length === 0) {

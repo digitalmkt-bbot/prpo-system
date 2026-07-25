@@ -639,7 +639,7 @@
                   <div><span class="k">เลขผู้เสียภาษี</span><span class="v" id="iss-vendor-tax">-</span></div>
                 </div>
               </div>
-              <div class="pr-field"><label>อ้างอิง</label><input id="iss-reference" placeholder="เลขอ้างอิง (ถ้ามี)"></div>
+              <div class="pr-field"><label>อ้างอิง (เลข PR)</label><input id="iss-reference" placeholder="ดึงจากเลข PR อัตโนมัติ"></div>
               <div class="pr-field"><label>เลขที่ใบเสนอราคา</label><input id="iss-quotation" placeholder="เลขใบเสนอราคา"></div>
               <div class="pr-field"><label>เลขที่ใบแจ้งหนี้</label><input id="iss-invoice" placeholder="เลขใบแจ้งหนี้"></div>
               <div class="pr-field"><label>เลขผู้เสียภาษี</label><input id="iss-taxno" placeholder="เลขประจำตัวผู้เสียภาษี"></div>
@@ -1714,7 +1714,7 @@
                 <div><span class="k">เลขผู้เสียภาษี</span><span class="v" id="ed-vendor-tax">${nz(po.supplier_tax_id)}</span></div>
               </div>
             </div>
-            <div class="pr-field"><label>อ้างอิง</label><input id="ed-reference" value="${esc(po.reference)}"></div>
+            <div class="pr-field"><label>อ้างอิง (เลข PR)</label><input id="ed-reference" value="${esc(po.reference || po.source_pr_no)}"></div>
             <div class="pr-field"><label>เลขที่ใบเสนอราคา</label><input id="ed-quotation" value="${esc(po.quotation_no)}"></div>
             <div class="pr-field"><label>เลขที่ใบแจ้งหนี้</label><input id="ed-invoice" value="${esc(po.invoice_no)}"></div>
             <div class="pr-field"><label>เลขผู้เสียภาษี</label><input id="ed-taxno" value="${esc(po.tax_no || po.supplier_tax_id)}"></div>
