@@ -183,6 +183,15 @@
     .pr-card-head { display:flex; align-items:center; justify-content:space-between; padding:14px 18px; border-bottom:1px solid #f0f2f5; }
     .pr-card-title { font-size:14px; font-weight:600; color:#1a1a2e; display:flex; align-items:center; gap:8px; }
     .pr-card-title .dot { width:8px; height:8px; border-radius:50%; background:var(--teal); }
+    /* PEAK-style section header with green check */
+    .pr-card-title.sec { font-size:16px; font-weight:800; color:#0d1f18; gap:11px; }
+    .pr-card-title.sec .chk { width:24px; height:24px; border-radius:50%; background:var(--brand); color:#fff; display:flex; align-items:center; justify-content:center; flex-shrink:0; box-shadow:0 2px 6px rgba(16,185,129,.3); }
+    .pr-card-title.sec .chk svg { width:14px; height:14px; stroke:#fff; fill:none; stroke-width:3; stroke-linecap:round; stroke-linejoin:round; }
+    .po-sec-sub { font-size:12px; color:var(--brand-dark); font-weight:600; cursor:pointer; }
+    .po-sec-sub:hover { text-decoration:underline; }
+    .po-vendor-meta { margin-top:10px; display:flex; flex-wrap:wrap; gap:22px; font-size:13px; }
+    .po-vendor-meta .k { font-size:11px; color:#9aa8a1; display:block; margin-bottom:2px; }
+    .po-vendor-meta .v { color:#0d1f18; font-weight:600; }
     .pr-card-body { padding:18px; }
     .pr-wf { display:flex; background:#fff; border:1px solid #e8eaed; border-radius:16px; overflow:hidden; margin-bottom:16px; }
     .pr-wf-step { flex:1; padding:12px 14px; display:flex; align-items:center; gap:10px; border-right:1px solid #f0f2f5; }
@@ -608,45 +617,68 @@
         <h1>ออกใบสั่งซื้อ (PO)</h1>
         <p class="subtitle">อ้างอิงจาก <b id="iss-pr-ref">-</b> · เลือกผู้ขายและตรวจรายการก่อนออก PO · ถ้าซื้อจากหลาย Supplier ให้ลบ (🗑) รายการที่ไม่ได้ซื้อจากเจ้านี้ออก แล้วออก PO ใบใหม่สำหรับรายการที่เหลือได้</p>
 
+        <!-- Section 1: ข้อมูลผู้ขาย -->
         <div class="pr-card">
-          <div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> ข้อมูลผู้ขาย</div></div>
+          <div class="pr-card-head"><div class="pr-card-title sec"><span class="chk"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></span> ข้อมูลผู้ขาย</div></div>
           <div class="pr-card-body">
             <div class="pr-grid">
               <div class="pr-field full typeahead" style="position:relative">
-                <label>ผู้ขาย (Supplier) *</label>
+                <label>ชื่อผู้ขาย (Supplier) *</label>
                 <input id="issue-supplier-search" placeholder="คลิกเพื่อเลือก หรือพิมพ์ค้นหาชื่อ/รหัสผู้ขาย..." autocomplete="off" oninput="filterIssueSupplier()" onfocus="openIssueSupplier()">
                 <span onclick="openIssueSupplier(true)" style="position:absolute;right:12px;top:34px;cursor:pointer;color:#9ca3af;font-size:12px">▼</span>
                 <input type="hidden" id="issue-supplier">
                 <div class="typeahead-results" id="issue-supplier-results"></div>
+                <div class="po-vendor-meta">
+                  <div><span class="k">ที่อยู่</span><span class="v" id="iss-vendor-addr">-</span></div>
+                  <div><span class="k">เบอร์โทร</span><span class="v" id="iss-vendor-phone">-</span></div>
+                  <div><span class="k">เลขผู้เสียภาษี</span><span class="v" id="iss-vendor-tax">-</span></div>
+                </div>
               </div>
               <div class="pr-field"><label>อ้างอิง</label><input id="iss-reference" placeholder="เลขอ้างอิง (ถ้ามี)"></div>
               <div class="pr-field"><label>เลขที่ใบเสนอราคา</label><input id="iss-quotation" placeholder="เลขใบเสนอราคา"></div>
               <div class="pr-field"><label>เลขที่ใบแจ้งหนี้</label><input id="iss-invoice" placeholder="เลขใบแจ้งหนี้"></div>
               <div class="pr-field"><label>เลขผู้เสียภาษี</label><input id="iss-taxno" placeholder="เลขประจำตัวผู้เสียภาษี"></div>
               <div class="pr-field"><label>เงื่อนไขการชำระเงิน</label><input id="iss-payment" placeholder="เช่น เครดิต 30 วัน / เงินสด"></div>
-              <div class="pr-field"><label>ประเภทราคา</label>
-                <select id="iss-pricetype" onchange="recalcIssue()">
-                  <option value="exclusive">แยกภาษี</option><option value="inclusive">รวมภาษี</option>
-                </select>
-              </div>
-              <div class="pr-field"><label>กลุ่มจัดประเภท: แผนก</label><select id="iss-cat-dept"><option value="">— ยังไม่ระบุ —</option></select></div>
-              <div class="pr-field"><label>สาขา</label><input id="iss-cat-branch" placeholder="สาขา (ถ้ามี)"></div>
-              <div class="pr-field"><label>โปรแกรม</label><input id="iss-cat-program" placeholder="โปรแกรม (ถ้ามี)"></div>
-              <div class="pr-field"><label>แท็ก</label><input id="iss-tags" placeholder="แท็ก คั่นด้วย ,"></div>
-              <div class="pr-field"><label>ภาษีมูลค่าเพิ่ม</label>
-                <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#374151;margin-top:6px;"><input type="checkbox" id="iss-vat-all" style="width:auto;" checked onchange="applyIssueVatAll()"> มี VAT 7% (ทั้งใบ)</label>
-              </div>
               <div class="pr-field"><label>ผู้ติดต่อ (ฝั่งผู้ขาย)</label><input id="iss-contact-name"></div>
               <div class="pr-field"><label>เบอร์โทรผู้ติดต่อ</label><input id="iss-contact-phone"></div>
               <div class="pr-field"><label>อีเมลผู้ติดต่อ</label><input id="iss-contact-email"></div>
-              <div class="pr-field full"><label>หมายเหตุ</label><textarea id="iss-note" placeholder="หมายเหตุในใบสั่งซื้อ..."></textarea></div>
-              <div class="pr-field full"><label>แนบไฟล์ในเอกสารนี้ (เช่น ใบเสนอราคา/ใบแจ้งหนี้ · สูงสุด 20MB/ไฟล์)</label><input type="file" id="iss-files" multiple></div>
             </div>
           </div>
         </div>
 
+        <!-- Section 2: กลุ่มจัดประเภท -->
         <div class="pr-card">
-          <div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> รายการสินค้า / บริการ</div></div>
+          <div class="pr-card-head"><div class="pr-card-title sec"><span class="chk"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></span> กลุ่มจัดประเภท</div><span class="po-sec-sub" onclick="document.querySelector('.nav a[data-page=&quot;departments&quot;]').click()">จัดการกลุ่มจัดประเภท</span></div>
+          <div class="pr-card-body">
+            <div class="pr-grid" style="grid-template-columns:1fr 1fr 1fr">
+              <div class="pr-field"><label>แผนก</label><select id="iss-cat-dept"><option value="">ยังไม่ระบุ</option></select></div>
+              <div class="pr-field"><label>สาขา</label><input id="iss-cat-branch" placeholder="ยังไม่ระบุ"></div>
+              <div class="pr-field"><label>โปรแกรม</label><input id="iss-cat-program" placeholder="ยังไม่ระบุ"></div>
+              <div class="pr-field full"><label>แท็ก</label><input id="iss-tags" placeholder="แท็ก คั่นด้วย ,"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 3: ข้อมูลราคาและภาษี -->
+        <div class="pr-card">
+          <div class="pr-card-head"><div class="pr-card-title sec"><span class="chk"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></span> ข้อมูลราคาและภาษี</div></div>
+          <div class="pr-card-body">
+            <div class="pr-grid">
+              <div class="pr-field"><label>ประเภทราคา *</label>
+                <select id="iss-pricetype" onchange="recalcIssue()">
+                  <option value="exclusive">แยกภาษี</option><option value="inclusive">รวมภาษี</option>
+                </select>
+              </div>
+              <div class="pr-field"><label>ภาษีมูลค่าเพิ่ม</label>
+                <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#374151;margin-top:6px;"><input type="checkbox" id="iss-vat-all" style="width:auto;" checked onchange="applyIssueVatAll()"> มี VAT 7% (ทั้งใบ)</label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 4: รายการ -->
+        <div class="pr-card">
+          <div class="pr-card-head"><div class="pr-card-title sec"><span class="chk"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></span> รายการ</div></div>
           <div class="pr-card-body">
             <table class="pr-items">
               <thead><tr>
@@ -658,6 +690,13 @@
               <tbody id="iss-items"></tbody>
             </table>
             <button class="pr-add" onclick="addIssueRow({}, 7)">+ เพิ่มรายการ</button>
+          </div>
+        </div>
+
+        <!-- Section 5: สรุปข้อมูล -->
+        <div class="pr-card">
+          <div class="pr-card-head"><div class="pr-card-title sec"><span class="chk"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></span> สรุปข้อมูล</div></div>
+          <div class="pr-card-body">
             <div class="pr-sum">
               <div class="pr-sum-box" style="text-align:left; min-width:300px;">
                 <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--teal-dark)"><span>มูลค่าก่อนภาษี</span><span>฿<span id="iss-subtotal">0.00</span></span></div>
@@ -667,6 +706,17 @@
                 <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;margin-top:10px;color:var(--teal-dark)"><span>หัก ณ ที่จ่าย</span><input type="number" id="iss-wht" value="0" min="0" step="0.01" style="width:120px;text-align:right;padding:5px 8px" oninput="recalcIssue()"></div>
                 <div style="display:flex;justify-content:space-between;font-weight:700;font-size:15px;margin-top:4px;color:#065f46"><span>ยอดชำระ</span><span>฿<span id="iss-net">0.00</span></span></div>
               </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 6: หมายเหตุสำหรับผู้ขาย -->
+        <div class="pr-card">
+          <div class="pr-card-head"><div class="pr-card-title sec"><span class="chk"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></span> หมายเหตุสำหรับผู้ขาย</div></div>
+          <div class="pr-card-body">
+            <div class="pr-grid">
+              <div class="pr-field full"><label>หมายเหตุ</label><textarea id="iss-note" placeholder="หมายเหตุในใบสั่งซื้อ..."></textarea></div>
+              <div class="pr-field full"><label>แนบไฟล์ในเอกสารนี้ (เช่น ใบเสนอราคา/ใบแจ้งหนี้ · สูงสุด 20MB/ไฟล์)</label><input type="file" id="iss-files" multiple></div>
             </div>
           </div>
         </div>
@@ -2054,6 +2104,10 @@
         set('iss-contact-name', s.name);
         set('iss-contact-phone', s.phone);
         set('iss-contact-email', s.email);
+        const meta = (fid, v) => { const f = document.getElementById(fid); if (f) f.textContent = (v && String(v).trim()) ? v : '-'; };
+        meta('iss-vendor-addr', s.address);
+        meta('iss-vendor-phone', s.phone);
+        meta('iss-vendor-tax', s.tax_id);
       }
     }
     window.pickIssueSupplier = pickIssueSupplier;
@@ -2120,7 +2174,8 @@
         document.getElementById('issue-supplier-search').value = '';
         document.getElementById('issue-supplier').value = '';
         document.getElementById('issue-supplier-results').style.display = 'none';
-        ['iss-contact-name', 'iss-contact-phone', 'iss-contact-email', 'iss-note'].forEach(id => document.getElementById(id).value = '');
+        ['iss-contact-name', 'iss-contact-phone', 'iss-contact-email', 'iss-note', 'iss-quotation', 'iss-invoice', 'iss-taxno', 'iss-payment'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+        ['iss-vendor-addr', 'iss-vendor-phone', 'iss-vendor-tax'].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = '-'; });
         // อ้างอิงเติมจากเลข PR ต้นทางอัตโนมัติ (แก้ไขได้)
         document.getElementById('iss-reference').value = pr.pr_no || '';
         document.getElementById('iss-wht').value = '0';
