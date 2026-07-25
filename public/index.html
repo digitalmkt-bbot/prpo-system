@@ -510,9 +510,10 @@
           <div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> ข้อมูลผู้ขาย</div></div>
           <div class="pr-card-body">
             <div class="pr-grid">
-              <div class="pr-field full typeahead">
+              <div class="pr-field full typeahead" style="position:relative">
                 <label>ผู้ขาย (Supplier) *</label>
-                <input id="issue-supplier-search" placeholder="พิมพ์ชื่อ/รหัสผู้ขาย..." autocomplete="off" oninput="filterIssueSupplier()">
+                <input id="issue-supplier-search" placeholder="คลิกเพื่อเลือก หรือพิมพ์ค้นหาชื่อ/รหัสผู้ขาย..." autocomplete="off" oninput="filterIssueSupplier()" onfocus="openIssueSupplier()">
+                <span onclick="openIssueSupplier(true)" style="position:absolute;right:12px;top:34px;cursor:pointer;color:#9ca3af;font-size:12px">▼</span>
                 <input type="hidden" id="issue-supplier">
                 <div class="typeahead-results" id="issue-supplier-results"></div>
               </div>
@@ -1520,6 +1521,7 @@
     async function showEditPO(poNo) {
       if (!canEditPO()) return toast('เฉพาะฝ่ายจัดซื้อ/Admin แก้ไขใบ PO ได้', true);
       try {
+        await ensureSuppliers();
         const po = await api.getPODetail(poNo);
         const esc = v => (v == null ? '' : String(v).replace(/"/g, '&quot;'));
         const escT = v => (v == null ? '' : String(v).replace(/</g, '&lt;'));
@@ -1528,6 +1530,13 @@
           <h2 style="margin:0 0 4px">แก้ไขใบสั่งซื้อ ${po.po_no}</h2>
           <p class="subtitle" style="margin:0 0 16px">ผู้ขาย: ${nz(po.supplier_code)} ${nz(po.supplier_name)} · แก้รายการแล้วยอดคำนวณใหม่อัตโนมัติ</p>
           <div class="pr-grid">
+            <div class="pr-field full typeahead" style="position:relative">
+              <label>ผู้ขาย (Supplier) *</label>
+              <input id="ed-supplier-search" placeholder="คลิกเพื่อเลือก หรือพิมพ์ค้นหา..." autocomplete="off" value="${esc((po.supplier_code ? po.supplier_code + ' ' : '') + (po.supplier_name || ''))}" oninput="filterEditSupplier()" onfocus="openEditSupplier()">
+              <span onclick="openEditSupplier(true)" style="position:absolute;right:12px;top:34px;cursor:pointer;color:#9ca3af;font-size:12px">▼</span>
+              <input type="hidden" id="ed-supplier" value="${esc(po.supplier_id)}">
+              <div class="typeahead-results" id="ed-supplier-results"></div>
+            </div>
             <div class="pr-field"><label>อ้างอิง</label><input id="ed-reference" value="${esc(po.reference)}"></div>
             <div class="pr-field"><label>เลขที่ใบเสนอราคา</label><input id="ed-quotation" value="${esc(po.quotation_no)}"></div>
             <div class="pr-field"><label>เลขที่ใบแจ้งหนี้</label><input id="ed-invoice" value="${esc(po.invoice_no)}"></div>
@@ -1657,6 +1666,7 @@
         })).filter(i => i.product_name);
         if (!items.length) return toast('ต้องมีรายการอย่างน้อย 1 รายการ', true);
         await api.updatePO(poNo, {
+          supplier_id: (document.getElementById('ed-supplier') || {}).value || null,
           reference: val('ed-reference'), note: val('ed-note'),
           quotation_no: val('ed-quotation') || null, invoice_no: val('ed-invoice') || null,
           tax_no: val('ed-taxno') || null, payment_terms: val('ed-payment') || null,
@@ -1901,20 +1911,57 @@
     function filterIssueSupplier() {
       const q = document.getElementById('issue-supplier-search').value.toLowerCase().trim();
       const box = document.getElementById('issue-supplier-results');
-      if (!q) { box.style.display = 'none'; return; }
-      const m = SUPPLIERS.filter(s => (s.name || '').toLowerCase().includes(q) || (s.code || '').toLowerCase().includes(q)).slice(0, 20);
+      const list = [...SUPPLIERS].sort((a, b) => String(a.code || '').localeCompare(String(b.code || ''), 'en', { numeric: true }));
+      const m = (q
+        ? list.filter(s => (s.name || '').toLowerCase().includes(q) || (s.code || '').toLowerCase().includes(q))
+        : list).slice(0, 100);
       box.innerHTML = m.length
-        ? m.map(s => `<div onclick="pickIssueSupplier('${s.id}', this)" data-label="${(s.name || '').replace(/"/g, '&quot;')}"><div>${s.name}</div><div class="code">${s.code}</div></div>`).join('')
-        : '<div style="color:var(--muted)">ไม่พบ</div>';
+        ? m.map(s => `<div onclick="pickIssueSupplier('${s.id}', this)" data-label="${(s.name || '').replace(/"/g, '&quot;')}"><div>${nz(s.name)}</div><div class="code">${nz(s.code)}</div></div>`).join('')
+        : '<div style="color:var(--muted);padding:6px 10px">ไม่พบผู้ขาย</div>';
       box.style.display = 'block';
     }
     window.filterIssueSupplier = filterIssueSupplier;
+    function openIssueSupplier(clear) {
+      if (clear) { const s = document.getElementById('issue-supplier-search'); s.value = ''; s.focus(); }
+      filterIssueSupplier();
+    }
+    window.openIssueSupplier = openIssueSupplier;
     function pickIssueSupplier(id, el) {
       document.getElementById('issue-supplier').value = id;
       document.getElementById('issue-supplier-search').value = el.getAttribute('data-label');
       document.getElementById('issue-supplier-results').style.display = 'none';
     }
     window.pickIssueSupplier = pickIssueSupplier;
+    // Close the supplier dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.typeahead')) {
+        ['issue-supplier-results', 'ed-supplier-results'].forEach(id => { const w = document.getElementById(id); if (w) w.style.display = 'none'; });
+      }
+    });
+
+    // Edit-PO supplier dropdown (searchable)
+    function filterEditSupplier() {
+      const q = document.getElementById('ed-supplier-search').value.toLowerCase().trim();
+      const box = document.getElementById('ed-supplier-results');
+      const list = [...SUPPLIERS].sort((a, b) => String(a.code || '').localeCompare(String(b.code || ''), 'en', { numeric: true }));
+      const m = (q ? list.filter(s => (s.name || '').toLowerCase().includes(q) || (s.code || '').toLowerCase().includes(q)) : list).slice(0, 100);
+      box.innerHTML = m.length
+        ? m.map(s => `<div onclick="pickEditSupplier('${s.id}', this)" data-label="${((s.code ? s.code + ' ' : '') + (s.name || '')).replace(/"/g, '&quot;')}"><div>${nz(s.name)}</div><div class="code">${nz(s.code)}</div></div>`).join('')
+        : '<div style="color:var(--muted);padding:6px 10px">ไม่พบผู้ขาย</div>';
+      box.style.display = 'block';
+    }
+    window.filterEditSupplier = filterEditSupplier;
+    function openEditSupplier(clear) {
+      if (clear) { const s = document.getElementById('ed-supplier-search'); s.value = ''; s.focus(); }
+      filterEditSupplier();
+    }
+    window.openEditSupplier = openEditSupplier;
+    function pickEditSupplier(id, el) {
+      document.getElementById('ed-supplier').value = id;
+      document.getElementById('ed-supplier-search').value = el.getAttribute('data-label');
+      document.getElementById('ed-supplier-results').style.display = 'none';
+    }
+    window.pickEditSupplier = pickEditSupplier;
 
     // Switch SPA page programmatically (for non-nav pages like Issue PO)
     function showPage(name) {
