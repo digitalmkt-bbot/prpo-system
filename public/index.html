@@ -253,7 +253,7 @@
     .dash-ic { width:46px; height:46px; border-radius:13px; display:flex; align-items:center; justify-content:center; color:#fff; flex-shrink:0; font-size:20px; font-weight:800; box-shadow:0 4px 10px rgba(16,24,40,.12); }
     .dash-ic svg { width:23px; height:23px; stroke:#fff; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
     /* ===== Solar dashboard layout ===== */
-    .solar-cards { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:18px; }
+    .solar-cards { display:grid; grid-template-columns:repeat(3,1fr); gap:18px; margin-bottom:18px; }
     /* FarmVue-style metric cards */
     .fv-mc { background:#fff; border-radius:20px; padding:16px 18px; position:relative; overflow:hidden; box-shadow:var(--card-shadow); }
     .fv-mc.mint { background:#00e58f; }
@@ -261,7 +261,7 @@
     .fv-mc.mint .fv-mc-title { color:#062b20; }
     .fv-mc-sub { font-size:11px; color:#9aa8a1; margin-top:3px; }
     .fv-mc.mint .fv-mc-sub { color:#0a3b2b; font-weight:600; }
-    .fv-robot { position:absolute; right:12px; top:10px; width:44px; height:44px; opacity:.95; pointer-events:none; }
+    .fv-robot { position:absolute; right:10px; top:-6px; width:96px; height:96px; opacity:.85; pointer-events:none; }
     .fv-statbar { background:#081d16; border-radius:14px; padding:11px 13px; margin-top:16px; display:flex; align-items:center; justify-content:space-between; gap:8px; }
     .fv-statnum { display:flex; align-items:baseline; gap:7px; min-width:0; }
     .fv-statnum > span { font-size:22px; font-weight:800; color:#ff681a; white-space:nowrap; }
@@ -298,7 +298,43 @@
     .cta-card { background:linear-gradient(150deg,#10b981,#059669); border-radius:18px; padding:22px; color:#fff; display:flex; flex-direction:column; justify-content:center; box-shadow:var(--card-shadow); }
     .cta-card h3 { margin:0 0 6px; font-size:18px; } .cta-card p { margin:0 0 16px; font-size:13px; opacity:.9; line-height:1.5; }
     .cta-card .cta-btn { background:#fff; color:#059669; border:none; border-radius:999px; padding:10px 18px; font-weight:700; font-size:13px; cursor:pointer; align-self:flex-start; }
-    @media (max-width:1100px){ .solar-cards{grid-template-columns:repeat(2,1fr);} .solar-row3{grid-template-columns:1fr;} }
+    @media (max-width:1100px){ .solar-cards{grid-template-columns:repeat(2,1fr);} .solar-row3{grid-template-columns:1fr;} .fv-row2{grid-template-columns:1fr;} }
+    /* FarmVue Ref — bigger cards */
+    .fv-mc { padding:20px 22px; }
+    .fv-mc-title { font-size:22px; }
+    .fv-mc-sub { font-size:12px; margin-top:4px; }
+    .fv-robot { width:60px; height:60px; right:16px; top:14px; }
+    .fv-statbar { margin-top:26px; padding:14px 16px; border-radius:16px; }
+    .fv-statnum > span { font-size:30px; }
+    .fv-statmeta span:first-child { font-size:11px; }
+    .fv-badge { font-size:11px; }
+    .fv-donut { width:40px; height:40px; }
+    .fv-mc.mint .fv-statmeta span:first-child { color:#b9c6bf; }
+    /* Row 2: big chart (left) + right column (dark list + mint card) */
+    .fv-row2 { display:grid; grid-template-columns:2fr 1fr; gap:18px; margin-bottom:18px; align-items:stretch; }
+    .fv-chart-card { background:#fff; border-radius:20px; padding:20px 22px; box-shadow:var(--card-shadow); display:flex; flex-direction:column; }
+    .fv-chart-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+    .fv-chart-head h3 { margin:0; font-size:19px; font-weight:800; color:#0d1f18; }
+    .fv-pill { background:#ffe6d5; color:#ff681a; border:none; border-radius:12px; padding:8px 14px; font-weight:700; font-size:12px; cursor:pointer; display:flex; align-items:center; gap:6px; }
+    .fv-rightcol { display:flex; flex-direction:column; gap:18px; }
+    .fv-prod-card { background:#fff; border-radius:20px; padding:18px 20px; box-shadow:var(--card-shadow); }
+    .fv-prod-top { display:flex; align-items:baseline; justify-content:space-between; margin-bottom:12px; }
+    .fv-prod-top h3 { margin:0; font-size:17px; font-weight:800; color:#0d1f18; }
+    .fv-prod-top .fv-prod-pct { font-size:20px; font-weight:800; color:#ff681a; }
+    .fv-prod-inner { background:#081d16; border-radius:16px; padding:14px 16px; }
+    .fv-prod-inner .fv-prod-h { display:flex; align-items:center; justify-content:space-between; font-size:12px; font-weight:700; color:#ff681a; margin-bottom:8px; }
+    .fv-prod-row { display:flex; align-items:center; gap:9px; padding:8px 0; border-bottom:1px solid rgba(255,255,255,.06); font-size:12.5px; }
+    .fv-prod-row:last-child { border-bottom:none; }
+    .fv-prod-row .fv-pn { flex:1; color:#d6e4de; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .fv-prod-row .fv-pd { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+    .fv-prod-row .fv-pp { font-weight:800; color:#eafff6; }
+    .fv-benef { background:#00e58f; border-radius:20px; padding:18px 20px; box-shadow:var(--card-shadow); display:flex; align-items:center; gap:14px; }
+    .fv-benef .fv-benef-ic { width:66px; height:66px; border-radius:16px; background:#081d16; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .fv-benef .fv-benef-ic img { width:44px; height:44px; }
+    .fv-benef .fv-benef-r { flex:1; }
+    .fv-benef .fv-benef-t { font-size:14px; font-weight:700; color:#062b20; }
+    .fv-benef .fv-benef-v { font-size:32px; font-weight:800; color:#062b20; line-height:1.1; }
+    .fv-benef .fv-benef-s { font-size:11px; color:#0a3b2b; font-weight:600; margin-top:2px; }
     /* Convertex palette: lead with yellow, teal secondary */
     .ic-purple { background:linear-gradient(135deg,#ff9a63,#ff681a); color:#fff; box-shadow:0 4px 10px rgba(255,104,26,.30); }
     .ic-purple svg { stroke:#fff; }
@@ -425,39 +461,52 @@
           <button class="btn secondary" onclick="resetDashFilter()">ล้าง</button>
         </div>
 
-        <!-- Row 1: FarmVue-style metric cards -->
+        <!-- Row 1: FarmVue Ref — 3 metric cards (middle mint) -->
         <div class="solar-cards">
           <div class="fv-mc">
-            <div class="fv-mc-title">Total PRs</div><div class="fv-mc-sub">Growth last week</div>
-            <img class="fv-robot" src="/robot.svg" alt="" aria-hidden="true">
+            <div class="fv-mc-title">Total<br>PRs</div><div class="fv-mc-sub">Growth last week</div>
+            <img class="fv-robot" src="/plant.svg" alt="" aria-hidden="true">
             <div class="fv-statbar"><div class="fv-statnum"><span id="pr-total-count">0</span><div class="fv-statmeta"><span>PRs</span><span class="fv-badge" id="b-pr">+0%</span></div></div>
               <svg class="fv-donut" viewBox="0 0 36 36"><path d="M18 3a15 15 0 1 1 0 30 15 15 0 1 1 0-30" fill="none" stroke="#1c3a30" stroke-width="5"/><path d="M18 3a15 15 0 1 1 0 30 15 15 0 1 1 0-30" fill="none" stroke="#00e58f" stroke-width="5.5" stroke-linecap="round" stroke-dasharray="70 100" transform="rotate(-90 18 18)"/></svg></div>
           </div>
-          <div class="fv-mc">
-            <div class="fv-mc-title">PR Value (THB)</div><div class="fv-mc-sub">Growth last week</div>
-            <img class="fv-robot" src="/robot.svg" alt="" aria-hidden="true">
-            <div class="fv-statbar"><div class="fv-statnum"><span id="pr-total-amount">0</span><div class="fv-statmeta"><span>THB</span><span class="fv-badge" id="b-prval">+0%</span></div></div>
-              <svg class="fv-donut" viewBox="0 0 36 36"><path d="M18 3a15 15 0 1 1 0 30 15 15 0 1 1 0-30" fill="none" stroke="#1c3a30" stroke-width="5"/><path d="M18 3a15 15 0 1 1 0 30 15 15 0 1 1 0-30" fill="none" stroke="#00e58f" stroke-width="5.5" stroke-linecap="round" stroke-dasharray="60 100" transform="rotate(-90 18 18)"/></svg></div>
-          </div>
           <div class="fv-mc mint po-only">
-            <div class="fv-mc-title">Total POs</div><div class="fv-mc-sub">Growth last week</div>
-            <img class="fv-robot" src="/robot.svg" alt="" aria-hidden="true">
+            <div class="fv-mc-title">Total<br>POs</div><div class="fv-mc-sub">Growth last week</div>
+            <img class="fv-robot" src="/plant.svg" alt="" aria-hidden="true">
             <div class="fv-statbar"><div class="fv-statnum"><span id="po-total-count">0</span><div class="fv-statmeta"><span>POs</span><span class="fv-badge" id="b-po">+0%</span></div></div>
               <svg class="fv-donut" viewBox="0 0 36 36"><path d="M18 3a15 15 0 1 1 0 30 15 15 0 1 1 0-30" fill="none" stroke="#1c3a30" stroke-width="5"/><path d="M18 3a15 15 0 1 1 0 30 15 15 0 1 1 0-30" fill="none" stroke="#00e58f" stroke-width="5.5" stroke-linecap="round" stroke-dasharray="85 100" transform="rotate(-90 18 18)"/></svg></div>
           </div>
-          <div class="fv-mc po-only">
-            <div class="fv-mc-title">PO Value (THB)</div><div class="fv-mc-sub">This year</div>
-            <img class="fv-robot" src="/robot.svg" alt="" aria-hidden="true">
-            <div class="fv-statbar"><div class="fv-statnum"><span id="po-total-amount">0</span><div class="fv-statmeta"><span>THB</span><span class="fv-badge" id="b-poval">+0%</span></div></div>
-              <svg class="fv-donut" viewBox="0 0 36 36"><path d="M18 3a15 15 0 1 1 0 30 15 15 0 1 1 0-30" fill="none" stroke="#1c3a30" stroke-width="5"/><path d="M18 3a15 15 0 1 1 0 30 15 15 0 1 1 0-30" fill="none" stroke="#00e58f" stroke-width="5.5" stroke-linecap="round" stroke-dasharray="55 100" transform="rotate(-90 18 18)"/></svg></div>
+          <div class="fv-mc">
+            <div class="fv-mc-title">Total<br>Value</div><div class="fv-mc-sub">Growth last week</div>
+            <img class="fv-robot" src="/plant.svg" alt="" aria-hidden="true">
+            <div class="fv-statbar"><div class="fv-statnum"><span id="val-total">0</span><div class="fv-statmeta"><span>THB</span><span class="fv-badge" id="b-val">+0%</span></div></div>
+              <svg class="fv-donut" viewBox="0 0 36 36"><path d="M18 3a15 15 0 1 1 0 30 15 15 0 1 1 0-30" fill="none" stroke="#1c3a30" stroke-width="5"/><path d="M18 3a15 15 0 1 1 0 30 15 15 0 1 1 0-30" fill="none" stroke="#00e58f" stroke-width="5.5" stroke-linecap="round" stroke-dasharray="60 100" transform="rotate(-90 18 18)"/></svg></div>
           </div>
         </div>
 
-        <!-- Row 2: big line | balance bars | concentric rings -->
-        <div class="solar-row3">
-          <div class="pr-card"><div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> Analytics Report — PR รายวัน</div></div><div class="pr-card-body"><div class="dash-chart-box"><canvas id="pr-chart"></canvas></div></div></div>
-          <div class="pr-card po-only"><div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> Balance Flow (PR / PO)</div></div><div class="pr-card-body"><div class="dash-chart-box"><canvas id="balance-chart"></canvas></div></div></div>
-          <div class="pr-card"><div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> Top แผนก (มูลค่า)</div></div><div class="pr-card-body"><div class="rings-wrap"><div class="rings-canvas"><canvas id="rings-chart"></canvas><div class="rings-center"><div class="rc-t">Total</div><div class="rc-v" id="rings-total">0</div></div></div><div class="rings-legend" id="rings-legend"></div></div></div></div>
+        <!-- Row 2: big area chart (Total Sales style) + right column -->
+        <div class="fv-row2">
+          <div class="fv-chart-card">
+            <div class="fv-chart-head"><h3>Total Value — มูลค่าจัดซื้อ</h3>
+              <button class="fv-pill" type="button">This Period 📅</button></div>
+            <div class="dash-chart-box" style="height:320px;"><canvas id="pr-chart"></canvas></div>
+          </div>
+          <div class="fv-rightcol">
+            <div class="fv-prod-card">
+              <div class="fv-prod-top"><h3>Top แผนก</h3><span class="fv-prod-pct" id="prod-top-pct">0%</span></div>
+              <div class="fv-prod-inner">
+                <div class="fv-prod-h"><span>Department by Value</span><span>▲</span></div>
+                <div id="prod-list"></div>
+              </div>
+            </div>
+            <div class="fv-benef po-only">
+              <div class="fv-benef-ic"><img src="/plant.svg" alt=""></div>
+              <div class="fv-benef-r">
+                <div class="fv-benef-t">Total Orders</div>
+                <div class="fv-benef-v" id="benef-val">0</div>
+                <div class="fv-benef-s"><span id="benef-badge">+0%</span> Growth last week</div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- Row 3: recent PR table | CTA | recent PO list -->
@@ -889,23 +938,19 @@
         const setTxt = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
         const setBadge = (id, pct) => { const el = document.getElementById(id); if (!el) return; const up = pct >= 0; el.textContent = (up ? '+' : '') + pct + '% ' + (up ? '▲' : '▼'); el.style.color = up ? '#ff681a' : '#e11d48'; };
         const trend = (arr, key) => { const a = (arr || []).map(r => Number(r[key] || 0)); if (a.length < 2) return 0; const h = Math.floor(a.length / 2); const past = a.slice(0, h).reduce((x, y) => x + y, 0); const now = a.slice(h).reduce((x, y) => x + y, 0); if (past === 0) return now > 0 ? 100 : 0; return Math.round((now - past) / past * 100); };
-        // Row 1: metric cards + sparklines
+        // Row 1: 3 metric cards (PRs / POs / Total Value)
         setTxt('pr-total-count', s.pr.total_count);
-        setTxt('pr-total-amount', money(Math.round(s.pr.total_amount)));
         setTxt('po-total-count', s.po.total_count);
-        setTxt('po-total-amount', money(Math.round(s.po.total_amount)));
+        const totalVal = Math.round(Number(s.pr.total_amount || 0) + Number(s.po.total_amount || 0));
+        setTxt('val-total', money(totalVal));
         setBadge('b-pr', trend(s.pr.by_day, 'c'));
-        setBadge('b-prval', trend(s.pr.by_day, 'a'));
         setBadge('b-po', trend(s.po.by_day, 'c'));
-        setBadge('b-poval', trend(s.po.by_day, 'a'));
-        drawSpark('spark-pr', s.pr.by_day, 'c', '#ff681a');
-        drawSpark('spark-prval', s.pr.by_day, 'a', '#10b981');
-        drawSpark('spark-po', s.po.by_day, 'c', '#F59E0B');
-        drawSpark('spark-poval', s.po.by_day, 'a', '#34D399');
-        // Row 2: big smooth line + Balance Flow bars + concentric rings (Top departments)
-        drawDayChart('pr-chart', s.pr.by_day, '#ff681a');
-        drawBalance('balance-chart', s.pr.by_day, s.po.by_day);
-        drawRings('rings-chart', 'rings-legend', 'rings-total', s.pr.top);
+        setBadge('b-val', trend(s.pr.by_day, 'a'));
+        // Row 2: big area chart (purchase value/day) + Top departments list + Total Orders card
+        drawDayChart('pr-chart', s.pr.by_day, '#ff681a', 'a');
+        renderProdList('prod-list', 'prod-top-pct', s.pr.top);
+        setTxt('benef-val', (Number(s.pr.total_count || 0) + Number(s.po.total_count || 0)).toLocaleString());
+        setBadge('benef-badge', trend(s.po.by_day, 'c'));
         // Row 3: recent PR table + CTA pending count + recent PO list
         renderDashRecent('pr-recent', s.pr.recent);
         setTxt('cta-pending', s.pr.status.Pending || 0);
@@ -964,28 +1009,45 @@
       return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
     }
     // Smooth area line chart (Solar "Analytics Report" style)
-    function drawDayChart(canvasId, byDay, color) {
+    function drawDayChart(canvasId, byDay, color, key) {
+      key = key || 'c';
+      const isMoney = key === 'a';
       const list = byDay || [];
       const fillBg = (ctx) => {
         const ch = ctx.chart, area = ch.chartArea;
         if (!area) return hexA(color, 0.12);
         const g = ch.ctx.createLinearGradient(0, area.top, 0, area.bottom);
-        g.addColorStop(0, hexA(color, 0.34));
+        g.addColorStop(0, hexA(color, 0.42));
         g.addColorStop(1, hexA(color, 0.01));
         return g;
       };
       upsertChart(canvasId, 'line',
         { labels: list.map(r => r.d.slice(5)), datasets: [{
-            data: list.map(r => r.c), borderColor: color, backgroundColor: fillBg,
-            fill: true, tension: 0.45, borderWidth: 2.5, pointRadius: 0,
-            pointHoverRadius: 5, pointHoverBackgroundColor: color,
-            pointHoverBorderColor: '#fff', pointHoverBorderWidth: 2 }] },
+            data: list.map(r => Number(r[key] || 0)), borderColor: color, backgroundColor: fillBg,
+            fill: true, tension: 0.45, borderWidth: 3, pointRadius: 0,
+            pointHoverRadius: 6, pointHoverBackgroundColor: '#fff',
+            pointHoverBorderColor: color, pointHoverBorderWidth: 3 }] },
         { ...NO_RESIZE, interaction: { mode: 'index', intersect: false }, hover: { mode: 'index', intersect: false },
-          plugins: { legend: { display: false }, tooltip: { backgroundColor: '#1a1a2e', padding: 10, displayColors: false, titleFont: { size: 12 }, bodyFont: { size: 13, weight: '600' },
-            callbacks: { label: c => (window.tDyn || (s => s))('จำนวน') + ': ' + Number(c.parsed.y).toLocaleString() } } },
+          plugins: { legend: { display: false }, tooltip: { backgroundColor: '#081d16', padding: 12, cornerRadius: 12, displayColors: true, boxWidth: 8, boxHeight: 8, boxPadding: 4, usePointStyle: true,
+            titleColor: '#00e58f', titleFont: { size: 12, weight: '700' }, bodyColor: '#fff', bodyFont: { size: 14, weight: '700' },
+            callbacks: { labelPointStyle: () => ({ pointStyle: 'circle', rotation: 0 }), labelColor: () => ({ borderColor: '#ff681a', backgroundColor: '#ff681a' }),
+              label: c => isMoney ? '฿ ' + Number(c.parsed.y).toLocaleString() : (window.tDyn || (s => s))('จำนวน') + ': ' + Number(c.parsed.y).toLocaleString() } } },
           scales: {
             x: { grid: { display: false }, ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 8 } },
-            y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: 'rgba(0,0,0,.05)' }, border: { display: false } } } });
+            y: { beginAtZero: true, ticks: { precision: 0, callback: v => isMoney ? (v >= 1000 ? (v / 1000) + 'K' : v) : v }, grid: { color: 'rgba(0,0,0,.05)' }, border: { display: false } } } });
+    }
+    // Top departments list (FarmVue "Production Gained" style)
+    function renderProdList(listId, pctId, top) {
+      const list = (top || []).slice(0, 6);
+      const colors = ['#00e58f', '#ff681a', '#F59E0B', '#34D399', '#3B82F6', '#a78bfa'];
+      const total = list.reduce((x, r) => x + Number(r.a || 0), 0) || 1;
+      const el = document.getElementById(listId);
+      if (el) el.innerHTML = list.map((r, i) => {
+        const pct = Math.round(Number(r.a || 0) / total * 100);
+        return `<div class="fv-prod-row"><span class="fv-pn">${nz(r.name)}</span><span class="fv-pd" style="background:${colors[i % colors.length]}"></span><span class="fv-pp">${pct}%</span></div>`;
+      }).join('') || '<div style="color:#7b9c90;font-size:12px;padding:6px 0;">ยังไม่มีข้อมูล</div>';
+      const p = document.getElementById(pctId);
+      if (p && list.length) p.textContent = Math.round(Number(list[0].a || 0) / total * 100) + '%';
     }
 
     // Mini sparkline (Solar metric-card style) — no axes, soft gradient
