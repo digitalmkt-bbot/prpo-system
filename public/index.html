@@ -1655,7 +1655,7 @@
             <div class="pr-field"><label>อ้างอิง</label><input id="ed-reference" value="${esc(po.reference)}"></div>
             <div class="pr-field"><label>เลขที่ใบเสนอราคา</label><input id="ed-quotation" value="${esc(po.quotation_no)}"></div>
             <div class="pr-field"><label>เลขที่ใบแจ้งหนี้</label><input id="ed-invoice" value="${esc(po.invoice_no)}"></div>
-            <div class="pr-field"><label>เลขผู้เสียภาษี</label><input id="ed-taxno" value="${esc(po.tax_no)}"></div>
+            <div class="pr-field"><label>เลขผู้เสียภาษี</label><input id="ed-taxno" value="${esc(po.tax_no || po.supplier_tax_id)}"></div>
             <div class="pr-field"><label>เงื่อนไขการชำระเงิน</label><input id="ed-payment" value="${esc(po.payment_terms)}"></div>
             <div class="pr-field"><label>ประเภทราคา</label>
               <select id="ed-pricetype" onchange="recalcEdit()">
@@ -1670,9 +1670,10 @@
             <div class="pr-field"><label>ภาษีมูลค่าเพิ่ม</label>
               <label style="display:flex;align-items:center;gap:8px;font-size:13px;margin-top:6px"><input type="checkbox" id="ed-vat-all" style="width:auto" ${(po.vat_amount > 0 || po.has_vat) ? 'checked' : ''} onchange="applyEditVatAll()"> มี VAT 7% (ทั้งใบ)</label>
             </div>
-            <div class="pr-field"><label>ผู้ติดต่อ (ฝั่งผู้ขาย)</label><input id="ed-contact-name" value="${esc(po.contact_name)}"></div>
-            <div class="pr-field"><label>เบอร์โทรผู้ติดต่อ</label><input id="ed-contact-phone" value="${esc(po.contact_phone)}"></div>
-            <div class="pr-field"><label>อีเมลผู้ติดต่อ</label><input id="ed-contact-email" value="${esc(po.contact_email)}"></div>
+            <div class="pr-field"><label>ผู้ติดต่อ (ฝั่งผู้ขาย)</label><input id="ed-contact-name" value="${esc(po.contact_name || po.supplier_name)}"></div>
+            <div class="pr-field"><label>เบอร์โทรผู้ติดต่อ</label><input id="ed-contact-phone" value="${esc(po.contact_phone || po.supplier_phone)}"></div>
+            <div class="pr-field"><label>อีเมลผู้ติดต่อ</label><input id="ed-contact-email" value="${esc(po.contact_email || po.supplier_email)}"></div>
+            <div class="pr-field full"><label>ที่อยู่ผู้ขาย</label><textarea id="ed-supplier-address" style="min-height:48px">${escT(po.supplier_address)}</textarea></div>
             <div class="pr-field full"><label>หมายเหตุ</label><textarea id="ed-note">${escT(po.note)}</textarea></div>
           </div>
           <h3 style="margin:18px 0 6px;font-size:14px">รายการสินค้า / บริการ</h3>
@@ -2045,6 +2046,15 @@
       document.getElementById('issue-supplier').value = id;
       document.getElementById('issue-supplier-search').value = el.getAttribute('data-label');
       document.getElementById('issue-supplier-results').style.display = 'none';
+      // Auto-fill supplier master info into the new PO fields
+      const s = (SUPPLIERS || []).find(x => String(x.id) === String(id));
+      if (s) {
+        const set = (fid, v) => { const f = document.getElementById(fid); if (f && v != null && String(v).trim() !== '') f.value = v; };
+        set('iss-taxno', s.tax_id);
+        set('iss-contact-name', s.name);
+        set('iss-contact-phone', s.phone);
+        set('iss-contact-email', s.email);
+      }
     }
     window.pickIssueSupplier = pickIssueSupplier;
     // Close the supplier dropdown when clicking outside
@@ -2075,6 +2085,16 @@
       document.getElementById('ed-supplier').value = id;
       document.getElementById('ed-supplier-search').value = el.getAttribute('data-label');
       document.getElementById('ed-supplier-results').style.display = 'none';
+      // Auto-fill supplier master info into the PO fields
+      const s = (SUPPLIERS || []).find(x => String(x.id) === String(id));
+      if (s) {
+        const set = (fid, v) => { const f = document.getElementById(fid); if (f && v != null && String(v).trim() !== '') f.value = v; };
+        set('ed-taxno', s.tax_id);
+        set('ed-contact-name', s.name);
+        set('ed-contact-phone', s.phone);
+        set('ed-contact-email', s.email);
+        set('ed-supplier-address', s.address);
+      }
     }
     window.pickEditSupplier = pickEditSupplier;
 
