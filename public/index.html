@@ -17,24 +17,24 @@
     * { box-sizing: border-box; font-family: var(--font); }
     body { margin: 0; background: var(--bg); color: var(--ink); font-size: 14px; }
     .container { display: flex; min-height: 100vh; }
-    .sidebar { width: 248px; background: #fbfcfd; border-right: 1px solid rgba(20,30,40,.04); padding: 22px 16px; }
-    .logo { font-size: 16px; font-weight: 800; color: var(--ink); margin-bottom: 26px; display:flex; align-items:center; gap:10px; }
-    .logo-ic { width:38px; height:38px; border-radius:50%; background:linear-gradient(135deg,#4f9cff,#ffe16a); display:flex; align-items:center; justify-content:center; flex-shrink:0; box-shadow:0 4px 12px rgba(79,156,255,.28); }
+    .sidebar { width: 248px; background: #061813; border-right: 1px solid rgba(0,0,0,.2); padding: 22px 16px; }
+    .logo { font-size: 16px; font-weight: 800; color: #eafff6; margin-bottom: 26px; display:flex; align-items:center; gap:10px; }
+    .logo-ic { width:38px; height:38px; border-radius:50%; background:linear-gradient(135deg,#00e58f,#ff681a); display:flex; align-items:center; justify-content:center; flex-shrink:0; box-shadow:0 4px 12px rgba(0,229,143,.28); }
     .nav { list-style: none; margin: 0; padding: 0; }
     .nav li { margin-bottom: 3px; }
-    .nav-label { font-size:10.5px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:#9aa5b1; padding:6px 14px 4px; margin-top:10px; }
+    .nav-label { font-size:10.5px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:#2f7f63; padding:6px 14px 4px; margin-top:10px; }
     .nav-label:first-of-type { margin-top:0; }
-    .nav a { display: block; padding: 11px 14px; border-radius: 14px; color: #5b6675; text-decoration: none; cursor: pointer; font-size:14px; font-weight:500; transition:all .15s; }
-    .nav a:hover { background: #f1f3f5; color: var(--ink); }
-    .nav a.active { background: var(--accent-soft); color: #14181f; font-weight:700; box-shadow:inset 3px 0 0 var(--accent); }
-    .nav a.active:hover { background: var(--accent-soft); color: #14181f; }
+    .nav a { display: block; padding: 11px 14px; border-radius: 14px; color: #7b9c90; text-decoration: none; cursor: pointer; font-size:14px; font-weight:500; transition:all .15s; }
+    .nav a:hover { background: #0a231c; color: #d6f5e8; }
+    .nav a.active { background: #0a231c; color: #00e58f; font-weight:700; box-shadow:inset 3px 0 0 #00e58f; }
+    .nav a.active:hover { background: #0a231c; color: #00e58f; }
     /* User / profile box */
-    .user-box { margin-top: 36px; padding: 12px; background: #fff; border: var(--card-border); border-radius: 18px; box-shadow: var(--card-shadow); }
+    .user-box { margin-top: 36px; padding: 12px; background: #0a231c; border: 1px solid rgba(0,229,143,.14); border-radius: 18px; }
     .user-row { display:flex; align-items:center; gap:10px; }
-    .user-avatar { width:38px; height:38px; border-radius:50%; background:linear-gradient(135deg,#4f9cff,#7c8cff); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .user-avatar { width:38px; height:38px; border-radius:50%; background:linear-gradient(135deg,#00e58f,#059669); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
     .user-info { display:flex; flex-direction:column; min-width:0; flex:1; }
-    .user-info b { font-size:13px; color:var(--ink2); line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    .user-info span { font-size:11px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .user-info b { font-size:13px; color:#eafff6; line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .user-info span { font-size:11px; color:#7b9c90; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .user-chevron { flex-shrink:0; }
     .main { flex: 1; padding: 28px 32px; overflow: auto; background: var(--bg); }
     /* Top header bar (search) */
@@ -114,9 +114,9 @@
     .lg-mascot.peek .lg-paw-l { transform:translate(16px,-40px); }
     .lg-mascot.peek .lg-paw-r { transform:translate(-16px,-40px); }
     .lg-mascot.peek .lg-eye { animation:none; transform:scaleY(.08); }
-    .logout-btn { display: block; width: 100%; margin-top: 12px; padding: 8px; border: 1px solid rgba(20,30,40,.08);
-      background: #f8fafc; color: var(--ink); border-radius: 10px; cursor: pointer; font-size: 12px; font-weight:600; }
-    .logout-btn:hover { background: #f1f3f5; }
+    .logout-btn { display: block; width: 100%; margin-top: 12px; padding: 8px; border: 1px solid rgba(0,229,143,.2);
+      background: transparent; color: #00e58f; border-radius: 10px; cursor: pointer; font-size: 12px; font-weight:600; }
+    .logout-btn:hover { background: #0a231c; }
     /* Modal */
     .modal-overlay { position: fixed; inset: 0; background: rgba(15,23,42,.5); display: none;
       align-items: center; justify-content: center; z-index: 900; }
@@ -243,6 +243,22 @@
     .dash-ic svg { width:23px; height:23px; stroke:#fff; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
     /* ===== Solar dashboard layout ===== */
     .solar-cards { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:18px; }
+    /* FarmVue-style metric cards */
+    .fv-mc { background:#fff; border-radius:20px; padding:16px 18px; position:relative; overflow:hidden; box-shadow:var(--card-shadow); }
+    .fv-mc.mint { background:#00e58f; }
+    .fv-mc-title { font-size:15px; font-weight:800; color:#0d1f18; line-height:1.15; }
+    .fv-mc.mint .fv-mc-title { color:#062b20; }
+    .fv-mc-sub { font-size:11px; color:#9aa8a1; margin-top:3px; }
+    .fv-mc.mint .fv-mc-sub { color:#0a3b2b; font-weight:600; }
+    .fv-robot { position:absolute; right:12px; top:10px; width:44px; height:44px; opacity:.95; pointer-events:none; }
+    .fv-statbar { background:#081d16; border-radius:14px; padding:11px 13px; margin-top:16px; display:flex; align-items:center; justify-content:space-between; gap:8px; }
+    .fv-statnum { display:flex; align-items:baseline; gap:7px; min-width:0; }
+    .fv-statnum > span { font-size:22px; font-weight:800; color:#ff681a; white-space:nowrap; }
+    .fv-statmeta { display:flex; flex-direction:column; line-height:1.15; }
+    .fv-statmeta span:first-child { font-size:10px; color:#b9c6bf; }
+    .fv-badge { font-size:10px; color:#ff681a; font-weight:700; }
+    .fv-donut { width:34px; height:34px; flex-shrink:0; }
+    @media (max-width:1100px){ .fv-statnum > span { font-size:19px; } }
     .mc-s { background:#fff; border:var(--card-border); border-radius:18px; padding:16px 18px 6px; box-shadow:var(--card-shadow); position:relative; overflow:hidden; }
     .mc-s .mc-top { display:flex; align-items:center; justify-content:space-between; gap:8px; }
     .mc-s .mc-label { font-size:13px; color:#6b7280; font-weight:600; }
@@ -322,11 +338,11 @@
     <div class="sidebar">
       <div class="logo">
         <span class="logo-ic"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></span>
-        <span><span style="display:block;line-height:1.1">PR/PO System</span><span style="display:block;font-size:11px;color:var(--muted);font-weight:500">จัดซื้อ / Procurement</span></span>
+        <span><span style="display:block;line-height:1.1;color:#eafff6">PR/PO System</span><span style="display:block;font-size:11px;color:#7b9c90;font-weight:500">จัดซื้อ / Procurement</span></span>
       </div>
-      <div id="lang-toggle" style="display:flex;gap:4px;margin:4px 0 12px;padding:4px;background:#f1f3f5;border-radius:999px;">
-        <button type="button" data-lang="en" onclick="setLang('en')" style="flex:1;border:none;border-radius:999px;padding:6px 0;font-size:12px;font-weight:700;cursor:pointer;background:#101418;color:#fff;">EN</button>
-        <button type="button" data-lang="th" onclick="setLang('th')" style="flex:1;border:none;border-radius:999px;padding:6px 0;font-size:12px;font-weight:700;cursor:pointer;background:transparent;color:var(--muted);">TH</button>
+      <div id="lang-toggle" style="display:flex;gap:4px;margin:4px 0 12px;padding:4px;background:#0a231c;border-radius:999px;">
+        <button type="button" data-lang="en" onclick="setLang('en')" style="flex:1;border:none;border-radius:999px;padding:6px 0;font-size:12px;font-weight:700;cursor:pointer;background:#00e58f;color:#061813;">EN</button>
+        <button type="button" data-lang="th" onclick="setLang('th')" style="flex:1;border:none;border-radius:999px;padding:6px 0;font-size:12px;font-weight:700;cursor:pointer;background:transparent;color:#7b9c90;">TH</button>
       </div>
       <ul class="nav">
         <li class="nav-label">General</li>
@@ -390,12 +406,32 @@
           <button class="btn secondary" onclick="resetDashFilter()">ล้าง</button>
         </div>
 
-        <!-- Row 1: metric cards with sparklines -->
+        <!-- Row 1: FarmVue-style metric cards -->
         <div class="solar-cards">
-          <div class="mc-s"><div class="mc-top"><span class="mc-label">Total PRs</span><span class="mc-badge up" id="b-pr">+0%</span></div><div class="mc-val" id="pr-total-count">0</div><div class="mc-spark"><canvas id="spark-pr"></canvas></div></div>
-          <div class="mc-s"><div class="mc-top"><span class="mc-label">PR Value (THB)</span><span class="mc-badge up" id="b-prval">+0%</span></div><div class="mc-val" id="pr-total-amount">0</div><div class="mc-spark"><canvas id="spark-prval"></canvas></div></div>
-          <div class="mc-s po-only"><div class="mc-top"><span class="mc-label">Total POs</span><span class="mc-badge up" id="b-po">+0%</span></div><div class="mc-val" id="po-total-count">0</div><div class="mc-spark"><canvas id="spark-po"></canvas></div></div>
-          <div class="mc-s po-only"><div class="mc-top"><span class="mc-label">PO Value (THB)</span><span class="mc-badge up" id="b-poval">+0%</span></div><div class="mc-val" id="po-total-amount">0</div><div class="mc-spark"><canvas id="spark-poval"></canvas></div></div>
+          <div class="fv-mc">
+            <div class="fv-mc-title">Total PRs</div><div class="fv-mc-sub">Growth last week</div>
+            <img class="fv-robot" src="/robot.svg" alt="" aria-hidden="true">
+            <div class="fv-statbar"><div class="fv-statnum"><span id="pr-total-count">0</span><div class="fv-statmeta"><span>PRs</span><span class="fv-badge" id="b-pr">+0%</span></div></div>
+              <svg class="fv-donut" viewBox="0 0 36 36"><path d="M18 3a15 15 0 1 1 0 30 15 15 0 1 1 0-30" fill="none" stroke="#1c3a30" stroke-width="5"/><path d="M18 3a15 15 0 1 1 0 30 15 15 0 1 1 0-30" fill="none" stroke="#00e58f" stroke-width="5.5" stroke-linecap="round" stroke-dasharray="70 100" transform="rotate(-90 18 18)"/></svg></div>
+          </div>
+          <div class="fv-mc">
+            <div class="fv-mc-title">PR Value (THB)</div><div class="fv-mc-sub">Growth last week</div>
+            <img class="fv-robot" src="/robot.svg" alt="" aria-hidden="true">
+            <div class="fv-statbar"><div class="fv-statnum"><span id="pr-total-amount">0</span><div class="fv-statmeta"><span>THB</span><span class="fv-badge" id="b-prval">+0%</span></div></div>
+              <svg class="fv-donut" viewBox="0 0 36 36"><path d="M18 3a15 15 0 1 1 0 30 15 15 0 1 1 0-30" fill="none" stroke="#1c3a30" stroke-width="5"/><path d="M18 3a15 15 0 1 1 0 30 15 15 0 1 1 0-30" fill="none" stroke="#00e58f" stroke-width="5.5" stroke-linecap="round" stroke-dasharray="60 100" transform="rotate(-90 18 18)"/></svg></div>
+          </div>
+          <div class="fv-mc mint po-only">
+            <div class="fv-mc-title">Total POs</div><div class="fv-mc-sub">Growth last week</div>
+            <img class="fv-robot" src="/robot.svg" alt="" aria-hidden="true">
+            <div class="fv-statbar"><div class="fv-statnum"><span id="po-total-count">0</span><div class="fv-statmeta"><span>POs</span><span class="fv-badge" id="b-po">+0%</span></div></div>
+              <svg class="fv-donut" viewBox="0 0 36 36"><path d="M18 3a15 15 0 1 1 0 30 15 15 0 1 1 0-30" fill="none" stroke="#1c3a30" stroke-width="5"/><path d="M18 3a15 15 0 1 1 0 30 15 15 0 1 1 0-30" fill="none" stroke="#00e58f" stroke-width="5.5" stroke-linecap="round" stroke-dasharray="85 100" transform="rotate(-90 18 18)"/></svg></div>
+          </div>
+          <div class="fv-mc po-only">
+            <div class="fv-mc-title">PO Value (THB)</div><div class="fv-mc-sub">This year</div>
+            <img class="fv-robot" src="/robot.svg" alt="" aria-hidden="true">
+            <div class="fv-statbar"><div class="fv-statnum"><span id="po-total-amount">0</span><div class="fv-statmeta"><span>THB</span><span class="fv-badge" id="b-poval">+0%</span></div></div>
+              <svg class="fv-donut" viewBox="0 0 36 36"><path d="M18 3a15 15 0 1 1 0 30 15 15 0 1 1 0-30" fill="none" stroke="#1c3a30" stroke-width="5"/><path d="M18 3a15 15 0 1 1 0 30 15 15 0 1 1 0-30" fill="none" stroke="#00e58f" stroke-width="5.5" stroke-linecap="round" stroke-dasharray="55 100" transform="rotate(-90 18 18)"/></svg></div>
+          </div>
         </div>
 
         <!-- Row 2: big line | balance bars | concentric rings -->
@@ -832,7 +868,7 @@
         const money = v => Number(v || 0).toLocaleString('th-TH');
         const _L = (window.tDyn || (s => s));
         const setTxt = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
-        const setBadge = (id, pct) => { const el = document.getElementById(id); if (!el) return; const up = pct >= 0; el.textContent = (up ? '+' : '') + pct + '%'; el.className = 'mc-badge ' + (up ? 'up' : 'down'); };
+        const setBadge = (id, pct) => { const el = document.getElementById(id); if (!el) return; const up = pct >= 0; el.textContent = (up ? '+' : '') + pct + '% ' + (up ? '▲' : '▼'); el.style.color = up ? '#ff681a' : '#e11d48'; };
         const trend = (arr, key) => { const a = (arr || []).map(r => Number(r[key] || 0)); if (a.length < 2) return 0; const h = Math.floor(a.length / 2); const past = a.slice(0, h).reduce((x, y) => x + y, 0); const now = a.slice(h).reduce((x, y) => x + y, 0); if (past === 0) return now > 0 ? 100 : 0; return Math.round((now - past) / past * 100); };
         // Row 1: metric cards + sparklines
         setTxt('pr-total-count', s.pr.total_count);
