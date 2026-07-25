@@ -192,6 +192,29 @@
     .po-vendor-meta { margin-top:10px; display:flex; flex-wrap:wrap; gap:22px; font-size:13px; }
     .po-vendor-meta .k { font-size:11px; color:#9aa8a1; display:block; margin-bottom:2px; }
     .po-vendor-meta .v { color:#0d1f18; font-weight:600; }
+    /* PEAK Create-PO header boxes (top-right) */
+    .po-topbar { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:14px; flex-wrap:wrap; }
+    .po-topbar h1 { margin:0; }
+    .po-docboxes { display:flex; gap:12px; }
+    .po-docbox { border:1px solid var(--line); border-radius:12px; padding:10px 14px; min-width:180px; background:#fff; }
+    .po-docbox .lbl { font-size:12px; color:#6b7280; font-weight:600; margin-bottom:4px; }
+    .po-docbox input { border:none; padding:0; font-size:14px; background:transparent; }
+    .po-docbox input:focus { box-shadow:none; }
+    .po-docbox .docno { font-size:15px; font-weight:800; color:var(--brand-dark); }
+    .po-magic { display:inline-flex; align-items:center; gap:6px; margin-top:10px; color:var(--brand-dark); font-weight:700; font-size:13px; cursor:pointer; }
+    .po-magic:hover { text-decoration:underline; }
+    /* Qty stepper */
+    .qty-step { display:flex; align-items:center; gap:4px; justify-content:center; }
+    .qty-step button { width:22px; height:22px; border:1px solid var(--line); background:#f6faf8; border-radius:7px; cursor:pointer; font-weight:700; color:var(--brand-dark); line-height:1; padding:0; }
+    .qty-step button:hover { background:var(--accent-soft); }
+    .qty-step input { width:52px; text-align:center; }
+    /* Dark total card (สรุปข้อมูล) */
+    .po-total-card { background:#2b3245; color:#fff; border-radius:16px; padding:18px 24px; display:flex; align-items:center; justify-content:space-between; min-width:320px; box-shadow:0 6px 18px rgba(43,50,69,.22); }
+    .po-total-card .t { font-size:14px; font-weight:600; opacity:.85; }
+    .po-total-card .v { font-size:26px; font-weight:800; }
+    .po-summary-row { display:flex; align-items:center; justify-content:flex-end; gap:28px; flex-wrap:wrap; }
+    .ii-descrow td { padding:0 8px 10px !important; border-bottom:1px solid #f0f2f5 !important; }
+    .ii-descrow textarea { width:100%; min-height:34px; font-size:12px; background:#f8fafc; border:1px solid #eef2f0; border-radius:8px; padding:6px 8px; resize:vertical; }
     /* Section header inside the Edit-PO modal */
     .po-modal-sec { display:flex; align-items:center; gap:10px; font-size:15px; font-weight:800; color:#0d1f18; margin:22px 0 12px; padding-top:16px; border-top:1px solid #eef2f0; }
     .po-modal-sec:first-of-type { border-top:none; padding-top:0; margin-top:6px; }
@@ -619,8 +642,14 @@
 
       <!-- ISSUE PO -->
       <div class="page pr-form" id="page-issue">
-        <h1>ออกใบสั่งซื้อ (PO)</h1>
-        <p class="subtitle">อ้างอิงจาก <b id="iss-pr-ref">-</b> · เลือกผู้ขายและตรวจรายการก่อนออก PO · ถ้าซื้อจากหลาย Supplier ให้ลบ (🗑) รายการที่ไม่ได้ซื้อจากเจ้านี้ออก แล้วออก PO ใบใหม่สำหรับรายการที่เหลือได้</p>
+        <div class="po-topbar">
+          <h1>สร้างใบสั่งซื้อ</h1>
+          <div class="po-docboxes">
+            <div class="po-docbox"><div class="lbl">อ้างอิง</div><input id="iss-reference" placeholder="ระบุเอกสารอ้างอิง ถ้ามี"></div>
+            <div class="po-docbox"><div class="lbl">เลขที่เอกสาร *</div><div class="docno" id="iss-docno">ออกอัตโนมัติเมื่อบันทึก</div></div>
+          </div>
+        </div>
+        <p class="subtitle" style="margin-top:-6px">อ้างอิงจาก <b id="iss-pr-ref">-</b> · เลือกผู้ขายและตรวจรายการก่อนออก PO · ถ้าซื้อจากหลาย Supplier ให้ลบ (🗑) รายการที่ไม่ได้ซื้อจากเจ้านี้ออก แล้วออก PO ใบใหม่สำหรับรายการที่เหลือได้</p>
 
         <!-- Section 1: ข้อมูลผู้ขาย -->
         <div class="pr-card">
@@ -633,13 +662,14 @@
                 <span onclick="openIssueSupplier(true)" style="position:absolute;right:12px;top:34px;cursor:pointer;color:#9ca3af;font-size:12px">▼</span>
                 <input type="hidden" id="issue-supplier">
                 <div class="typeahead-results" id="issue-supplier-results"></div>
+                <div class="po-magic" onclick="loadLastItemsForSupplier()"><svg viewBox="0 0 24 24" style="width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M5 3v4M3 5h4M6 17v4M4 19h4M13 3l3 6 6 3-6 3-3 6-3-6-6-3 6-3z"/></svg> เลือกรายการล่าสุดของผู้ติดต่อนี้</div>
                 <div class="po-vendor-meta">
                   <div><span class="k">ที่อยู่</span><span class="v" id="iss-vendor-addr">-</span></div>
                   <div><span class="k">เบอร์โทร</span><span class="v" id="iss-vendor-phone">-</span></div>
                   <div><span class="k">เลขผู้เสียภาษี</span><span class="v" id="iss-vendor-tax">-</span></div>
                 </div>
               </div>
-              <div class="pr-field"><label>อ้างอิง (เลข PR)</label><input id="iss-reference" placeholder="ดึงจากเลข PR อัตโนมัติ"></div>
+              <div class="pr-field"><label>วันที่ออก *</label><input type="date" id="iss-issue-date"></div>
               <div class="pr-field"><label>เลขที่ใบเสนอราคา</label><input id="iss-quotation" placeholder="เลขใบเสนอราคา"></div>
               <div class="pr-field"><label>เลขที่ใบแจ้งหนี้</label><input id="iss-invoice" placeholder="เลขใบแจ้งหนี้"></div>
               <div class="pr-field"><label>เลขผู้เสียภาษี</label><input id="iss-taxno" placeholder="เลขประจำตัวผู้เสียภาษี"></div>
@@ -687,14 +717,20 @@
           <div class="pr-card-body">
             <table class="pr-items">
               <thead><tr>
-                <th style="width:26px">#</th><th>รายการ</th><th style="width:150px">บัญชี</th>
-                <th style="width:72px;text-align:center">จำนวน</th><th style="width:100px">ราคา/หน่วย</th>
-                <th style="width:90px">ส่วนลด</th><th style="width:60px;text-align:center">VAT%</th>
-                <th style="width:110px;text-align:right">มูลค่าก่อนภาษี</th>
+                <th style="width:26px">#</th><th>สินค้า/บริการ</th><th style="width:150px">บัญชี</th>
+                <th style="width:96px;text-align:center">จำนวน</th><th style="width:100px">ราคา/หน่วย</th>
+                <th style="width:100px">ส่วนลด/หน่วย</th><th style="width:70px;text-align:center">ภาษี</th>
+                <th style="width:120px;text-align:right">มูลค่าก่อนภาษี</th><th style="width:30px"></th>
               </tr></thead>
               <tbody id="iss-items"></tbody>
             </table>
-            <button class="pr-add" onclick="addIssueRow({}, 7)">+ เพิ่มรายการ</button>
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-top:12px">
+              <div style="display:flex;gap:10px">
+                <button class="btn secondary" style="border-color:var(--brand);color:var(--brand-dark)" onclick="addIssueRow({}, 7)">+ เพิ่มรายการใหม่</button>
+                <button class="btn secondary" style="border-color:var(--brand);color:var(--brand-dark)" onclick="addIssueDescOnly()">+ เพิ่มคำอธิบายรายการ</button>
+              </div>
+              <div style="font-size:13px;color:#6b7280">รวม <b id="iss-item-count">0</b> รายการ</div>
+            </div>
           </div>
         </div>
 
@@ -702,15 +738,15 @@
         <div class="pr-card">
           <div class="pr-card-head"><div class="pr-card-title sec"><span class="chk"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></span> สรุปข้อมูล</div></div>
           <div class="pr-card-body">
-            <div class="pr-sum">
+            <div class="po-summary-row">
               <div class="pr-sum-box" style="text-align:left; min-width:300px;">
                 <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--teal-dark)"><span>มูลค่าก่อนภาษี</span><span>฿<span id="iss-subtotal">0.00</span></span></div>
                 <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--teal-dark);margin-top:4px"><span>ภาษีมูลค่าเพิ่ม (VAT)</span><span>฿<span id="iss-vat">0.00</span></span></div>
-                <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;margin-top:6px;color:var(--teal-dark)"><span>ส่วนลดรวม</span><input type="number" id="iss-docdisc" value="0" min="0" step="0.01" style="width:120px;text-align:right;padding:5px 8px" oninput="recalcIssue()"></div>
-                <div style="display:flex;justify-content:space-between;font-weight:700;font-size:17px;border-top:1px solid #a7f3d0;margin-top:8px;padding-top:8px;color:#065f46"><span>จำนวนเงินทั้งสิ้น</span><span>฿<span id="iss-total">0.00</span></span></div>
+                <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;margin-top:6px;color:var(--teal-dark)"><span>ส่วนลดรวม ✏️</span><input type="number" id="iss-docdisc" value="0" min="0" step="0.01" style="width:120px;text-align:right;padding:5px 8px" oninput="recalcIssue()"></div>
                 <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;margin-top:10px;color:var(--teal-dark)"><span>หัก ณ ที่จ่าย</span><input type="number" id="iss-wht" value="0" min="0" step="0.01" style="width:120px;text-align:right;padding:5px 8px" oninput="recalcIssue()"></div>
-                <div style="display:flex;justify-content:space-between;font-weight:700;font-size:15px;margin-top:4px;color:#065f46"><span>ยอดชำระ</span><span>฿<span id="iss-net">0.00</span></span></div>
+                <div style="display:flex;justify-content:space-between;font-weight:700;font-size:15px;margin-top:6px;color:#065f46"><span>ยอดชำระ</span><span>฿<span id="iss-net">0.00</span></span></div>
               </div>
+              <div class="po-total-card"><span class="t">จำนวนเงินทั้งสิ้น</span><span><span class="v" id="iss-total">0.00</span> บาท</span></div>
             </div>
           </div>
         </div>
@@ -2210,6 +2246,8 @@
         ['iss-vendor-addr', 'iss-vendor-phone', 'iss-vendor-tax'].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = '-'; });
         // อ้างอิงเติมจากเลข PR ต้นทางอัตโนมัติ (แก้ไขได้)
         document.getElementById('iss-reference').value = pr.pr_no || '';
+        const dnow = new Date(); const dstr = dnow.getFullYear() + '-' + String(dnow.getMonth() + 1).padStart(2, '0') + '-' + String(dnow.getDate()).padStart(2, '0');
+        const idt = document.getElementById('iss-issue-date'); if (idt) idt.value = dstr;
         document.getElementById('iss-wht').value = '0';
         document.getElementById('iss-vat-all').checked = true;
         const items = (pr.items || []).filter(i => i && i.product_name && i.item_status !== 'rejected' && !i.po_no);
@@ -2307,14 +2345,14 @@
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td class="ii-no" style="text-align:center;color:#cbd5e1"></td>
-        <td><input class="ii-name" value="${esc(it.product_name)}" placeholder="ชื่อรายการ"><input type="hidden" class="ii-desc" value="${esc(it.description)}"></td>
+        <td><input class="ii-name" value="${esc(it.product_name)}" placeholder="เลือกสินค้า/บริการ"><textarea class="ii-desc" placeholder="กรุณาพิมพ์คำอธิบายรายการ ไม่เกิน 1,000 ตัวอักษร" maxlength="1000" style="width:100%;min-height:30px;margin-top:5px;font-size:12px;background:#f8fafc;border:1px solid #eef2f0;border-radius:8px;padding:5px 8px;resize:vertical">${esc(it.description).replace(/</g,'&lt;')}</textarea></td>
         <td><select class="ii-acct">${window.__acctOpts || '<option value=""></option>'}</select></td>
-        <td><input class="ii-qty" type="number" min="0" step="1" value="${it.quantity != null ? it.quantity : 1}" style="text-align:center" oninput="recalcIssue()"></td>
+        <td><div class="qty-step"><button type="button" onclick="stepQty(this,-1)">−</button><input class="ii-qty" type="number" min="0" step="1" value="${it.quantity != null ? it.quantity : 1}" oninput="recalcIssue()"><button type="button" onclick="stepQty(this,1)">+</button></div></td>
         <td><input class="ii-price" type="number" min="0" step="0.01" value="${it.unit_price != null ? it.unit_price : 0}" oninput="recalcIssue()"></td>
         <td><input class="ii-disc" type="number" min="0" step="0.01" value="${it.discount != null ? it.discount : 0}" oninput="recalcIssue()"></td>
         <td><input class="ii-vat" type="number" min="0" step="1" value="${it.vat_rate != null ? it.vat_rate : defVat}" style="text-align:center" oninput="recalcIssue()"></td>
         <td class="ii-line" style="text-align:right;font-weight:600">0.00</td>
-        <td style="text-align:center"><button title="ลบรายการนี้ออกจากใบ PO ใบนี้ (ออกใบใหม่ได้ทีหลัง)" style="background:none;border:none;color:#fca5a5;cursor:pointer;font-size:15px" onclick="this.closest('tr').remove();recalcIssue()">🗑</button></td>`;
+        <td style="text-align:center"><button title="ลบรายการนี้" style="background:none;border:none;color:#fca5a5;cursor:pointer;font-size:15px" onclick="this.closest('tr').remove();recalcIssue()">🗑</button></td>`;
       tr.dataset.prid = it.id || '';
       document.getElementById('iss-items').appendChild(tr);
       if (it.account_code) { const sel = tr.querySelector('.ii-acct'); if (sel) sel.value = it.account_code; }
@@ -2344,8 +2382,46 @@
       document.getElementById('iss-vat').textContent = f(vat);
       document.getElementById('iss-total').textContent = f(total);
       document.getElementById('iss-net').textContent = f(net);
+      const cnt = document.getElementById('iss-item-count'); if (cnt) cnt.textContent = n;
     }
     window.recalcIssue = recalcIssue;
+
+    // Qty +/- stepper
+    function stepQty(btn, delta) {
+      const inp = btn.parentElement.querySelector('.ii-qty');
+      inp.value = Math.max(0, (+inp.value || 0) + delta);
+      recalcIssue();
+    }
+    window.stepQty = stepQty;
+
+    // "+ เพิ่มคำอธิบายรายการ" — add a row and focus its description
+    function addIssueDescOnly() {
+      addIssueRow({}, document.getElementById('iss-vat-all')?.checked ? 7 : 0);
+      const rows = document.querySelectorAll('#iss-items tr');
+      const last = rows[rows.length - 1];
+      const d = last && last.querySelector('.ii-desc'); if (d) d.focus();
+    }
+    window.addIssueDescOnly = addIssueDescOnly;
+
+    // "เลือกรายการล่าสุดของผู้ติดต่อนี้" — load items from this supplier's most recent PO
+    async function loadLastItemsForSupplier() {
+      const sid = document.getElementById('issue-supplier').value;
+      if (!sid) return toast('กรุณาเลือกผู้ขายก่อน', true);
+      try {
+        const pos = await api.getPOs();
+        const mine = (pos || []).filter(p => String(p.supplier_id) === String(sid))
+          .sort((a, b) => String(b.po_no).localeCompare(String(a.po_no)));
+        if (!mine.length) return toast('ยังไม่มีใบสั่งซื้อก่อนหน้าของผู้ขายรายนี้', true);
+        const det = await api.getPODetail(mine[0].po_no);
+        const items = (det.items || []).filter(i => i && i.product_name);
+        if (!items.length) return toast('ใบก่อนหน้าไม่มีรายการ', true);
+        document.getElementById('iss-items').innerHTML = '';
+        items.forEach(it => addIssueRow({ product_name: it.product_name, description: it.description, quantity: it.quantity, unit_price: it.unit_price, discount: it.discount, vat_rate: it.vat_rate, account_code: it.account_code }, 7));
+        recalcIssue();
+        toast('ดึงรายการจาก ' + mine[0].po_no + ' แล้ว');
+      } catch (e) { toast('ดึงรายการล่าสุดไม่สำเร็จ: ' + e.message, true); }
+    }
+    window.loadLastItemsForSupplier = loadLastItemsForSupplier;
 
     function applyIssueVatAll() {
       const rate = document.getElementById('iss-vat-all').checked ? 7 : 0;
@@ -2375,7 +2451,7 @@
         const pr_item_ids = trs.filter(tr => tr.querySelector('.ii-name').value.trim() && tr.dataset.prid).map(tr => tr.dataset.prid);
         const res = await api.issuePO({
           pr_no: _issuePR.pr_no, supplier_id, items, pr_item_ids,
-          reference: val('iss-reference'), note: val('iss-note'),
+          reference: val('iss-reference'), note: val('iss-note'), issue_date: val('iss-issue-date') || null,
           quotation_no: val('iss-quotation') || null, invoice_no: val('iss-invoice') || null,
           tax_no: val('iss-taxno') || null, payment_terms: val('iss-payment') || null,
           contact_name: val('iss-contact-name'), contact_phone: val('iss-contact-phone'), contact_email: val('iss-contact-email'),
