@@ -8,9 +8,9 @@
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
     :root {
-      --brand:#B0184E; --brand-dark:#8A1340; --panel:#ffffff; --ink:#0f172a; --muted:#6b7280;
-      --line:#eceef1; --green:#16a34a; --amber:#d97706; --red:#e11d48; --bg:#F5F3F6;
-      --accent:#C2185B; --accent-soft:#FCE4EC; --teal:#34D399;
+      --brand:#10b981; --brand-dark:#059669; --panel:#ffffff; --ink:#0f172a; --muted:#6b7280;
+      --line:#e3eceb; --green:#16a34a; --amber:#d97706; --red:#e11d48; --bg:#EBF1EE;
+      --accent:#10b981; --accent-soft:#D1FAE5; --teal:#ff681a;
       --ink2:#14181f; --card-radius:20px; --card-shadow:0 4px 16px rgba(20,30,40,.05); --card-border:1px solid rgba(20,30,40,.06);
       --font:"Segoe UI", Roboto, "Helvetica Neue", sans-serif;
     }
@@ -80,10 +80,10 @@
     .toast.show { display: block; }
     .toast.error { background: var(--red); }
     .empty { text-align: center; color: var(--muted); padding: 40px 20px; }
-    .status { padding: 12px 14px; background: #FCE4EC; border-left: 3px solid var(--brand); border-radius: 10px; color: var(--brand-dark); }
+    .status { padding: 12px 14px; background: #D1FAE5; border-left: 3px solid var(--brand); border-radius: 10px; color: var(--brand-dark); }
     /* Login */
     .login-wrap { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
-      background: linear-gradient(135deg,#FFE3EF 0%,#ECE4FF 45%,#FFF0E2 100%); background-size:200% 200%;
+      background: linear-gradient(135deg,#D1FAE5 0%,#E6F7F0 45%,#FFF0E2 100%); background-size:200% 200%;
       animation: lg-bg 14s ease infinite; z-index: 1000; overflow:hidden; }
     @keyframes lg-bg { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
     .lg-blob { position:absolute; border-radius:50%; opacity:.5; filter:blur(1px); animation:lg-float 9s ease-in-out infinite; }
@@ -99,9 +99,9 @@
     .login-card .sub { color: var(--muted); font-size: 13px; margin-bottom: 18px; text-align:center; }
     .login-card label { font-size:12px; color:#6b7280; font-weight:600; }
     .login-card input { width:100%; padding:12px 16px; border:2px solid #F0E9F7; border-radius:14px; font-size:14px; margin-top:5px; background:#FBF8FE; box-sizing:border-box; transition:all .2s; }
-    .login-card input:focus { outline:none; border-color:#C2185B; background:#fff; box-shadow:0 0 0 4px rgba(194,24,91,.10); }
+    .login-card input:focus { outline:none; border-color:#10b981; background:#fff; box-shadow:0 0 0 4px rgba(16,185,129,.12); }
     .login-card .btn { width:100%; margin-top:18px; padding:12px; font-size:15px; border-radius:14px; transition:transform .15s, box-shadow .2s; }
-    .login-card .btn:hover { transform:translateY(-2px); box-shadow:0 8px 20px rgba(194,24,91,.30); }
+    .login-card .btn:hover { transform:translateY(-2px); box-shadow:0 8px 20px rgba(16,185,129,.30); }
     .login-card .btn:active { transform:translateY(0) scale(.97); }
     .login-err { color: var(--red); font-size: 13px; margin-top: 12px; min-height: 18px; text-align:center; }
     /* cute mascot */
@@ -165,7 +165,7 @@
     .typeahead-results > div:hover { background: #f1f5f9; }
     .typeahead-results .code { color: var(--muted); font-size: 11px; }
     /* ===== New PR form (teal) ===== */
-    .pr-form { --teal:#C2185B; --teal-dark:#8A1340; }
+    .pr-form { --teal:#10b981; --teal-dark:#059669; }
     .pr-card { background:#fff; border:var(--card-border); border-radius:var(--card-radius); margin-bottom:16px; overflow:hidden; box-shadow:var(--card-shadow); }
     .pr-card-head { display:flex; align-items:center; justify-content:space-between; padding:14px 18px; border-bottom:1px solid #f0f2f5; }
     .pr-card-title { font-size:14px; font-weight:600; color:#1a1a2e; display:flex; align-items:center; gap:8px; }
@@ -195,7 +195,7 @@
     .pr-add { margin-top:12px; background:none; border:1.5px dashed #d1d5db; border-radius:12px; padding:9px; font-size:12px; color:#9ca3af; cursor:pointer; width:100%; }
     .pr-add:hover { border-color:var(--teal); color:var(--teal); background:#f8fffe; }
     .pr-sum { display:flex; justify-content:flex-end; margin-top:16px; }
-    .pr-sum-box { background:linear-gradient(135deg,#FCE4EC,#FDF2F6); border:1.5px solid #F8BBD0; border-radius:14px; padding:12px 24px; text-align:right; }
+    .pr-sum-box { background:linear-gradient(135deg,#D1FAE5,#ECFDF5); border:1.5px solid #6EE7B7; border-radius:14px; padding:12px 24px; text-align:right; }
     .pr-sum-label { font-size:11px; color:var(--teal-dark); font-weight:600; }
     .pr-sum-val { font-size:22px; font-weight:700; color:#065f46; }
     .pr-submit { background:var(--ink2); color:#fff; border:none; border-radius:13px; padding:11px 24px; font-weight:600; cursor:pointer; font-size:14px; }
@@ -265,17 +265,17 @@
     .sh-list { display:flex; flex-direction:column; }
     .sh-row { display:flex; align-items:center; gap:11px; padding:9px 0; border-bottom:1px solid var(--line); }
     .sh-row:last-child { border-bottom:none; }
-    .sh-av { width:34px; height:34px; border-radius:50%; background:linear-gradient(135deg,#E91E63,#7C3AED); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:14px; flex-shrink:0; }
+    .sh-av { width:34px; height:34px; border-radius:50%; background:linear-gradient(135deg,#34d399,#059669); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:14px; flex-shrink:0; }
     .sh-main { flex:1; min-width:0; } .sh-name { font-weight:700; font-size:13px; color:#1a1a2e; } .sh-sub { font-size:11px; color:#9ca3af; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .sh-amt { font-weight:700; font-size:13px; color:#1a1a2e; }
-    .cta-card { background:linear-gradient(150deg,#C2185B,#7C3AED); border-radius:18px; padding:22px; color:#fff; display:flex; flex-direction:column; justify-content:center; box-shadow:var(--card-shadow); }
+    .cta-card { background:linear-gradient(150deg,#10b981,#059669); border-radius:18px; padding:22px; color:#fff; display:flex; flex-direction:column; justify-content:center; box-shadow:var(--card-shadow); }
     .cta-card h3 { margin:0 0 6px; font-size:18px; } .cta-card p { margin:0 0 16px; font-size:13px; opacity:.9; line-height:1.5; }
-    .cta-card .cta-btn { background:#fff; color:#C2185B; border:none; border-radius:999px; padding:10px 18px; font-weight:700; font-size:13px; cursor:pointer; align-self:flex-start; }
+    .cta-card .cta-btn { background:#fff; color:#059669; border:none; border-radius:999px; padding:10px 18px; font-weight:700; font-size:13px; cursor:pointer; align-self:flex-start; }
     @media (max-width:1100px){ .solar-cards{grid-template-columns:repeat(2,1fr);} .solar-row3{grid-template-columns:1fr;} }
     /* Convertex palette: lead with yellow, teal secondary */
-    .ic-purple { background:linear-gradient(135deg,#E91E63,#C2185B); color:#fff; box-shadow:0 4px 10px rgba(194,24,91,.30); }
+    .ic-purple { background:linear-gradient(135deg,#ff9a63,#ff681a); color:#fff; box-shadow:0 4px 10px rgba(255,104,26,.30); }
     .ic-purple svg { stroke:#fff; }
-    .ic-blue { background:linear-gradient(135deg,#A78BFA,#7C3AED); }
+    .ic-blue { background:linear-gradient(135deg,#34d399,#10b981); }
     .ic-green { background:linear-gradient(135deg,#6EE7B7,#34D399); }
     .ic-amber { background:linear-gradient(135deg,#fbbf24,#f59e0b); }
     .ic-red { background:linear-gradient(135deg,#fb7185,#e11d48); }
@@ -289,18 +289,18 @@
       <div class="lg-mascot" id="lg-mascot">
         <svg viewBox="0 0 124 112" width="124" height="112" xmlns="http://www.w3.org/2000/svg">
           <g class="lg-face">
-            <circle cx="30" cy="26" r="12" fill="#FFB6D5"/>
-            <circle cx="94" cy="26" r="12" fill="#FFB6D5"/>
-            <ellipse cx="62" cy="56" rx="44" ry="42" fill="#FFB6D5"/>
-            <ellipse cx="62" cy="60" rx="32" ry="30" fill="#FFD7E8"/>
-            <ellipse cx="40" cy="66" rx="7" ry="5" fill="#FF8FB8" opacity=".65"/>
-            <ellipse cx="84" cy="66" rx="7" ry="5" fill="#FF8FB8" opacity=".65"/>
+            <circle cx="30" cy="26" r="12" fill="#6EE7B7"/>
+            <circle cx="94" cy="26" r="12" fill="#6EE7B7"/>
+            <ellipse cx="62" cy="56" rx="44" ry="42" fill="#6EE7B7"/>
+            <ellipse cx="62" cy="60" rx="32" ry="30" fill="#A7F3D0"/>
+            <ellipse cx="40" cy="66" rx="7" ry="5" fill="#FDBA74" opacity=".7"/>
+            <ellipse cx="84" cy="66" rx="7" ry="5" fill="#FDBA74" opacity=".7"/>
             <g><circle class="lg-eye" cx="50" cy="54" r="6" fill="#3a2a3f"/><circle cx="52" cy="52" r="2" fill="#fff"/></g>
             <g><circle class="lg-eye" cx="74" cy="54" r="6" fill="#3a2a3f"/><circle cx="76" cy="52" r="2" fill="#fff"/></g>
-            <path d="M54 70 Q62 78 70 70" stroke="#A85A78" stroke-width="3" fill="none" stroke-linecap="round"/>
+            <path d="M54 70 Q62 78 70 70" stroke="#047857" stroke-width="3" fill="none" stroke-linecap="round"/>
           </g>
-          <ellipse class="lg-paw lg-paw-l" cx="36" cy="98" rx="12" ry="10" fill="#FFB6D5"/>
-          <ellipse class="lg-paw lg-paw-r" cx="88" cy="98" rx="12" ry="10" fill="#FFB6D5"/>
+          <ellipse class="lg-paw lg-paw-l" cx="36" cy="98" rx="12" ry="10" fill="#6EE7B7"/>
+          <ellipse class="lg-paw lg-paw-r" cx="88" cy="98" rx="12" ry="10" fill="#6EE7B7"/>
         </svg>
       </div>
       <h2>PR/PO System</h2>
@@ -843,12 +843,12 @@
         setBadge('b-prval', trend(s.pr.by_day, 'a'));
         setBadge('b-po', trend(s.po.by_day, 'c'));
         setBadge('b-poval', trend(s.po.by_day, 'a'));
-        drawSpark('spark-pr', s.pr.by_day, 'c', '#E91E63');
-        drawSpark('spark-prval', s.pr.by_day, 'a', '#7C3AED');
+        drawSpark('spark-pr', s.pr.by_day, 'c', '#ff681a');
+        drawSpark('spark-prval', s.pr.by_day, 'a', '#10b981');
         drawSpark('spark-po', s.po.by_day, 'c', '#F59E0B');
         drawSpark('spark-poval', s.po.by_day, 'a', '#34D399');
         // Row 2: big smooth line + Balance Flow bars + concentric rings (Top departments)
-        drawDayChart('pr-chart', s.pr.by_day, '#C2185B');
+        drawDayChart('pr-chart', s.pr.by_day, '#ff681a');
         drawBalance('balance-chart', s.pr.by_day, s.po.by_day);
         drawRings('rings-chart', 'rings-legend', 'rings-total', s.pr.top);
         // Row 3: recent PR table + CTA pending count + recent PO list
@@ -857,8 +857,8 @@
         renderPOList('po-recent-list', s.po.recent);
         // Row 4: product reports (combined PR + PO)
         const prod = s.products || { by_value: [], by_orders: [] };
-        drawTopValueBar('prod-value', prod.by_value, '#C2185B', 'value', true);
-        drawTopValueBar('prod-orders', s.pr.top, '#7C3AED', 'a', true);
+        drawTopValueBar('prod-value', prod.by_value, '#ff681a', 'value', true);
+        drawTopValueBar('prod-orders', s.pr.top, '#10b981', 'a', true);
       } catch (e) {
         toast('โหลด Dashboard ไม่สำเร็จ: ' + e.message, true);
       }
@@ -957,8 +957,8 @@
       const _L = (window.tDyn || (s => s));
       upsertChart(canvasId, 'bar',
         { labels: pr.map(r => r.d.slice(5)), datasets: [
-            { label: _L('PR'), data: pr.map(r => Number(r.c || 0)), backgroundColor: '#5B1A3A', borderRadius: 6, maxBarThickness: 11 },
-            { label: _L('PO'), data: po.map(r => Number(r.c || 0)), backgroundColor: '#F4744E', borderRadius: 6, maxBarThickness: 11 } ] },
+            { label: _L('PR'), data: pr.map(r => Number(r.c || 0)), backgroundColor: '#059669', borderRadius: 6, maxBarThickness: 11 },
+            { label: _L('PO'), data: po.map(r => Number(r.c || 0)), backgroundColor: '#ff681a', borderRadius: 6, maxBarThickness: 11 } ] },
         { ...NO_RESIZE, interaction: { mode: 'index', intersect: false }, hover: { mode: 'index', intersect: false },
           plugins: { legend: { display: true, position: 'top', labels: { boxWidth: 10, font: { size: 11 } } },
             tooltip: { backgroundColor: '#1a1a2e', padding: 10, bodyFont: { size: 13, weight: '600' } } },
@@ -968,7 +968,7 @@
     // Concentric rings (Solar "Customers" style) — one ring per top department
     function drawRings(canvasId, legendId, totalId, top) {
       const list = (top || []).slice(0, 5);
-      const colors = ['#C2185B', '#7C3AED', '#F59E0B', '#34D399', '#3B82F6'];
+      const colors = ['#ff681a', '#10b981', '#F59E0B', '#34D399', '#3B82F6'];
       const total = list.reduce((x, r) => x + Number(r.a || 0), 0) || 1;
       const datasets = list.map((r, i) => {
         const pct = Math.round(Number(r.a || 0) / total * 100);
