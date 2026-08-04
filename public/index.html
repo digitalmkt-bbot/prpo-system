@@ -6,20 +6,23 @@
   <title>PR/PO Procurement System - Railway</title>
   <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --brand:#ec4899; --brand-dark:#db2777; --panel:#ffffff; --ink:#111827; --muted:#6b7280;
-      --line:#e5e7eb; --green:#db2777; --amber:#d97706; --red:#e11d48; --bg:#f4f4f6;
-      --accent:#ec4899; --accent-soft:#fce7f3; --teal:#8b5cf6;
-      --ink2:#18181b; --card-radius:20px; --card-shadow:0 4px 16px rgba(20,30,40,.05); --card-border:1px solid rgba(20,30,40,.06);
-      --font:"Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+      --brand:#f97fbe; --brand-dark:#ec4899; --panel:#ffffff; --ink:#181818; --muted:#71717a;
+      --line:#e5e7eb; --green:#059669; --amber:#d97706; --red:#e11d48; --bg:#f0f0f0;
+      --accent:#f97fbe; --accent-soft:#fde7f1; --teal:#8b5cf6;
+      --ink2:#181818; --card-radius:20px; --card-shadow:0 4px 16px rgba(20,30,40,.05); --card-border:1px solid rgba(20,30,40,.06);
+      --font:"Instrument Sans","Noto Sans Thai", system-ui, "Segoe UI", Roboto, sans-serif;
     }
     * { box-sizing: border-box; font-family: var(--font); }
     body { margin: 0; background: var(--bg); color: var(--ink); font-size: 14px; }
     .container { display: flex; min-height: 100vh; }
-    .sidebar { width: 248px; background: #18181b; border-right: 1px solid rgba(0,0,0,.2); padding: 22px 16px; }
+    .sidebar { width: 248px; background: #181818; border-right: 1px solid rgba(0,0,0,.2); padding: 22px 16px; }
     .logo { font-size: 16px; font-weight: 800; color: #eafff6; margin-bottom: 26px; display:flex; align-items:center; gap:10px; }
-    .logo-ic { width:38px; height:38px; border-radius:50%; background:linear-gradient(135deg,#ec4899,#8b5cf6); display:flex; align-items:center; justify-content:center; flex-shrink:0; box-shadow:0 4px 12px rgba(0,229,143,.28); }
+    .logo-ic { width:38px; height:38px; border-radius:50%; background:linear-gradient(135deg,#f97fbe,#8b5cf6); display:flex; align-items:center; justify-content:center; flex-shrink:0; box-shadow:0 4px 12px rgba(0,229,143,.28); }
     .nav { list-style: none; margin: 0; padding: 0; }
     .nav li { margin-bottom: 3px; }
     .nav-label { font-size:10.5px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:#71717a; padding:6px 14px 4px; margin-top:10px; }
@@ -31,14 +34,32 @@
     .nav a.active:hover { background: #2a2a30; color: #ffffff; }
     .nav a.active svg.nav-ic { stroke:#f472b6; }
     /* User / profile box */
-    .user-box { margin-top: 36px; padding: 12px; background: #26262b; border: 1px solid rgba(0,229,143,.14); border-radius: 18px; }
+    .user-box { margin-top: 36px; padding: 10px; background: #ffffff; border: 1px solid #ececec; border-radius: 18px; }
     .user-row { display:flex; align-items:center; gap:10px; }
-    .user-avatar { width:38px; height:38px; border-radius:50%; background:linear-gradient(135deg,#ec4899,#db2777); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .user-avatar { width:38px; height:38px; border-radius:50%; background:linear-gradient(135deg,#f97fbe,#db2777); display:flex; align-items:center; justify-content:center; flex-shrink:0; color:#fff; font-weight:700; }
     .user-info { display:flex; flex-direction:column; min-width:0; flex:1; }
-    .user-info b { font-size:13px; color:#eafff6; line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    .user-info span { font-size:11px; color:#7b9c90; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .user-info b { font-size:13px; color:#181818; line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .user-info span { font-size:10px; color:#fff; background:#181818; padding:1px 8px; border-radius:999px; align-self:flex-start; margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .user-chevron { flex-shrink:0; }
-    .main { flex: 1; padding: 28px 32px; overflow: auto; background: var(--bg); }
+    .main { flex: 1; padding: 28px 32px; overflow: auto; background: var(--bg); position:relative; }
+    /* StayWise pastel gradient hero — only on the dashboard */
+    .main::before { content:''; position:absolute; top:0; left:0; right:0; height:0; z-index:0; pointer-events:none; }
+    .main:has(#page-dashboard.active)::before { height:452px; background:linear-gradient(115deg,#fdf6b2 0%,#fbcfe8 32%,#e9d5ff 62%,#bbf7d0 100%); border-radius:0 0 36px 36px; }
+    [data-theme="dark"] .main:has(#page-dashboard.active)::before { background:linear-gradient(115deg,#3a2f1a 0%,#3a1f34 34%,#241a3a 64%,#173a2a 100%); opacity:.55; }
+    .app-topbar, .page { position:relative; z-index:1; }
+    /* StayWise frosted metric cards */
+    .sw-cards { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:22px; }
+    .sw-mc { background:rgba(255,255,255,.62); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border:1px solid rgba(255,255,255,.6); border-radius:20px; padding:18px 20px; box-shadow:0 6px 20px rgba(24,24,24,.06); transition:transform .15s; }
+    .sw-mc:hover { transform:translateY(-2px); }
+    .sw-mc-label { font-size:12px; font-weight:600; color:#52525b; display:block; margin-bottom:8px; }
+    .sw-mc-val { font-size:30px; font-weight:700; color:#181818; line-height:1.05; letter-spacing:-.5px; }
+    .sw-mc-val .u { font-size:14px; font-weight:600; color:#71717a; margin-left:4px; }
+    .sw-mc-delta { font-size:12px; margin-top:8px; font-weight:600; }
+    .sw-mc-delta .mut { color:#a1a1aa; font-weight:500; margin-left:4px; }
+    [data-theme="dark"] .sw-mc { background:rgba(30,30,34,.6); border-color:rgba(255,255,255,.08); }
+    [data-theme="dark"] .sw-mc-val { color:#f3f4f6; }
+    [data-theme="dark"] .sw-mc-label { color:#a1a1aa; }
+    @media (max-width:900px){ .sw-cards{grid-template-columns:1fr;} }
     /* Top header bar (search) */
     .app-topbar { display:flex; justify-content:space-between; align-items:center; gap:14px; margin-bottom:18px; }
     .topbar-greet .tg-hi { font-size:12px; color:#6b7c74; }
@@ -69,7 +90,7 @@
     [data-theme="dark"] .po-modal-sec { color:#f3f4f6; border-top-color:#26262b; }
     [data-theme="dark"] .modal-card, [data-theme="dark"] #po-edit-card, [data-theme="dark"] .detail-card { background:#18181c; color:#e5e7eb; }
     .topbar-user { display:flex; align-items:center; gap:9px; background:#fff; padding:4px 14px 4px 4px; border-radius:999px; border:1px solid rgba(20,30,40,.06); box-shadow:0 2px 8px rgba(31,45,61,.05); }
-    .topbar-user .tu-av { width:30px; height:30px; border-radius:50%; background:#0d2820; color:#ec4899; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; flex-shrink:0; }
+    .topbar-user .tu-av { width:30px; height:30px; border-radius:50%; background:#0d2820; color:#f97fbe; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; flex-shrink:0; }
     .topbar-user .tu-name { font-size:12px; font-weight:700; color:#0d1f18; line-height:1.15; }
     .topbar-user .tu-role { font-size:10px; color:#9aa8a1; line-height:1.15; }
     @media (max-width:820px){ .topbar-search { display:none; } .topbar-greet .tg-welcome { font-size:17px; } }
@@ -81,7 +102,8 @@
     .sub-tab { background:none; border:none; padding:10px 18px; font-size:14px; font-weight:600; color:var(--muted); cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-2px; transition:color .15s; }
     .sub-tab:hover { color:var(--brand-dark); }
     .sub-tab.active { color:var(--brand-dark); border-bottom-color:var(--brand); }
-    h1 { margin: 0 0 6px; font-size: 26px; font-weight:800; color:#0d1f18; }
+    h1 { margin: 0 0 6px; font-size: 26px; font-weight:700; color:#181818; letter-spacing:-.5px; }
+    #page-dashboard > h1 { font-size:40px; font-weight:700; margin-bottom:2px; }
     .subtitle { color: var(--muted); margin-bottom: 22px; }
     .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 26px; }
     .card { background: var(--panel); border: var(--card-border); border-radius: var(--card-radius); padding: 24px; box-shadow: var(--card-shadow); }
@@ -138,7 +160,7 @@
     .login-card .sub { color: var(--muted); font-size: 13px; margin-bottom: 18px; text-align:center; }
     .login-card label { font-size:12px; color:#6b7280; font-weight:600; }
     .login-card input { width:100%; padding:12px 16px; border:2px solid #F0E9F7; border-radius:14px; font-size:14px; margin-top:5px; background:#FBF8FE; box-sizing:border-box; transition:all .2s; }
-    .login-card input:focus { outline:none; border-color:#ec4899; background:#fff; box-shadow:0 0 0 4px rgba(16,185,129,.12); }
+    .login-card input:focus { outline:none; border-color:#f97fbe; background:#fff; box-shadow:0 0 0 4px rgba(16,185,129,.12); }
     .login-card .btn { width:100%; margin-top:18px; padding:12px; font-size:15px; border-radius:14px; transition:transform .15s, box-shadow .2s; }
     .login-card .btn:hover { transform:translateY(-2px); box-shadow:0 8px 20px rgba(16,185,129,.30); }
     .login-card .btn:active { transform:translateY(0) scale(.97); }
@@ -154,7 +176,7 @@
     .lg-mascot.peek .lg-paw-r { transform:translate(-16px,-40px); }
     .lg-mascot.peek .lg-eye { animation:none; transform:scaleY(.08); }
     .logout-btn { display: block; width: 100%; margin-top: 12px; padding: 8px; border: 1px solid rgba(0,229,143,.2);
-      background: transparent; color: #ec4899; border-radius: 10px; cursor: pointer; font-size: 12px; font-weight:600; }
+      background: transparent; color: #f97fbe; border-radius: 10px; cursor: pointer; font-size: 12px; font-weight:600; }
     .logout-btn:hover { background: #26262b; }
     /* Modal */
     .modal-overlay { position: fixed; inset: 0; background: rgba(15,23,42,.5); display: none;
@@ -204,7 +226,7 @@
     .typeahead-results > div:hover { background: #f1f5f9; }
     .typeahead-results .code { color: var(--muted); font-size: 11px; }
     /* ===== New PR form (teal) ===== */
-    .pr-form { --teal:#ec4899; --teal-dark:#db2777; }
+    .pr-form { --teal:#f97fbe; --teal-dark:#db2777; }
     .pr-card { background:#fff; border:var(--card-border); border-radius:var(--card-radius); margin-bottom:16px; overflow:hidden; box-shadow:var(--card-shadow); }
     .pr-card-head { display:flex; align-items:center; justify-content:space-between; padding:14px 18px; border-bottom:1px solid #f0f2f5; }
     .pr-card-title { font-size:14px; font-weight:600; color:#1a1a2e; display:flex; align-items:center; gap:8px; }
@@ -321,7 +343,7 @@
     .solar-cards { display:grid; grid-template-columns:repeat(3,1fr); gap:18px; margin-bottom:18px; }
     /* FarmVue-style metric cards */
     .fv-mc { background:#fff; border-radius:20px; padding:16px 18px; position:relative; overflow:hidden; box-shadow:var(--card-shadow); }
-    .fv-mc.mint { background:#ec4899; }
+    .fv-mc.mint { background:#f97fbe; }
     .fv-mc-title { font-size:15px; font-weight:800; color:#0d1f18; line-height:1.15; }
     .fv-mc.mint .fv-mc-title { color:#ffffff; }
     .fv-mc-sub { font-size:11px; color:#9aa8a1; margin-top:3px; }
@@ -360,7 +382,7 @@
     .sh-av { width:34px; height:34px; border-radius:50%; background:linear-gradient(135deg,#34d399,#db2777); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:14px; flex-shrink:0; }
     .sh-main { flex:1; min-width:0; } .sh-name { font-weight:700; font-size:13px; color:#1a1a2e; } .sh-sub { font-size:11px; color:#9ca3af; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .sh-amt { font-weight:700; font-size:13px; color:#1a1a2e; }
-    .cta-card { background:linear-gradient(150deg,#ec4899,#db2777); border-radius:18px; padding:22px; color:#fff; display:flex; flex-direction:column; justify-content:center; box-shadow:var(--card-shadow); }
+    .cta-card { background:linear-gradient(150deg,#f97fbe,#db2777); border-radius:18px; padding:22px; color:#fff; display:flex; flex-direction:column; justify-content:center; box-shadow:var(--card-shadow); }
     .cta-card h3 { margin:0 0 6px; font-size:18px; } .cta-card p { margin:0 0 16px; font-size:13px; opacity:.9; line-height:1.5; }
     .cta-card .cta-btn { background:#fff; color:#db2777; border:none; border-radius:999px; padding:10px 18px; font-weight:700; font-size:13px; cursor:pointer; align-self:flex-start; }
     @media (max-width:1100px){ .solar-cards{grid-template-columns:repeat(2,1fr);} .solar-row3{grid-template-columns:1fr;} .fv-row2{grid-template-columns:1fr;} }
@@ -393,7 +415,7 @@
     .fv-prod-row .fv-pn { flex:1; color:#d6e4de; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .fv-prod-row .fv-pd { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
     .fv-prod-row .fv-pp { font-weight:800; color:#eafff6; }
-    .fv-benef { background:#ec4899; border-radius:20px; padding:18px 20px; box-shadow:var(--card-shadow); display:flex; align-items:center; gap:14px; }
+    .fv-benef { background:#f97fbe; border-radius:20px; padding:18px 20px; box-shadow:var(--card-shadow); display:flex; align-items:center; gap:14px; }
     .fv-benef .fv-benef-ic { width:66px; height:66px; border-radius:16px; background:#26262b; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
     .fv-benef .fv-benef-ic img { width:44px; height:44px; }
     .fv-benef .fv-benef-r { flex:1; }
@@ -403,7 +425,7 @@
     /* Convertex palette: lead with yellow, teal secondary */
     .ic-purple { background:linear-gradient(135deg,#ff9a63,#8b5cf6); color:#fff; box-shadow:0 4px 10px rgba(255,104,26,.30); }
     .ic-purple svg { stroke:#fff; }
-    .ic-blue { background:linear-gradient(135deg,#34d399,#ec4899); }
+    .ic-blue { background:linear-gradient(135deg,#34d399,#f97fbe); }
     .ic-green { background:linear-gradient(135deg,#f9a8d4,#34D399); }
     .ic-amber { background:linear-gradient(135deg,#fbbf24,#f59e0b); }
     .ic-red { background:linear-gradient(135deg,#fb7185,#e11d48); }
@@ -453,7 +475,7 @@
         <span><span style="display:block;line-height:1.1;color:#eafff6">PR/PO System</span><span style="display:block;font-size:11px;color:#7b9c90;font-weight:500">จัดซื้อ / Procurement</span></span>
       </div>
       <div id="lang-toggle" style="display:flex;gap:4px;margin:4px 0 12px;padding:4px;background:#26262b;border-radius:999px;">
-        <button type="button" data-lang="en" onclick="setLang('en')" style="flex:1;border:none;border-radius:999px;padding:6px 0;font-size:12px;font-weight:700;cursor:pointer;background:#ec4899;color:#18181b;">EN</button>
+        <button type="button" data-lang="en" onclick="setLang('en')" style="flex:1;border:none;border-radius:999px;padding:6px 0;font-size:12px;font-weight:700;cursor:pointer;background:#f97fbe;color:#181818;">EN</button>
         <button type="button" data-lang="th" onclick="setLang('th')" style="flex:1;border:none;border-radius:999px;padding:6px 0;font-size:12px;font-weight:700;cursor:pointer;background:transparent;color:#7b9c90;">TH</button>
       </div>
       <ul class="nav">
@@ -527,22 +549,22 @@
           <button class="btn secondary" onclick="resetDashFilter()">ล้าง</button>
         </div>
 
-        <!-- Row 1: FarmVue Ref — 3 metric cards (middle mint) -->
-        <div class="solar-cards">
-          <div class="fv-mc">
-            <div class="fv-mc-title">Total<br>PRs</div><div class="fv-mc-sub">Growth last week</div>
-            <div class="fv-statbar"><div class="fv-statnum"><span id="pr-total-count">0</span><div class="fv-statmeta"><span>PRs</span><span class="fv-badge" id="b-pr">+0%</span></div></div>
-              <svg class="fv-donut" viewBox="0 0 36 36"><path d="M18 3a15 15 0 1 1 0 30 15 15 0 1 1 0-30" fill="none" stroke="#1c3a30" stroke-width="5"/><path d="M18 3a15 15 0 1 1 0 30 15 15 0 1 1 0-30" fill="none" stroke="#ec4899" stroke-width="5.5" stroke-linecap="round" stroke-dasharray="70 100" transform="rotate(-90 18 18)"/></svg></div>
+        <!-- Row 1: StayWise frosted metric cards -->
+        <div class="sw-cards">
+          <div class="sw-mc">
+            <span class="sw-mc-label">Total PRs</span>
+            <div class="sw-mc-val"><span id="pr-total-count">0</span></div>
+            <div class="sw-mc-delta"><span id="b-pr">+0%</span><span class="mut">last week</span></div>
           </div>
-          <div class="fv-mc mint po-only">
-            <div class="fv-mc-title">Total<br>POs</div><div class="fv-mc-sub">Growth last week</div>
-            <div class="fv-statbar"><div class="fv-statnum"><span id="po-total-count">0</span><div class="fv-statmeta"><span>POs</span><span class="fv-badge" id="b-po">+0%</span></div></div>
-              <svg class="fv-donut" viewBox="0 0 36 36"><path d="M18 3a15 15 0 1 1 0 30 15 15 0 1 1 0-30" fill="none" stroke="#1c3a30" stroke-width="5"/><path d="M18 3a15 15 0 1 1 0 30 15 15 0 1 1 0-30" fill="none" stroke="#ec4899" stroke-width="5.5" stroke-linecap="round" stroke-dasharray="85 100" transform="rotate(-90 18 18)"/></svg></div>
+          <div class="sw-mc po-only">
+            <span class="sw-mc-label">Total POs</span>
+            <div class="sw-mc-val"><span id="po-total-count">0</span></div>
+            <div class="sw-mc-delta"><span id="b-po">+0%</span><span class="mut">last week</span></div>
           </div>
-          <div class="fv-mc">
-            <div class="fv-mc-title">Total<br>Value</div><div class="fv-mc-sub">Growth last week</div>
-            <div class="fv-statbar"><div class="fv-statnum"><span id="val-total">0</span><div class="fv-statmeta"><span>THB</span><span class="fv-badge" id="b-val">+0%</span></div></div>
-              <svg class="fv-donut" viewBox="0 0 36 36"><path d="M18 3a15 15 0 1 1 0 30 15 15 0 1 1 0-30" fill="none" stroke="#1c3a30" stroke-width="5"/><path d="M18 3a15 15 0 1 1 0 30 15 15 0 1 1 0-30" fill="none" stroke="#ec4899" stroke-width="5.5" stroke-linecap="round" stroke-dasharray="60 100" transform="rotate(-90 18 18)"/></svg></div>
+          <div class="sw-mc">
+            <span class="sw-mc-label">Total Value</span>
+            <div class="sw-mc-val"><span id="val-total">0</span><span class="u">THB</span></div>
+            <div class="sw-mc-delta"><span id="b-val">+0%</span><span class="mut">last week</span></div>
           </div>
         </div>
 
@@ -1069,7 +1091,7 @@
         const money = v => Number(v || 0).toLocaleString('th-TH');
         const _L = (window.tDyn || (s => s));
         const setTxt = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
-        const setBadge = (id, pct) => { const el = document.getElementById(id); if (!el) return; const up = pct >= 0; el.textContent = (up ? '+' : '') + pct + '% ' + (up ? '▲' : '▼'); el.style.color = up ? '#8b5cf6' : '#e11d48'; };
+        const setBadge = (id, pct) => { const el = document.getElementById(id); if (!el) return; const up = pct >= 0; el.textContent = (up ? '+' : '') + pct + '%'; el.style.color = up ? '#059669' : '#e11d48'; };
         const trend = (arr, key) => { const a = (arr || []).map(r => Number(r[key] || 0)); if (a.length < 2) return 0; const h = Math.floor(a.length / 2); const past = a.slice(0, h).reduce((x, y) => x + y, 0); const now = a.slice(h).reduce((x, y) => x + y, 0); if (past === 0) return now > 0 ? 100 : 0; return Math.round((now - past) / past * 100); };
         // Row 1: 3 metric cards (PRs / POs / Total Value)
         setTxt('pr-total-count', s.pr.total_count);
@@ -1091,7 +1113,7 @@
         // Row 4: product reports (combined PR + PO)
         const prod = s.products || { by_value: [], by_orders: [] };
         drawTopValueBar('prod-value', prod.by_value, '#8b5cf6', 'value', true);
-        drawTopValueBar('prod-orders', s.pr.top, '#ec4899', 'a', true);
+        drawTopValueBar('prod-orders', s.pr.top, '#f97fbe', 'a', true);
       } catch (e) {
         toast('โหลด Dashboard ไม่สำเร็จ: ' + e.message, true);
       }
@@ -1162,7 +1184,7 @@
             pointHoverBorderColor: color, pointHoverBorderWidth: 3 }] },
         { ...NO_RESIZE, interaction: { mode: 'index', intersect: false }, hover: { mode: 'index', intersect: false },
           plugins: { legend: { display: false }, tooltip: { backgroundColor: '#26262b', padding: 12, cornerRadius: 12, displayColors: true, boxWidth: 8, boxHeight: 8, boxPadding: 4, usePointStyle: true,
-            titleColor: '#ec4899', titleFont: { size: 12, weight: '700' }, bodyColor: '#fff', bodyFont: { size: 14, weight: '700' },
+            titleColor: '#f97fbe', titleFont: { size: 12, weight: '700' }, bodyColor: '#fff', bodyFont: { size: 14, weight: '700' },
             callbacks: { labelPointStyle: () => ({ pointStyle: 'circle', rotation: 0 }), labelColor: () => ({ borderColor: '#8b5cf6', backgroundColor: '#8b5cf6' }),
               label: c => isMoney ? '฿ ' + Number(c.parsed.y).toLocaleString() : (window.tDyn || (s => s))('จำนวน') + ': ' + Number(c.parsed.y).toLocaleString() } } },
           scales: {
@@ -1172,7 +1194,7 @@
     // Top departments list (FarmVue "Production Gained" style)
     function renderProdList(listId, pctId, top) {
       const list = (top || []).slice(0, 6);
-      const colors = ['#ec4899', '#8b5cf6', '#F59E0B', '#34D399', '#3B82F6', '#a78bfa'];
+      const colors = ['#f97fbe', '#8b5cf6', '#F59E0B', '#34D399', '#3B82F6', '#a78bfa'];
       const total = list.reduce((x, r) => x + Number(r.a || 0), 0) || 1;
       const el = document.getElementById(listId);
       if (el) el.innerHTML = list.map((r, i) => {
@@ -1218,7 +1240,7 @@
     // Concentric rings (Solar "Customers" style) — one ring per top department
     function drawRings(canvasId, legendId, totalId, top) {
       const list = (top || []).slice(0, 5);
-      const colors = ['#8b5cf6', '#ec4899', '#F59E0B', '#34D399', '#3B82F6'];
+      const colors = ['#8b5cf6', '#f97fbe', '#F59E0B', '#34D399', '#3B82F6'];
       const total = list.reduce((x, r) => x + Number(r.a || 0), 0) || 1;
       const datasets = list.map((r, i) => {
         const pct = Math.round(Number(r.a || 0) / total * 100);
