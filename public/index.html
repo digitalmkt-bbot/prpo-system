@@ -39,7 +39,7 @@
     .user-avatar { width:38px; height:38px; border-radius:50%; background:linear-gradient(135deg,#f97fbe,#db2777); display:flex; align-items:center; justify-content:center; flex-shrink:0; color:#fff; font-weight:700; }
     .user-info { display:flex; flex-direction:column; min-width:0; flex:1; }
     .user-info b { font-size:13px; color:#181818; line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    .user-info span { font-size:10px; color:#fff; background:#181818; padding:1px 8px; border-radius:999px; align-self:flex-start; margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .user-info span { display:block; max-width:100%; font-size:11px; color:#6b7280; margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .user-chevron { flex-shrink:0; }
     .main { flex: 1; padding: 28px 32px; overflow: auto; background: var(--bg); position:relative; }
     /* StayWise pastel gradient hero — only on the dashboard */
@@ -479,18 +479,18 @@
         <button type="button" data-lang="th" onclick="setLang('th')" style="flex:1;border:none;border-radius:999px;padding:6px 0;font-size:12px;font-weight:700;cursor:pointer;background:transparent;color:#7b9c90;">TH</button>
       </div>
       <ul class="nav">
-        <li class="nav-label">General</li>
-        <li><a class="active" data-page="dashboard"><svg class="nav-ic" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>Dashboard</a></li>
-        <li><a data-page="create"><svg class="nav-ic" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M12 12v6M9 15h6"/></svg>Create PR</a></li>
-        <li><a data-page="prs"><svg class="nav-ic" viewBox="0 0 24 24"><path d="M9 2h6a1 1 0 0 1 1 1v1h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2V3a1 1 0 0 1 1-1z"/><path d="M9 12h6M9 16h4"/></svg>PR List</a></li>
-        <li id="nav-pos"><a data-page="pos"><svg class="nav-ic" viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>PO List</a></li>
-        <li><a data-page="approvals"><svg class="nav-ic" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>My Approvals</a></li>
-        <li class="nav-label">Tools</li>
-        <li><a data-page="suppliers"><svg class="nav-ic" viewBox="0 0 24 24"><path d="M1 3h15v13H1z"/><path d="M16 8h4l3 3v5h-7z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>Suppliers</a></li>
-        <li><a data-page="departments"><svg class="nav-ic" viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 9h.01M9 13h.01M9 17h.01M15 9h.01M15 13h.01M15 17h.01"/></svg>Departments</a></li>
-        <li id="nav-companies"><a data-page="companies"><svg class="nav-ic" viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="1"/><path d="M9 22v-4h6v4M8 6h.01M12 6h.01M16 6h.01M8 10h.01M12 10h.01M16 10h.01M8 14h.01M12 14h.01M16 14h.01"/></svg>Companies</a></li>
-        <li id="nav-users"><a data-page="users"><svg class="nav-ic" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>Users &amp; Roles</a></li>
-        <li><a data-page="settings"><svg class="nav-ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Settings</a></li>
+        <li class="nav-label">ทั่วไป</li>
+        <li><a class="active" data-page="dashboard"><svg class="nav-ic" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>แดชบอร์ด</a></li>
+        <li><a data-page="create"><svg class="nav-ic" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M12 12v6M9 15h6"/></svg>สร้างใบขอซื้อ</a></li>
+        <li><a data-page="prs"><svg class="nav-ic" viewBox="0 0 24 24"><path d="M9 2h6a1 1 0 0 1 1 1v1h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2V3a1 1 0 0 1 1-1z"/><path d="M9 12h6M9 16h4"/></svg>รายการใบขอซื้อ</a></li>
+        <li id="nav-pos"><a data-page="pos"><svg class="nav-ic" viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>รายการใบสั่งซื้อ</a></li>
+        <li><a data-page="approvals"><svg class="nav-ic" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>รายการรออนุมัติ</a></li>
+        <li class="nav-label">เครื่องมือ</li>
+        <li><a data-page="suppliers"><svg class="nav-ic" viewBox="0 0 24 24"><path d="M1 3h15v13H1z"/><path d="M16 8h4l3 3v5h-7z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>ผู้ขาย</a></li>
+        <li><a data-page="departments"><svg class="nav-ic" viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 9h.01M9 13h.01M9 17h.01M15 9h.01M15 13h.01M15 17h.01"/></svg>แผนก</a></li>
+        <li id="nav-companies"><a data-page="companies"><svg class="nav-ic" viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="1"/><path d="M9 22v-4h6v4M8 6h.01M12 6h.01M16 6h.01M8 10h.01M12 10h.01M16 10h.01M8 14h.01M12 14h.01M16 14h.01"/></svg>บริษัท</a></li>
+        <li id="nav-users"><a data-page="users"><svg class="nav-ic" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>ผู้ใช้และสิทธิ์</a></li>
+        <li><a data-page="settings"><svg class="nav-ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>ตั้งค่า</a></li>
       </ul>
       <div class="user-box">
         <div class="user-row">
@@ -508,13 +508,13 @@
     <div class="main">
       <div class="app-topbar">
         <div class="topbar-greet">
-          <div class="tg-hi">Hi <span id="topbar-name">there</span>,</div>
-          <div class="tg-welcome">Welcome back</div>
+          <div class="tg-hi">สวัสดี <span id="topbar-name">there</span>,</div>
+          <div class="tg-welcome">ยินดีต้อนรับ</div>
         </div>
         <div class="topbar-right">
           <div class="app-search topbar-search">
             <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input type="text" placeholder="Search…" aria-label="Search">
+            <input type="text" placeholder="ค้นหา…" aria-label="Search">
           </div>
           <button class="topbar-theme" id="theme-toggle" onclick="toggleTheme()" aria-label="Theme" title="สลับโหมด Dark / Light"><span id="theme-ic">🌙</span> <span id="theme-lbl">Dark</span></button>
           <button class="topbar-bell" aria-label="Notifications" title="การแจ้งเตือน"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="bell-dot"></span></button>
@@ -523,7 +523,7 @@
       </div>
       <!-- DASHBOARD -->
       <div class="page active pr-form" id="page-dashboard">
-        <h1>Dashboard</h1>
+        <h1>แดชบอร์ด</h1>
         <p class="subtitle">ภาพรวมระบบการจัดซื้อ</p>
 
         <!-- Filter -->
@@ -552,19 +552,19 @@
         <!-- Row 1: StayWise frosted metric cards -->
         <div class="sw-cards">
           <div class="sw-mc">
-            <span class="sw-mc-label">Total PRs</span>
+            <span class="sw-mc-label">ใบขอซื้อทั้งหมด</span>
             <div class="sw-mc-val"><span id="pr-total-count">0</span></div>
-            <div class="sw-mc-delta"><span id="b-pr">+0%</span><span class="mut">last week</span></div>
+            <div class="sw-mc-delta"><span id="b-pr">+0%</span><span class="mut">สัปดาห์ที่แล้ว</span></div>
           </div>
           <div class="sw-mc po-only">
-            <span class="sw-mc-label">Total POs</span>
+            <span class="sw-mc-label">ใบสั่งซื้อทั้งหมด</span>
             <div class="sw-mc-val"><span id="po-total-count">0</span></div>
-            <div class="sw-mc-delta"><span id="b-po">+0%</span><span class="mut">last week</span></div>
+            <div class="sw-mc-delta"><span id="b-po">+0%</span><span class="mut">สัปดาห์ที่แล้ว</span></div>
           </div>
           <div class="sw-mc">
-            <span class="sw-mc-label">Total Value</span>
-            <div class="sw-mc-val"><span id="val-total">0</span><span class="u">THB</span></div>
-            <div class="sw-mc-delta"><span id="b-val">+0%</span><span class="mut">last week</span></div>
+            <span class="sw-mc-label">มูลค่ารวม</span>
+            <div class="sw-mc-val"><span id="val-total">0</span><span class="u">บาท</span></div>
+            <div class="sw-mc-delta"><span id="b-val">+0%</span><span class="mut">สัปดาห์ที่แล้ว</span></div>
           </div>
         </div>
 
@@ -2819,6 +2819,13 @@
   <script>
   (function(){
     const I18N_TH2EN = {
+      "ทั่วไป": "General", "เครื่องมือ": "Tools",
+      "แดชบอร์ด": "Dashboard", "สร้างใบขอซื้อ": "Create PR", "รายการใบขอซื้อ": "PR List",
+      "รายการใบสั่งซื้อ": "PO List", "รายการรออนุมัติ": "My Approvals",
+      "ผู้ขาย": "Suppliers", "บริษัท": "Companies", "ผู้ใช้และสิทธิ์": "Users & Roles", "ตั้งค่า": "Settings",
+      "สวัสดี": "Hi", "ยินดีต้อนรับ": "Welcome back", "ค้นหา…": "Search…",
+      "ใบขอซื้อทั้งหมด": "Total PRs", "ใบสั่งซื้อทั้งหมด": "Total POs", "มูลค่ารวม": "Total Value",
+      "สัปดาห์ที่แล้ว": "last week", "บาท": "THB",
       "เข้าสู่ระบบเพื่อใช้งาน": "Sign in to continue",
       "อีเมล": "Email",
       "รหัสผ่าน": "Password",
