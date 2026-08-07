@@ -189,6 +189,37 @@
     .detail-card { background:#fff; width:780px; max-width:96vw; border-radius:14px; padding:26px; box-shadow:0 20px 60px rgba(0,0,0,.3); }
     .detail-head { display:flex; justify-content:space-between; align-items:flex-start; border-bottom:1px solid var(--line); padding-bottom:14px; margin-bottom:16px; }
     .pr-letterhead { border-bottom:2px solid #1a1a2e; padding-bottom:12px; margin-bottom:16px; }
+    /* ===== Memo (PO document) template — Love Island ===== */
+    .memo { position:relative; font-family:"IBM Plex Sans Thai","Instrument Sans",sans-serif; color:#1f2937; background:#fff; overflow:hidden; }
+    .memo * { position:relative; z-index:1; }
+    .memo-wm { position:absolute; right:0; bottom:0; width:340px; opacity:.5; z-index:0; pointer-events:none; }
+    .memo-head { display:flex; justify-content:space-between; align-items:flex-start; gap:20px; }
+    .memo-co { font-size:19px; font-weight:700; color:#1e293b; }
+    .memo-accent { width:74px; height:5px; border-radius:3px; background:linear-gradient(90deg,#1e3a5f 0 55%,#38bdf8 55% 100%); margin:7px 0 10px; }
+    .memo-addr { font-size:11.5px; color:#475569; line-height:1.7; }
+    .memo-logo { width:180px; }
+    .memo-docno { text-align:right; font-size:13px; font-weight:700; color:#1e293b; margin-top:26px; }
+    .memo-rule { border:none; border-top:2px solid #1e293b; margin:10px 0; }
+    .memo-title { text-align:center; font-size:22px; font-weight:700; color:#1e293b; letter-spacing:.5px; }
+    .memo-date { text-align:right; font-size:13px; font-weight:700; color:#1e293b; margin:8px 0 14px; }
+    .memo-fields { display:grid; grid-template-columns:1fr; gap:9px; font-size:13px; margin-bottom:18px; }
+    .memo-fields .f { display:flex; gap:8px; }
+    .memo-fields .f b { min-width:120px; color:#1e293b; font-weight:700; }
+    .memo-fields .f span { color:#334155; }
+    .memo-sec { display:flex; align-items:center; gap:8px; font-size:13.5px; font-weight:700; color:#1e293b; margin:14px 0 8px; }
+    .memo-sec::before { content:''; width:0; height:0; border-left:11px solid #2aa9e0; border-top:7px solid transparent; border-bottom:7px solid transparent; }
+    table.memo-items { width:100%; border-collapse:collapse; font-size:12px; }
+    table.memo-items thead th { background:#3b4a63; color:#fff; font-weight:600; padding:8px 9px; text-align:left; }
+    table.memo-items thead th.c { text-align:center; } table.memo-items thead th.r { text-align:right; }
+    table.memo-items tbody td { padding:8px 9px; border-bottom:1px solid #e5e7eb; vertical-align:top; }
+    table.memo-items tbody tr:nth-child(even){ background:#f6f7f9; }
+    table.memo-items tfoot td { padding:8px 9px; font-weight:700; }
+    .memo-note { border:1px solid #e5e7eb; border-radius:6px; min-height:96px; padding:12px 14px; font-size:12.5px; color:#334155; background:#fcfcfd; white-space:pre-wrap; }
+    .memo-sign-h { font-size:13px; font-weight:700; color:#1e293b; margin:30px 0 6px; }
+    .memo-signs { display:grid; grid-template-columns:1fr 1fr 1fr; gap:20px; margin-top:34px; text-align:center; }
+    .memo-sign .dots { border-top:1.5px dotted #64748b; margin:0 10px 6px; padding-top:0; }
+    .memo-sign .role { font-size:12px; font-weight:700; color:#1e293b; }
+    .memo-sign .nm { font-size:12px; color:#475569; margin-top:2px; }
     .detail-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px 24px; font-size:13px; margin-bottom:18px; }
     .detail-grid .k { color:var(--muted); font-size:11px; margin-bottom:2px; }
     .detail-close { background:none; border:none; font-size:20px; cursor:pointer; color:var(--muted); }
@@ -1681,72 +1712,60 @@
           const base = gross - (it.discount || 0);
           grossTotal += gross; discountTotal += Number(it.discount || 0);
           return `<tr>
-            <td>${i + 1}. ${nz(it.product_name)}${it.account_code ? '<div style="color:#4f46e5;font-size:11px">บัญชี: ' + it.account_code + '</div>' : ''}${it.description ? '<div style="color:#6b7280;font-size:11px">' + it.description + '</div>' : ''}</td>
+            <td style="text-align:center">${i + 1}</td>
+            <td>${nz(it.product_name)}${it.account_code ? '<div style="color:#64748b;font-size:10.5px">บัญชี: ' + it.account_code + '</div>' : ''}</td>
+            <td>${it.description ? String(it.description) : '-'}</td>
             <td style="text-align:center">${Number(it.quantity).toLocaleString()}</td>
             <td style="text-align:center">${nz(it.unit)}</td>
             <td style="text-align:right">${money(it.unit_price)}</td>
-            <td style="text-align:right">${money(it.discount)}</td>
-            <td style="text-align:center">${it.vat_rate || 0}%</td>
             <td style="text-align:right">${money(base)}</td>
           </tr>`;
         }).join('');
+        const attachTxt = [po.quotation_no ? 'ใบเสนอราคา ' + po.quotation_no : '', po.invoice_no ? 'ใบแจ้งหนี้ ' + po.invoice_no : ''].filter(Boolean).join(' · ') || '-';
         document.getElementById('po-detail-card').innerHTML = `
-          <div class="podoc">
-            <div class="podoc-top">
-              <div><div style="font-weight:800;font-size:18px;color:#1a1a2e">💙 LOVE andaman</div></div>
-              <div style="text-align:right"><div style="font-size:11px;color:#6b7280">(ต้นฉบับ)</div><div class="podoc-title">ใบสั่งซื้อ</div></div>
-            </div>
-            <div class="podoc-parties">
-              <div class="podoc-party">
-                <div class="lbl">ผู้ซื้อ</div><div class="nm">${nz(co.name)}</div>
-                <div style="font-size:12px;margin-top:3px">${nz(co.address)}</div>
-                <div style="font-size:12px">เลขที่ภาษี: ${nz(co.tax_id)}</div>
-                <div style="font-size:12px">${nz(co.phone)} · ${nz(co.email)}</div>
-                <div class="lbl" style="margin-top:8px">ผู้ขาย</div><div class="nm">${nz(po.supplier_code)} ${nz(po.supplier_name)}</div>
-                <div style="font-size:12px;margin-top:3px">${nz(po.supplier_address)}</div>
-                <div style="font-size:12px">เลขที่ภาษี: ${nz(po.supplier_tax_id)}</div>
-                <div style="font-size:12px">${nz(po.supplier_phone)}${po.supplier_email ? ' · ' + po.supplier_email : ''}</div>
+          <div class="memo">
+            <img class="memo-wm" src="/memo-watermark.png" alt="" aria-hidden="true">
+            <div class="memo-head">
+              <div>
+                <div class="memo-co">Love Island Co., Ltd.</div>
+                <div class="memo-accent"></div>
+                <div class="memo-addr">9/239-240 Sakdidej Road<br>T.Talat Nuea A.Mueang Phuket 83000<br>T: +66 76 390 250<br>E-mail : info@loveandaman.com</div>
               </div>
-              <div class="podoc-party podoc-meta">
-                <div><span class="mk">เลขที่เอกสาร:</span><b>${po.po_no}</b></div>
-                <div><span class="mk">วันที่ออก:</span>${dt}</div>
-                <div><span class="mk">อ้างอิง:</span>${nz(po.reference)}</div>
-                ${po.quotation_no ? `<div><span class="mk">เลขใบเสนอราคา:</span>${po.quotation_no}</div>` : ''}
-                ${po.invoice_no ? `<div><span class="mk">เลขใบแจ้งหนี้:</span>${po.invoice_no}</div>` : ''}
-                ${po.tax_no ? `<div><span class="mk">เลขผู้เสียภาษี:</span>${po.tax_no}</div>` : ''}
-                ${po.payment_terms ? `<div><span class="mk">เงื่อนไขชำระเงิน:</span>${po.payment_terms}</div>` : ''}
-                ${po.cat_department ? `<div><span class="mk">แผนก:</span>${po.cat_department}</div>` : ''}
-                ${po.tags ? `<div><span class="mk">แท็ก:</span>${po.tags}</div>` : ''}
-                <div style="margin-top:8px" class="lbl">ติดต่อกลับที่:</div>
-                <div><span class="mk">ชื่อ:</span>${nz(po.contact_name)}</div>
-                <div><span class="mk">โทร:</span>${nz(po.contact_phone)}</div>
-                <div><span class="mk">อีเมล:</span>${nz(po.contact_email)}</div>
+              <div style="text-align:right;flex-shrink:0">
+                <img class="memo-logo" src="/memo-logo.png" alt="LOVE andaman">
+                <div class="memo-docno">เลขที่เอกสาร : ${po.po_no}</div>
               </div>
             </div>
-            <table class="podoc-items">
-              <thead><tr><th>คำอธิบาย</th><th style="text-align:center;width:55px">จำนวน</th><th style="text-align:center;width:55px">หน่วย</th><th style="text-align:right;width:85px">ราคา/หน่วย</th><th style="text-align:right;width:75px">ส่วนลด</th><th style="text-align:center;width:45px">VAT</th><th style="text-align:right;width:95px">มูลค่าก่อนภาษี</th></tr></thead>
-              <tbody>${rows || '<tr><td colspan="7" style="text-align:center;color:#9ca3af;padding:16px">ไม่มีรายการ</td></tr>'}</tbody>
+            <hr class="memo-rule">
+            <div class="memo-title">Memorandum</div>
+            <hr class="memo-rule">
+            <div class="memo-date">วันที่ : ${dt}</div>
+            <div class="memo-fields">
+              <div class="f"><b>แผนก :</b><span>${nz(po.cat_department)}</span></div>
+              <div class="f"><b>ประเภท :</b><span>ใบสั่งซื้อ (Purchase Order)</span></div>
+              <div class="f"><b>ผู้ขาย :</b><span>${nz(po.supplier_code)} ${nz(po.supplier_name)}</span></div>
+              <div class="f"><b>เรื่อง :</b><span>ขออนุมัติสั่งซื้อสินค้า / บริการ</span></div>
+              <div class="f"><b>ผู้ขอ :</b><span>${nz(po.contact_name)}</span></div>
+              <div class="f"><b>เอกสารแนบ :</b><span>${attachTxt}</span></div>
+            </div>
+            <div class="memo-sec">รายการสินค้า / บริการ</div>
+            <table class="memo-items">
+              <thead><tr><th class="c" style="width:34px">No.</th><th>รายการ</th><th>รายละเอียด</th><th class="c" style="width:54px">จำนวน</th><th class="c" style="width:50px">หน่วย</th><th class="r" style="width:88px">ราคา/หน่วย</th><th class="r" style="width:98px">รวม</th></tr></thead>
+              <tbody>${rows || '<tr><td colspan="7" style="text-align:center;color:#9ca3af;padding:14px">ไม่มีรายการ</td></tr>'}</tbody>
+              <tfoot>
+                <tr><td colspan="6" style="text-align:right">มูลค่าก่อนภาษี</td><td style="text-align:right">${money(po.subtotal)}</td></tr>
+                <tr><td colspan="6" style="text-align:right">ภาษีมูลค่าเพิ่ม (VAT)</td><td style="text-align:right">${money(po.vat_amount)}</td></tr>
+                <tr><td colspan="6" style="text-align:right">จำนวนเงินรวมทั้งสิ้น</td><td style="text-align:right">${money(po.total_amount)} บาท</td></tr>
+              </tfoot>
             </table>
-            <div class="podoc-sum">
-              <div style="font-size:12px;line-height:1.95;text-align:right;color:#374151;min-width:300px">
-                <div style="display:flex;justify-content:space-between"><span>รวมเป็นเงิน</span><b>${money(grossTotal)} บาท</b></div>
-                <div style="display:flex;justify-content:space-between"><span>หักส่วนลด</span><b>${money(discountTotal)} บาท</b></div>
-                <div style="display:flex;justify-content:space-between;border-top:1px dashed #d1d5db;padding-top:3px"><span>มูลค่าที่คำนวณภาษี</span><b>${money(po.subtotal)} บาท</b></div>
-                <div style="display:flex;justify-content:space-between"><span>ภาษีมูลค่าเพิ่ม (VAT)</span><b>${money(po.vat_amount)} บาท</b></div>
-                <div style="display:flex;justify-content:space-between;border-top:1px solid #d1d5db;padding-top:3px"><span>จำนวนเงินรวมทั้งสิ้น</span><b>${money(po.total_amount)} บาท</b></div>
-                <div style="display:flex;justify-content:space-between;color:#b91c1c"><span>หัก ณ ที่จ่าย</span><b>${money(po.wht_amount)} บาท</b></div>
-              </div>
-              <div class="grand">
-                <div style="font-size:11px;color:#6b7280">ยอดชำระสุทธิ</div>
-                <div style="font-size:22px;font-weight:800;color:#16a34a">${money(po.net_amount)} บาท</div>
-                <div style="font-size:11px;color:#6b7280;margin-top:6px;font-style:italic">(${bahtText(po.net_amount)})</div>
-              </div>
-            </div>
-            ${po.note ? `<div style="margin-top:14px;font-size:12px"><b>หมายเหตุ:</b> ${po.note}</div>` : ''}
-            <div class="podoc-sign">
-              <div><div class="line">ผู้ออกเอกสาร (ผู้ซื้อ)</div></div>
-              <div><div class="line">ผู้อนุมัติ (ผู้ซื้อ)</div></div>
-              <div><div class="line">ผู้รับเอกสาร (ผู้ขาย)</div></div>
+            <div style="text-align:right;font-size:11.5px;font-style:italic;color:#475569;margin-top:5px">(${bahtText(po.total_amount)})</div>
+            <div class="memo-sec">รายละเอียด</div>
+            <div class="memo-note">${po.note ? String(po.note).replace(/</g, '&lt;') : ''}</div>
+            <div class="memo-sign-h">ลายมือชื่อผู้อนุมัติ</div>
+            <div class="memo-signs">
+              <div class="memo-sign"><div style="height:40px"></div><div class="dots"></div><div class="role">ผู้จัดการแผนก / Manager</div><div class="nm">&nbsp;</div></div>
+              <div class="memo-sign"><div style="height:40px"></div><div class="dots"></div><div class="role">ผู้บริหาร / Executive</div><div class="nm">&nbsp;</div></div>
+              <div class="memo-sign"><div style="height:40px"></div><div class="dots"></div><div class="role">กรรมการผู้จัดการ / MD</div><div class="nm">&nbsp;</div></div>
             </div>
           </div>
           <div class="po-print-hide" style="margin-top:18px;border-top:1px solid var(--line);padding-top:12px">
