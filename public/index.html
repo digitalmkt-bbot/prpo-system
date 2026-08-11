@@ -2380,6 +2380,7 @@
         ['iss-vendor-addr', 'iss-vendor-phone', 'iss-vendor-tax'].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = '-'; });
         // อ้างอิงเติมจากเลข PR ต้นทางอัตโนมัติ (แก้ไขได้)
         document.getElementById('iss-reference').value = pr.pr_no || '';
+        document.getElementById('iss-quotation').value = pr.pr_no || '';
         const dnow = new Date(); const dstr = dnow.getFullYear() + '-' + String(dnow.getMonth() + 1).padStart(2, '0') + '-' + String(dnow.getDate()).padStart(2, '0');
         const idt = document.getElementById('iss-issue-date'); if (idt) idt.value = dstr;
         document.getElementById('iss-wht').value = '0';
