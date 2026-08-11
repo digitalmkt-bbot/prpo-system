@@ -2031,6 +2031,7 @@
         document.getElementById('cr-requester').value = currentUser ? (currentUser.name || '') : '';
         document.getElementById('cr-needed').value = '';
         document.getElementById('cr-purpose').value = '';
+        ensureProducts();
         document.getElementById('cr-items').innerHTML = '';
         addPrItem();
         recalcPR();
@@ -2156,11 +2157,39 @@
     }
     window.deletePurchaseType = deletePurchaseType;
 
+    // ===== Product master autocomplete (for PR item picker) =====
+    let PRODUCTS = [];
+    async function ensureProducts() {
+      if (PRODUCTS.length) return PRODUCTS;
+      try { PRODUCTS = await api.getProducts(); } catch { PRODUCTS = []; }
+      let dl = document.getElementById('prod-datalist');
+      if (!dl) { dl = document.createElement('datalist'); dl.id = 'prod-datalist'; document.body.appendChild(dl); }
+      dl.innerHTML = PRODUCTS.map(p => `<option value="${String(p.name || '').replace(/"/g, '&quot;')}">${p.code ? p.code : ''}${p.unit ? ' · ' + p.unit : ''}</option>`).join('');
+      window.__prodByName = {};
+      PRODUCTS.forEach(p => { if (p.name) window.__prodByName[String(p.name).trim().toLowerCase()] = p; });
+      return PRODUCTS;
+    }
+    window.ensureProducts = ensureProducts;
+    // When a product name is picked/typed, auto-fill unit (and code stored on row)
+    function onPickProduct(inp) {
+      const p = (window.__prodByName || {})[inp.value.trim().toLowerCase()];
+      if (!p) return;
+      const tr = inp.closest('tr');
+      tr.dataset.pcode = p.code || '';
+      const us = tr.querySelector('.it-unit');
+      if (us && p.unit) {
+        let opt = [...us.options].find(o => o.value === p.unit || o.text === p.unit);
+        if (!opt) { opt = document.createElement('option'); opt.value = p.unit; opt.text = p.unit; us.appendChild(opt); }
+        us.value = p.unit;
+      }
+    }
+    window.onPickProduct = onPickProduct;
+
     function addPrItem() {
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td class="it-no" style="text-align:center;color:#cbd5e1"></td>
-        <td><input class="it-name" placeholder="ชื่อสินค้า"></td>
+        <td><input class="it-name" list="prod-datalist" onchange="onPickProduct(this)" placeholder="พิมพ์เพื่อค้นหาสินค้า..." autocomplete="off"></td>
         <td><input class="it-desc" placeholder="รายละเอียด"></td>
         <td><input class="it-qty" type="number" min="0" step="1" value="1" style="text-align:center" oninput="recalcPR()"></td>
         <td><select class="it-unit"><option>ชิ้น</option><option>กล่อง</option><option>ชุด</option><option>แพ็ค</option><option>ม้วน</option><option>ลิตร</option><option>กิโลกรัม</option><option>เดือน</option><option>ครั้ง</option></select></td>
