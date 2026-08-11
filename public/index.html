@@ -518,6 +518,7 @@
         <li><a data-page="approvals"><svg class="nav-ic" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>รายการรออนุมัติ</a></li>
         <li class="nav-label">เครื่องมือ</li>
         <li><a data-page="suppliers"><svg class="nav-ic" viewBox="0 0 24 24"><path d="M1 3h15v13H1z"/><path d="M16 8h4l3 3v5h-7z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>ผู้ขาย</a></li>
+        <li><a data-page="products"><svg class="nav-ic" viewBox="0 0 24 24"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>สินค้า</a></li>
         <li><a data-page="departments"><svg class="nav-ic" viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 9h.01M9 13h.01M9 17h.01M15 9h.01M15 13h.01M15 17h.01"/></svg>แผนก</a></li>
         <li id="nav-companies"><a data-page="companies"><svg class="nav-ic" viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="1"/><path d="M9 22v-4h6v4M8 6h.01M12 6h.01M16 6h.01M8 10h.01M12 10h.01M16 10h.01M8 14h.01M12 14h.01M16 14h.01"/></svg>บริษัท</a></li>
         <li id="nav-users"><a data-page="users"><svg class="nav-ic" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>ผู้ใช้และสิทธิ์</a></li>
@@ -900,6 +901,24 @@
       </div>
 
       <!-- SUPPLIERS -->
+      <div class="page" id="page-products">
+        <h1>สินค้า / บริการ</h1>
+        <p class="subtitle">จัดการรายการสินค้า/บริการที่ใช้ในใบขอซื้อ (PR)</p>
+        <div class="toolbar" style="margin-top:16px;">
+          <input type="text" id="product-search" placeholder="ค้นหาสินค้า (ชื่อ/รหัส/หมวด)..." oninput="renderProducts()">
+          <button class="btn" onclick="showProductModal()">+ เพิ่มสินค้า</button>
+        </div>
+        <div class="panel">
+          <div style="font-size:12px; color:var(--muted); margin-bottom:10px;" id="product-count"></div>
+          <table>
+            <thead>
+              <tr><th style="width:150px">รหัส</th><th>ชื่อสินค้า / บริการ</th><th style="width:90px">หน่วย</th><th style="width:170px">หมวดหมู่</th><th style="width:90px">จัดการ</th></tr>
+            </thead>
+            <tbody id="product-table"></tbody>
+          </table>
+        </div>
+      </div>
+
       <div class="page" id="page-suppliers">
         <h1>Suppliers</h1>
         <p class="subtitle">จัดการผู้ขายและประเภทการจัดซื้อ</p>
@@ -1073,6 +1092,7 @@
         if (page === 'pos') loadPOs();
         if (page === 'approvals') loadApprovals();
         if (page === 'suppliers') switchSupTab('suppliers');
+        if (page === 'products') loadProducts();
         if (page === 'departments') loadDepartments();
         if (page === 'companies') loadCompanies();
         if (page === 'users') loadUsers();
@@ -2623,6 +2643,71 @@
       if (s) showSupplierModal(s);
     }
     window.editSupplier = editSupplier;
+
+    // ===== Products management page =====
+    async function loadProducts() {
+      try {
+        PRODUCTS = await api.getProducts();
+        window.__prodByName = {};
+        PRODUCTS.forEach(p => { if (p.name) window.__prodByName[String(p.name).trim().toLowerCase()] = p; });
+        const dl = document.getElementById('prod-datalist');
+        if (dl) dl.innerHTML = PRODUCTS.map(p => `<option value="${String(p.name || '').replace(/"/g, '&quot;')}">${p.code || ''}${p.unit ? ' · ' + p.unit : ''}</option>`).join('');
+        renderProducts();
+      } catch (e) { toast('โหลดสินค้าไม่สำเร็จ: ' + e.message, true); }
+    }
+    window.loadProducts = loadProducts;
+
+    function renderProducts() {
+      const q = (document.getElementById('product-search').value || '').toLowerCase().trim();
+      let list = PRODUCTS;
+      if (q) list = PRODUCTS.filter(p => (p.name || '').toLowerCase().includes(q) || (p.code || '').toLowerCase().includes(q) || (p.category || '').toLowerCase().includes(q));
+      const shown = list.slice(0, 300);
+      document.getElementById('product-count').textContent = `แสดง ${shown.length} จาก ${list.length} รายการ (ทั้งหมด ${PRODUCTS.length})` + (list.length > 300 ? ' — พิมพ์ค้นหาเพื่อกรองให้แคบลง' : '');
+      document.getElementById('product-table').innerHTML = shown.map(p => `<tr>
+        <td><b style="color:var(--brand-dark)">${nz(p.code)}</b></td>
+        <td>${nz(p.name)}</td>
+        <td>${nz(p.unit)}</td>
+        <td>${nz(p.category)}</td>
+        <td><button class="btn secondary" style="padding:4px 10px" onclick='editProduct(${JSON.stringify(p.id)})'>แก้ไข</button></td>
+      </tr>`).join('') || '<tr><td colspan="5" class="empty">ไม่พบสินค้า</td></tr>';
+    }
+    window.renderProducts = renderProducts;
+
+    function showProductModal(existing) {
+      const p = existing || {};
+      const e = v => (v == null ? '' : String(v).replace(/"/g, '&quot;'));
+      openModal(existing ? 'แก้ไขสินค้า' : 'เพิ่มสินค้า', `
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 12px">
+          <div><label>รหัสสินค้า *</label><input id="pd-code" value="${e(p.code)}" placeholder="เช่น KL-0001"></div>
+          <div><label>หน่วย</label><input id="pd-unit" value="${e(p.unit)}" placeholder="เช่น ชิ้น / กล่อง"></div>
+          <div style="grid-column:1/-1"><label>ชื่อสินค้า / บริการ *</label><input id="pd-name" value="${e(p.name)}"></div>
+          <div><label>หมวดหมู่</label><input id="pd-category" value="${e(p.category)}" placeholder="เช่น อาหารและเครื่องดื่ม"></div>
+          <div><label>ราคา/หน่วย (ถ้ามี)</label><input id="pd-price" type="number" min="0" step="0.01" value="${p.price != null ? p.price : 0}"></div>
+        </div>
+        ${existing ? `<div style="margin-top:14px;text-align:right"><button class="btn secondary" style="border-color:#e11d48;color:#e11d48;padding:5px 12px" onclick='deleteProduct(${JSON.stringify(p.id)})'>🗑 ลบสินค้า</button></div>` : ''}
+      `, async () => {
+        const data = { id: p.id, code: val('pd-code'), name: val('pd-name'), unit: val('pd-unit'), category: val('pd-category'), price: +document.getElementById('pd-price').value || 0 };
+        if (!data.code || !data.name) return toast('กรุณากรอกรหัสและชื่อสินค้า', true);
+        await api.saveProduct(data);
+        toast('บันทึกสินค้าแล้ว');
+        closeModal();
+        loadProducts();
+      });
+    }
+    window.showProductModal = showProductModal;
+
+    function editProduct(id) {
+      const p = PRODUCTS.find(x => x.id === id);
+      if (p) showProductModal(p);
+    }
+    window.editProduct = editProduct;
+
+    async function deleteProduct(id) {
+      if (!confirm('ยืนยันลบสินค้านี้?')) return;
+      try { await api.deleteProduct(id); toast('ลบสินค้าแล้ว'); closeModal(); loadProducts(); }
+      catch (e) { toast('ลบไม่สำเร็จ: ' + e.message, true); }
+    }
+    window.deleteProduct = deleteProduct;
 
     async function showDeptModal(id) {
       let d = null;
