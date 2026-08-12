@@ -1007,12 +1007,11 @@
           </table>
         </div>
         <div class="panel" style="margin-top:16px; background:#f0f4f8;">
-          <b>คำอธิบาย Role (ลำดับอนุมัติ 4 ขั้น)</b>
+          <b>คำอธิบาย Role (ลำดับอนุมัติ 3 ขั้น)</b>
           <div style="margin-top:8px; font-size:13px; color:var(--muted); line-height:1.9;">
             <b>Manager</b> — อนุมัติ <b>ขั้นที่ 1</b><br>
             <b>Executive</b> — อนุมัติ <b>ขั้นที่ 2</b><br>
-            <b>Managing Director</b> — อนุมัติ <b>ขั้นที่ 3</b> (ผ่านขั้นนี้ → ฝ่ายจัดซื้อออก PO ได้ทันที)<br>
-            <b>Owner</b> — อนุมัติ <b>ขั้นที่ 4</b> (อนุมัติสุดท้าย — ทำคู่ขนานได้ ไม่บล็อกการออก PO)<br>
+            <b>Managing Director</b> — อนุมัติ <b>ขั้นที่ 3</b> (ขั้นสุดท้าย — ผ่านขั้นนี้ → ฝ่ายจัดซื้อออก PO ได้ทันที)<br>
             <b>Purchasing</b> — ฝ่ายจัดซื้อ สร้าง PR / ออก PO (อนุมัติไม่ได้)<br>
             <b>Admin</b> — เข้าถึงทุกส่วน + อนุมัติแทนได้ทุกขั้น · <b>Approver/Viewer</b> — ดู/ใช้งานทั่วไป
           </div>
@@ -2768,9 +2767,9 @@
     const PO_ROLES = ['Admin', 'Purchase Manager', 'Admin Store']; // can view + issue PO
     const PR_SEE_ALL = ['Admin', 'Manager', 'Executive', 'Managing Director', 'Owner', 'Purchase Manager', 'Admin Store']; // see PRs across all departments
     const canSeePO = () => PO_ROLES.includes(currentUser && currentUser.role);
-    const APPROVER_ROLES = ['Admin', 'Manager', 'Executive', 'Managing Director', 'Owner'];
-    const APPROVAL_CHAIN = ['Manager', 'Executive', 'Managing Director', 'Owner']; // role required at step 1..4
-    const PO_AFTER_STEP = 3; // PO issuable once step 3 (MD) passed
+    const APPROVER_ROLES = ['Admin', 'Manager', 'Executive', 'Managing Director'];
+    const APPROVAL_CHAIN = ['Manager', 'Executive', 'Managing Director']; // role required at step 1..3
+    const PO_AFTER_STEP = 3; // PO issuable once step 3 (MD, final) passed
 
     async function loadUsers() {
       try {
@@ -3086,7 +3085,8 @@
       "เฉพาะ Manager ขึ้นไปอนุมัติ PR ได้": "Only Manager and above can approve PRs",
       "เพิ่มผู้ใช้": "Add user",
       "ชื่อ": "Name",
-      "คำอธิบาย Role (ลำดับอนุมัติ 4 ขั้น)": "Role description (4-step approval sequence)",
+      "คำอธิบาย Role (ลำดับอนุมัติ 3 ขั้น)": "Role description (3-step approval sequence)",
+      "ขั้นสุดท้าย": "final step",
       "ขั้นที่ 1": "Step 1",
       "ขั้นที่ 2": "Step 2",
       "ขั้นที่ 3": "Step 3",

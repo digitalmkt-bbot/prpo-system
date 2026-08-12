@@ -174,8 +174,8 @@ export default function(pool) {
         total += (parseFloat(item.quantity) * parseFloat(item.unit_price));
       });
 
-      // Fixed 4-step approval chain (Manager → Executive → Managing Director → Owner); PO issuable after step 3
-      const totalSteps = 4;
+      // Fixed 3-step approval chain (Manager → Executive → Managing Director); PO issuable after step 3 (MD)
+      const totalSteps = 3;
 
       // Resolve the creator's designated first approver (null = auto / same-dept manager)
       let firstApprover = null;
