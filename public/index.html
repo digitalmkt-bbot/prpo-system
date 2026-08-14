@@ -11,32 +11,32 @@
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --brand:#f97fbe; --brand-dark:#ec4899; --panel:#ffffff; --ink:#181818; --muted:#71717a;
-      --line:#e5e7eb; --green:#059669; --amber:#d97706; --red:#e11d48; --bg:#f0f0f0;
-      --accent:#f97fbe; --accent-soft:#fde7f1; --teal:#8b5cf6;
-      --ink2:#181818; --card-radius:20px; --card-shadow:0 4px 16px rgba(20,30,40,.05); --card-border:1px solid rgba(20,30,40,.06);
+      --brand:#2563eb; --brand-dark:#1e3a8a; --panel:#ffffff; --ink:#0f172a; --muted:#64748b;
+      --line:#e2e8f0; --green:#059669; --amber:#d97706; --red:#e11d48; --bg:#e2e8f0;
+      --accent:#2563eb; --accent-soft:#e0f2fe; --teal:#6366f1;
+      --ink2:#1e293b; --card-radius:20px; --card-shadow:0 4px 16px rgba(20,30,40,.05); --card-border:1px solid rgba(20,30,40,.06);
       --font:"Instrument Sans","IBM Plex Sans Thai", system-ui, "Segoe UI", Roboto, sans-serif;
     }
     * { box-sizing: border-box; font-family: var(--font); }
     body { margin: 0; background: var(--bg); color: var(--ink); font-size: 14px; }
     .container { display: flex; min-height: 100vh; }
-    .sidebar { width: 248px; background: #181818; border-right: 1px solid rgba(0,0,0,.2); padding: 22px 16px; }
-    .logo { font-size: 16px; font-weight: 800; color: #eafff6; margin-bottom: 26px; display:flex; align-items:center; gap:10px; }
-    .logo-ic { width:38px; height:38px; border-radius:50%; background:linear-gradient(135deg,#f97fbe,#8b5cf6); display:flex; align-items:center; justify-content:center; flex-shrink:0; box-shadow:0 4px 12px rgba(0,229,143,.28); }
+    .sidebar { width: 248px; background: #ffffff; border-right: 1px solid #e2e8f0; padding: 22px 16px; }
+    .logo { font-size: 16px; font-weight: 800; color: #0f172a; margin-bottom: 26px; display:flex; align-items:center; gap:10px; }
+    .logo-ic { width:38px; height:38px; border-radius:12px; background:linear-gradient(135deg,#1e3a8a,#2563eb); display:flex; align-items:center; justify-content:center; flex-shrink:0; box-shadow:0 4px 12px rgba(37,99,235,.28); }
     .nav { list-style: none; margin: 0; padding: 0; }
     .nav li { margin-bottom: 3px; }
-    .nav-label { font-size:10.5px; font-weight:500; letter-spacing:.08em; text-transform:uppercase; color:#71717a; padding:6px 14px 4px; margin-top:10px; }
+    .nav-label { font-size:10.5px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:#94a3b8; padding:6px 14px 4px; margin-top:10px; }
     .nav-label:first-of-type { margin-top:0; }
-    .nav a { display: flex; align-items:center; gap:11px; padding: 11px 14px; border-radius: 16px; color: #a1a1aa; text-decoration: none; cursor: pointer; font-size:14px; font-weight:400; transition:all .15s; }
+    .nav a { display: flex; align-items:center; gap:11px; padding: 11px 14px; border-radius: 16px; color: #64748b; text-decoration: none; cursor: pointer; font-size:14px; font-weight:500; transition:all .15s; }
     .nav a svg.nav-ic { width:18px; height:18px; flex-shrink:0; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
-    .nav a:hover { background: #222227; color: #e5e7eb; }
-    .nav a.active { background: #2a2a30; color: #ffffff; font-weight:500; box-shadow:none; }
-    .nav a.active:hover { background: #2a2a30; color: #ffffff; }
-    .nav a.active svg.nav-ic { stroke:#f472b6; }
+    .nav a:hover { background: #f1f5f9; color: #0f172a; }
+    .nav a.active { background: #e0f2fe; color: #075985; font-weight:700; box-shadow:none; border:1px solid #bae6fd; }
+    .nav a.active:hover { background: #e0f2fe; color: #075985; }
+    .nav a.active svg.nav-ic { stroke:#0284c7; }
     /* User / profile box */
     .user-box { margin-top: 36px; padding: 10px; background: #ffffff; border: 1px solid #ececec; border-radius: 18px; }
     .user-row { display:flex; align-items:center; gap:10px; }
-    .user-avatar { width:38px; height:38px; border-radius:50%; background:linear-gradient(135deg,#f97fbe,#db2777); display:flex; align-items:center; justify-content:center; flex-shrink:0; color:#fff; font-weight:700; }
+    .user-avatar { width:38px; height:38px; border-radius:50%; background:linear-gradient(135deg,#2563eb,#1e40af); display:flex; align-items:center; justify-content:center; flex-shrink:0; color:#fff; font-weight:700; }
     .user-info { display:flex; flex-direction:column; min-width:0; flex:1; }
     .user-info b { font-size:13px; color:#181818; line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .user-info span { display:block; max-width:100%; font-size:11px; color:#6b7280; margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -44,8 +44,8 @@
     .main { flex: 1; padding: 28px 32px; overflow: auto; background: var(--bg); position:relative; }
     /* StayWise pastel gradient hero — only on the dashboard */
     .main::before { content:''; position:absolute; top:0; left:0; right:0; height:0; z-index:0; pointer-events:none; }
-    .main:has(#page-dashboard.active)::before { height:452px; background:linear-gradient(115deg,#fdf6b2 0%,#fbcfe8 32%,#e9d5ff 62%,#bbf7d0 100%); border-radius:0 0 36px 36px; }
-    [data-theme="dark"] .main:has(#page-dashboard.active)::before { background:linear-gradient(115deg,#3a2f1a 0%,#3a1f34 34%,#241a3a 64%,#173a2a 100%); opacity:.55; }
+    .main:has(#page-dashboard.active)::before { height:452px; background:linear-gradient(115deg,#e0f2fe 0%,#e0e7ff 40%,#f0f9ff 75%,#ecfeff 100%); border-radius:0 0 36px 36px; }
+    [data-theme="dark"] .main:has(#page-dashboard.active)::before { background:linear-gradient(115deg,#0b1e3a 0%,#141a3a 45%,#0a1420 100%); opacity:.6; }
     .app-topbar, .page { position:relative; z-index:1; }
     /* StayWise frosted metric cards */
     .sw-cards { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:22px; }
@@ -90,7 +90,7 @@
     [data-theme="dark"] .po-modal-sec { color:#f3f4f6; border-top-color:#26262b; }
     [data-theme="dark"] .modal-card, [data-theme="dark"] #po-edit-card, [data-theme="dark"] .detail-card { background:#18181c; color:#e5e7eb; }
     .topbar-user { display:flex; align-items:center; gap:9px; background:#fff; padding:4px 14px 4px 4px; border-radius:999px; border:1px solid rgba(20,30,40,.06); box-shadow:0 2px 8px rgba(31,45,61,.05); }
-    .topbar-user .tu-av { width:30px; height:30px; border-radius:50%; background:#0d2820; color:#f97fbe; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; flex-shrink:0; }
+    .topbar-user .tu-av { width:30px; height:30px; border-radius:50%; background:#0d2820; color:#2563eb; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; flex-shrink:0; }
     .topbar-user .tu-name { font-size:12px; font-weight:700; color:#0d1f18; line-height:1.15; }
     .topbar-user .tu-role { font-size:10px; color:#9aa8a1; line-height:1.15; }
     @media (max-width:820px){ .topbar-search { display:none; } .topbar-greet .tg-welcome { font-size:17px; } }
@@ -126,14 +126,14 @@
     table { width: 100%; border-collapse: collapse; }
     th { text-align: left; padding: 14px 16px; background: #fafafa; color: #71717a; font-weight: 600; font-size: 11px; letter-spacing:.04em; text-transform:uppercase; border-bottom: 1px solid var(--line); }
     td { padding: 14px 16px; border-bottom: 1px solid #f1f3f5; font-size:13px; }
-    tbody tr:hover { background: #fdf2f8; }
+    tbody tr:hover { background: #eff6ff; }
     .tag { display: inline-block; padding: 5px 14px; border-radius: 999px; font-size: 12px; font-weight:600; }
     .tag.pending { background: #e0f2fe; color: #0369a1; }
     .tag.approved { background: #d1fae5; color: #047857; }
-    .tag.rejected { background: #fce7f3; color: #be185d; }
+    .tag.rejected { background: #e0f2fe; color: #1e40af; }
     [data-theme="dark"] .tag.pending { background: rgba(3,105,161,.25); color:#7dd3fc; }
     [data-theme="dark"] .tag.approved { background: rgba(4,120,87,.25); color:#6ee7b7; }
-    [data-theme="dark"] .tag.rejected { background: rgba(190,24,93,.25); color:#f9a8d4; }
+    [data-theme="dark"] .tag.rejected { background: rgba(190,24,93,.25); color:#7dd3fc; }
     input, select, textarea { width: 100%; padding: 9px 12px; border: 1px solid var(--line); border-radius: 11px; font-size: 14px; background:#fff; outline:none; transition:border .15s, box-shadow .15s; }
     input:focus, select:focus, textarea:focus { border-color: var(--brand); box-shadow:0 0 0 3px var(--accent-soft); }
     label { display: block; font-size: 12px; color: var(--muted); margin: 10px 0 4px; }
@@ -141,17 +141,17 @@
     .toast.show { display: block; }
     .toast.error { background: var(--red); }
     .empty { text-align: center; color: var(--muted); padding: 40px 20px; }
-    .status { padding: 12px 14px; background: #fce7f3; border-left: 3px solid var(--brand); border-radius: 10px; color: var(--brand-dark); }
+    .status { padding: 12px 14px; background: #e0f2fe; border-left: 3px solid var(--brand); border-radius: 10px; color: var(--brand-dark); }
     /* Login */
     .login-wrap { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
-      background: linear-gradient(135deg,#fce7f3 0%,#ede9fe 45%,#f5d0fe 100%); background-size:200% 200%;
+      background: linear-gradient(135deg,#e0f2fe 0%,#e0e7ff 45%,#f0f9ff 100%); background-size:200% 200%;
       animation: lg-bg 14s ease infinite; z-index: 1000; overflow:hidden; }
     @keyframes lg-bg { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
     .lg-blob { position:absolute; border-radius:50%; opacity:.5; filter:blur(1px); animation:lg-float 9s ease-in-out infinite; }
-    .lg-blob.b1{ width:120px;height:120px; background:#fbcfe8; top:12%; left:13%; }
-    .lg-blob.b2{ width:90px;height:90px; background:#f9a8d4; bottom:15%; left:20%; animation-delay:1.5s; }
-    .lg-blob.b3{ width:150px;height:150px; background:#FFD9B0; top:16%; right:11%; animation-delay:.8s; }
-    .lg-blob.b4{ width:70px;height:70px; background:#FFB98A; bottom:18%; right:16%; animation-delay:2.2s; }
+    .lg-blob.b1{ width:120px;height:120px; background:#bae6fd; top:12%; left:13%; }
+    .lg-blob.b2{ width:90px;height:90px; background:#7dd3fc; bottom:15%; left:20%; animation-delay:1.5s; }
+    .lg-blob.b3{ width:150px;height:150px; background:#a5d8ff; top:16%; right:11%; animation-delay:.8s; }
+    .lg-blob.b4{ width:70px;height:70px; background:#c7d2fe; bottom:18%; right:16%; animation-delay:2.2s; }
     @keyframes lg-float { 0%,100%{transform:translate(0,0)} 50%{transform:translate(12px,-26px)} }
     .login-card { position:relative; z-index:2; background:#fff; width:360px; max-width:90vw; border-radius:28px; padding:24px 32px 32px;
       box-shadow:0 24px 70px rgba(6,24,19,.16); animation:lg-pop .6s cubic-bezier(.34,1.56,.64,1); }
@@ -160,7 +160,7 @@
     .login-card .sub { color: var(--muted); font-size: 13px; margin-bottom: 18px; text-align:center; }
     .login-card label { font-size:12px; color:#6b7280; font-weight:600; }
     .login-card input { width:100%; padding:12px 16px; border:2px solid #F0E9F7; border-radius:14px; font-size:14px; margin-top:5px; background:#FBF8FE; box-sizing:border-box; transition:all .2s; }
-    .login-card input:focus { outline:none; border-color:#f97fbe; background:#fff; box-shadow:0 0 0 4px rgba(16,185,129,.12); }
+    .login-card input:focus { outline:none; border-color:#2563eb; background:#fff; box-shadow:0 0 0 4px rgba(16,185,129,.12); }
     .login-card .btn { width:100%; margin-top:18px; padding:12px; font-size:15px; border-radius:14px; transition:transform .15s, box-shadow .2s; }
     .login-card .btn:hover { transform:translateY(-2px); box-shadow:0 8px 20px rgba(16,185,129,.30); }
     .login-card .btn:active { transform:translateY(0) scale(.97); }
@@ -175,9 +175,9 @@
     .lg-mascot.peek .lg-paw-l { transform:translate(16px,-40px); }
     .lg-mascot.peek .lg-paw-r { transform:translate(-16px,-40px); }
     .lg-mascot.peek .lg-eye { animation:none; transform:scaleY(.08); }
-    .logout-btn { display: block; width: 100%; margin-top: 12px; padding: 8px; border: 1px solid rgba(0,229,143,.2);
-      background: transparent; color: #f97fbe; border-radius: 10px; cursor: pointer; font-size: 12px; font-weight:600; }
-    .logout-btn:hover { background: #26262b; }
+    .logout-btn { display: block; width: 100%; margin-top: 12px; padding: 8px; border: 1px solid #e2e8f0;
+      background: #f8fafc; color: #2563eb; border-radius: 12px; cursor: pointer; font-size: 12px; font-weight:600; }
+    .logout-btn:hover { background: #eff6ff; }
     /* Modal */
     .modal-overlay { position: fixed; inset: 0; background: rgba(15,23,42,.5); display: none;
       align-items: center; justify-content: center; z-index: 900; }
@@ -257,7 +257,7 @@
     .typeahead-results > div:hover { background: #f1f5f9; }
     .typeahead-results .code { color: var(--muted); font-size: 11px; }
     /* ===== New PR form (teal) ===== */
-    .pr-form { --teal:#f97fbe; --teal-dark:#db2777; }
+    .pr-form { --teal:#2563eb; --teal-dark:#1e40af; }
     .pr-card { background:#fff; border:var(--card-border); border-radius:var(--card-radius); margin-bottom:16px; overflow:hidden; box-shadow:var(--card-shadow); }
     .pr-card-head { display:flex; align-items:center; justify-content:space-between; padding:14px 18px; border-bottom:1px solid #f0f2f5; }
     .pr-card-title { font-size:14px; font-weight:600; color:#1a1a2e; display:flex; align-items:center; gap:8px; }
@@ -324,9 +324,9 @@
     .pr-add { margin-top:12px; background:none; border:1.5px dashed #d1d5db; border-radius:12px; padding:9px; font-size:12px; color:#9ca3af; cursor:pointer; width:100%; }
     .pr-add:hover { border-color:var(--teal); color:var(--teal); background:#f8fffe; }
     .pr-sum { display:flex; justify-content:flex-end; margin-top:16px; }
-    .pr-sum-box { background:linear-gradient(135deg,#fce7f3,#fdf2f8); border:1.5px solid #f9a8d4; border-radius:14px; padding:12px 24px; text-align:right; }
+    .pr-sum-box { background:linear-gradient(135deg,#e0f2fe,#eff6ff); border:1.5px solid #7dd3fc; border-radius:14px; padding:12px 24px; text-align:right; }
     .pr-sum-label { font-size:11px; color:var(--teal-dark); font-weight:600; }
-    .pr-sum-val { font-size:22px; font-weight:700; color:#9d174d; }
+    .pr-sum-val { font-size:22px; font-weight:700; color:#1e3a8a; }
     .pr-submit { background:var(--brand); color:#fff; border:none; border-radius:999px; padding:11px 26px; font-weight:700; cursor:pointer; font-size:14px; box-shadow:0 4px 12px rgba(16,185,129,.24); }
     .pr-submit:hover { background:var(--brand-dark); }
     .pr-sig { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; }
@@ -374,7 +374,7 @@
     .solar-cards { display:grid; grid-template-columns:repeat(3,1fr); gap:18px; margin-bottom:18px; }
     /* FarmVue-style metric cards */
     .fv-mc { background:#fff; border-radius:20px; padding:16px 18px; position:relative; overflow:hidden; box-shadow:var(--card-shadow); }
-    .fv-mc.mint { background:#f97fbe; }
+    .fv-mc.mint { background:#2563eb; }
     .fv-mc-title { font-size:15px; font-weight:800; color:#0d1f18; line-height:1.15; }
     .fv-mc.mint .fv-mc-title { color:#ffffff; }
     .fv-mc-sub { font-size:11px; color:#9aa8a1; margin-top:3px; }
@@ -410,12 +410,12 @@
     .sh-list { display:flex; flex-direction:column; }
     .sh-row { display:flex; align-items:center; gap:11px; padding:9px 0; border-bottom:1px solid var(--line); }
     .sh-row:last-child { border-bottom:none; }
-    .sh-av { width:34px; height:34px; border-radius:50%; background:linear-gradient(135deg,#34d399,#db2777); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:14px; flex-shrink:0; }
+    .sh-av { width:34px; height:34px; border-radius:50%; background:linear-gradient(135deg,#34d399,#1e40af); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:14px; flex-shrink:0; }
     .sh-main { flex:1; min-width:0; } .sh-name { font-weight:700; font-size:13px; color:#1a1a2e; } .sh-sub { font-size:11px; color:#9ca3af; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .sh-amt { font-weight:700; font-size:13px; color:#1a1a2e; }
-    .cta-card { background:linear-gradient(150deg,#f97fbe,#db2777); border-radius:18px; padding:22px; color:#fff; display:flex; flex-direction:column; justify-content:center; box-shadow:var(--card-shadow); }
+    .cta-card { background:linear-gradient(150deg,#2563eb,#1e40af); border-radius:18px; padding:22px; color:#fff; display:flex; flex-direction:column; justify-content:center; box-shadow:var(--card-shadow); }
     .cta-card h3 { margin:0 0 6px; font-size:18px; } .cta-card p { margin:0 0 16px; font-size:13px; opacity:.9; line-height:1.5; }
-    .cta-card .cta-btn { background:#fff; color:#db2777; border:none; border-radius:999px; padding:10px 18px; font-weight:700; font-size:13px; cursor:pointer; align-self:flex-start; }
+    .cta-card .cta-btn { background:#fff; color:#1e40af; border:none; border-radius:999px; padding:10px 18px; font-weight:700; font-size:13px; cursor:pointer; align-self:flex-start; }
     @media (max-width:1100px){ .solar-cards{grid-template-columns:repeat(2,1fr);} .solar-row3{grid-template-columns:1fr;} .fv-row2{grid-template-columns:1fr;} }
     /* FarmVue Ref — bigger cards */
     .fv-mc { padding:20px 22px; }
@@ -446,7 +446,7 @@
     .fv-prod-row .fv-pn { flex:1; color:#d6e4de; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .fv-prod-row .fv-pd { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
     .fv-prod-row .fv-pp { font-weight:800; color:#eafff6; }
-    .fv-benef { background:#f97fbe; border-radius:20px; padding:18px 20px; box-shadow:var(--card-shadow); display:flex; align-items:center; gap:14px; }
+    .fv-benef { background:#2563eb; border-radius:20px; padding:18px 20px; box-shadow:var(--card-shadow); display:flex; align-items:center; gap:14px; }
     .fv-benef .fv-benef-ic { width:66px; height:66px; border-radius:16px; background:#26262b; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
     .fv-benef .fv-benef-ic img { width:44px; height:44px; }
     .fv-benef .fv-benef-r { flex:1; }
@@ -456,8 +456,8 @@
     /* Convertex palette: lead with yellow, teal secondary */
     .ic-purple { background:linear-gradient(135deg,#ff9a63,#8b5cf6); color:#fff; box-shadow:0 4px 10px rgba(255,104,26,.30); }
     .ic-purple svg { stroke:#fff; }
-    .ic-blue { background:linear-gradient(135deg,#34d399,#f97fbe); }
-    .ic-green { background:linear-gradient(135deg,#f9a8d4,#34D399); }
+    .ic-blue { background:linear-gradient(135deg,#34d399,#2563eb); }
+    .ic-green { background:linear-gradient(135deg,#7dd3fc,#34D399); }
     .ic-amber { background:linear-gradient(135deg,#fbbf24,#f59e0b); }
     .ic-red { background:linear-gradient(135deg,#fb7185,#e11d48); }
   </style>
@@ -470,18 +470,18 @@
       <div class="lg-mascot" id="lg-mascot">
         <svg viewBox="0 0 124 112" width="124" height="112" xmlns="http://www.w3.org/2000/svg">
           <g class="lg-face">
-            <circle cx="30" cy="26" r="12" fill="#f9a8d4"/>
-            <circle cx="94" cy="26" r="12" fill="#f9a8d4"/>
-            <ellipse cx="62" cy="56" rx="44" ry="42" fill="#f9a8d4"/>
-            <ellipse cx="62" cy="60" rx="32" ry="30" fill="#fbcfe8"/>
+            <circle cx="30" cy="26" r="12" fill="#7dd3fc"/>
+            <circle cx="94" cy="26" r="12" fill="#7dd3fc"/>
+            <ellipse cx="62" cy="56" rx="44" ry="42" fill="#7dd3fc"/>
+            <ellipse cx="62" cy="60" rx="32" ry="30" fill="#bae6fd"/>
             <ellipse cx="40" cy="66" rx="7" ry="5" fill="#FDBA74" opacity=".7"/>
             <ellipse cx="84" cy="66" rx="7" ry="5" fill="#FDBA74" opacity=".7"/>
             <g><circle class="lg-eye" cx="50" cy="54" r="6" fill="#3a2a3f"/><circle cx="52" cy="52" r="2" fill="#fff"/></g>
             <g><circle class="lg-eye" cx="74" cy="54" r="6" fill="#3a2a3f"/><circle cx="76" cy="52" r="2" fill="#fff"/></g>
-            <path d="M54 70 Q62 78 70 70" stroke="#be185d" stroke-width="3" fill="none" stroke-linecap="round"/>
+            <path d="M54 70 Q62 78 70 70" stroke="#1e40af" stroke-width="3" fill="none" stroke-linecap="round"/>
           </g>
-          <ellipse class="lg-paw lg-paw-l" cx="36" cy="98" rx="12" ry="10" fill="#f9a8d4"/>
-          <ellipse class="lg-paw lg-paw-r" cx="88" cy="98" rx="12" ry="10" fill="#f9a8d4"/>
+          <ellipse class="lg-paw lg-paw-l" cx="36" cy="98" rx="12" ry="10" fill="#7dd3fc"/>
+          <ellipse class="lg-paw lg-paw-r" cx="88" cy="98" rx="12" ry="10" fill="#7dd3fc"/>
         </svg>
       </div>
       <h2>PR/PO System</h2>
@@ -503,11 +503,11 @@
     <div class="sidebar">
       <div class="logo">
         <span class="logo-ic"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></span>
-        <span><span style="display:block;line-height:1.1;color:#eafff6">PR/PO System</span><span style="display:block;font-size:11px;color:#7b9c90;font-weight:500">จัดซื้อ / Procurement</span></span>
+        <span><span style="display:block;line-height:1.1;color:#0f172a">PR/PO System</span><span style="display:block;font-size:11px;color:#94a3b8;font-weight:500">จัดซื้อ / Procurement</span></span>
       </div>
-      <div id="lang-toggle" style="display:flex;gap:4px;margin:4px 0 12px;padding:4px;background:#26262b;border-radius:999px;">
-        <button type="button" data-lang="en" onclick="setLang('en')" style="flex:1;border:none;border-radius:999px;padding:6px 0;font-size:12px;font-weight:700;cursor:pointer;background:#f97fbe;color:#181818;">EN</button>
-        <button type="button" data-lang="th" onclick="setLang('th')" style="flex:1;border:none;border-radius:999px;padding:6px 0;font-size:12px;font-weight:700;cursor:pointer;background:transparent;color:#7b9c90;">TH</button>
+      <div id="lang-toggle" style="display:flex;gap:4px;margin:4px 0 12px;padding:4px;background:#f1f5f9;border-radius:999px;">
+        <button type="button" data-lang="en" onclick="setLang('en')" style="flex:1;border:none;border-radius:999px;padding:6px 0;font-size:12px;font-weight:700;cursor:pointer;background:#2563eb;color:#ffffff;">EN</button>
+        <button type="button" data-lang="th" onclick="setLang('th')" style="flex:1;border:none;border-radius:999px;padding:6px 0;font-size:12px;font-weight:700;cursor:pointer;background:transparent;color:#64748b;">TH</button>
       </div>
       <ul class="nav">
         <li class="nav-label">ทั่วไป</li>
@@ -827,7 +827,7 @@
                 <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--teal-dark);margin-top:4px"><span>ภาษีมูลค่าเพิ่ม (VAT)</span><span>฿<span id="iss-vat">0.00</span></span></div>
                 <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;margin-top:6px;color:var(--teal-dark)"><span>ส่วนลดรวม ✏️</span><input type="number" id="iss-docdisc" value="0" min="0" step="0.01" style="width:120px;text-align:right;padding:5px 8px" oninput="recalcIssue()"></div>
                 <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;margin-top:10px;color:var(--teal-dark)"><span>หัก ณ ที่จ่าย</span><input type="number" id="iss-wht" value="0" min="0" step="0.01" style="width:120px;text-align:right;padding:5px 8px" oninput="recalcIssue()"></div>
-                <div style="display:flex;justify-content:space-between;font-weight:700;font-size:15px;margin-top:6px;color:#9d174d"><span>ยอดชำระ</span><span>฿<span id="iss-net">0.00</span></span></div>
+                <div style="display:flex;justify-content:space-between;font-weight:700;font-size:15px;margin-top:6px;color:#1e3a8a"><span>ยอดชำระ</span><span>฿<span id="iss-net">0.00</span></span></div>
               </div>
               <div class="po-total-card"><span class="t">จำนวนเงินทั้งสิ้น</span><span><span class="v" id="iss-total">0.00</span> บาท</span></div>
             </div>
@@ -1165,7 +1165,7 @@
         // Row 4: product reports (combined PR + PO)
         const prod = s.products || { by_value: [], by_orders: [] };
         drawTopValueBar('prod-value', prod.by_value, '#8b5cf6', 'value', true);
-        drawTopValueBar('prod-orders', s.pr.top, '#f97fbe', 'a', true);
+        drawTopValueBar('prod-orders', s.pr.top, '#2563eb', 'a', true);
       } catch (e) {
         toast('โหลด Dashboard ไม่สำเร็จ: ' + e.message, true);
       }
@@ -1236,7 +1236,7 @@
             pointHoverBorderColor: color, pointHoverBorderWidth: 3 }] },
         { ...NO_RESIZE, interaction: { mode: 'index', intersect: false }, hover: { mode: 'index', intersect: false },
           plugins: { legend: { display: false }, tooltip: { backgroundColor: '#26262b', padding: 12, cornerRadius: 12, displayColors: true, boxWidth: 8, boxHeight: 8, boxPadding: 4, usePointStyle: true,
-            titleColor: '#f97fbe', titleFont: { size: 12, weight: '700' }, bodyColor: '#fff', bodyFont: { size: 14, weight: '700' },
+            titleColor: '#2563eb', titleFont: { size: 12, weight: '700' }, bodyColor: '#fff', bodyFont: { size: 14, weight: '700' },
             callbacks: { labelPointStyle: () => ({ pointStyle: 'circle', rotation: 0 }), labelColor: () => ({ borderColor: '#8b5cf6', backgroundColor: '#8b5cf6' }),
               label: c => isMoney ? '฿ ' + Number(c.parsed.y).toLocaleString() : (window.tDyn || (s => s))('จำนวน') + ': ' + Number(c.parsed.y).toLocaleString() } } },
           scales: {
@@ -1246,7 +1246,7 @@
     // Top departments list (FarmVue "Production Gained" style)
     function renderProdList(listId, pctId, top) {
       const list = (top || []).slice(0, 6);
-      const colors = ['#f97fbe', '#8b5cf6', '#F59E0B', '#34D399', '#3B82F6', '#a78bfa'];
+      const colors = ['#2563eb', '#8b5cf6', '#F59E0B', '#34D399', '#3B82F6', '#a78bfa'];
       const total = list.reduce((x, r) => x + Number(r.a || 0), 0) || 1;
       const el = document.getElementById(listId);
       if (el) el.innerHTML = list.map((r, i) => {
@@ -1281,7 +1281,7 @@
       const _L = (window.tDyn || (s => s));
       upsertChart(canvasId, 'bar',
         { labels: pr.map(r => r.d.slice(5)), datasets: [
-            { label: _L('PR'), data: pr.map(r => Number(r.c || 0)), backgroundColor: '#db2777', borderRadius: 6, maxBarThickness: 11 },
+            { label: _L('PR'), data: pr.map(r => Number(r.c || 0)), backgroundColor: '#1e40af', borderRadius: 6, maxBarThickness: 11 },
             { label: _L('PO'), data: po.map(r => Number(r.c || 0)), backgroundColor: '#8b5cf6', borderRadius: 6, maxBarThickness: 11 } ] },
         { ...NO_RESIZE, interaction: { mode: 'index', intersect: false }, hover: { mode: 'index', intersect: false },
           plugins: { legend: { display: true, position: 'top', labels: { boxWidth: 10, font: { size: 11 } } },
@@ -1292,7 +1292,7 @@
     // Concentric rings (Solar "Customers" style) — one ring per top department
     function drawRings(canvasId, legendId, totalId, top) {
       const list = (top || []).slice(0, 5);
-      const colors = ['#8b5cf6', '#f97fbe', '#F59E0B', '#34D399', '#3B82F6'];
+      const colors = ['#8b5cf6', '#2563eb', '#F59E0B', '#34D399', '#3B82F6'];
       const total = list.reduce((x, r) => x + Number(r.a || 0), 0) || 1;
       const datasets = list.map((r, i) => {
         const pct = Math.round(Number(r.a || 0) / total * 100);
@@ -1924,7 +1924,7 @@
               <div style="display:flex;justify-content:space-between;font-size:13px"><span>มูลค่าก่อนภาษี</span><span>฿<span id="ed-subtotal">0.00</span></span></div>
               <div style="display:flex;justify-content:space-between;font-size:13px;margin-top:4px"><span>ภาษีมูลค่าเพิ่ม (VAT)</span><span>฿<span id="ed-vat">0.00</span></span></div>
               <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;margin-top:6px"><span>ส่วนลดรวม</span><input type="number" id="ed-docdisc" value="${po.doc_discount != null ? po.doc_discount : 0}" min="0" step="0.01" style="width:120px;text-align:right;padding:5px 8px" oninput="recalcEdit()"></div>
-              <div style="display:flex;justify-content:space-between;font-weight:700;font-size:16px;border-top:1px solid #fbcfe8;margin-top:8px;padding-top:8px;color:#9d174d"><span>จำนวนเงินทั้งสิ้น</span><span>฿<span id="ed-total">0.00</span></span></div>
+              <div style="display:flex;justify-content:space-between;font-weight:700;font-size:16px;border-top:1px solid #bae6fd;margin-top:8px;padding-top:8px;color:#1e3a8a"><span>จำนวนเงินทั้งสิ้น</span><span>฿<span id="ed-total">0.00</span></span></div>
               <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;margin-top:10px"><span>หัก ณ ที่จ่าย</span><input type="number" id="ed-wht" value="${po.wht_amount != null ? po.wht_amount : 0}" min="0" step="0.01" style="width:120px;text-align:right;padding:5px 8px" oninput="recalcEdit()"></div>
               <div style="display:flex;justify-content:space-between;font-weight:700;font-size:15px;margin-top:4px;color:#16a34a"><span>ยอดชำระสุทธิ</span><span>฿<span id="ed-net">0.00</span></span></div>
             </div>
