@@ -1413,7 +1413,8 @@
                 const c = stepInfo[step];
                 const nm = c ? escn(c.approverName || c.approver || '') : '';
                 const d = c ? fmtD(c.approveTime || c.approvedAt || c.time) : '';
-                return `<div class="memo-sign"><div style="height:40px"></div><div class="dots"></div><div class="role">${label}</div><div class="nm">${nm || '&nbsp;'}</div>${d ? `<div style="font-size:11px;color:#94a3b8;margin-top:2px">${d}</div>` : ''}</div>`;
+                const sig = nm ? `<div style="height:40px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:3px;font-size:14px;font-weight:600;color:#1e293b;font-family:'Sarabun','IBM Plex Sans Thai',cursive">${nm}</div>` : `<div style="height:40px"></div>`;
+                return `<div class="memo-sign">${sig}<div class="dots"></div><div class="role">${label}</div><div class="nm">${nm || '&nbsp;'}</div>${d ? `<div style="font-size:11px;color:#94a3b8;margin-top:2px">${d}</div>` : ''}</div>`;
               }).join('')}
             </div>
           </div>`;
