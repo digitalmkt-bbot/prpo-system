@@ -1403,7 +1403,20 @@
         }).join('');
         let chain = '';
         if (Array.isArray(pr.approval_chain) && pr.approval_chain.length) {
-          chain = `<div style="margin-top:16px"><b>ประวัติการอนุมัติ</b><ul style="font-size:13px;color:var(--muted);margin:8px 0 0 18px;line-height:1.7">${pr.approval_chain.map(c => `<li>ขั้น ${c.step}${c.role ? ' (' + c.role + ')' : ''}: ${c.approverName || c.approver}${c.comment ? ' — ' + c.comment : ''}</li>`).join('')}</ul></div>`;
+          const stepInfo = {}; pr.approval_chain.forEach(c => { if (c && c.step != null) stepInfo[c.step] = c; });
+          const fmtD = t => { try { return t ? new Date(t).toLocaleDateString('th-TH') : ''; } catch { return ''; } };
+          const escn = v => (v == null ? '' : String(v).replace(/</g, '&lt;'));
+          const cols = [['ผู้จัดการแผนก / Manager', 1], ['ผู้บริหาร / Executive', 2], ['กรรมการผู้จัดการ / MD', 3]];
+          chain = `<div style="margin-top:22px"><b>ลายมือชื่อผู้อนุมัติ</b>
+            <div class="memo-signs" style="margin-top:36px">
+              ${cols.map(([label, step]) => {
+                const c = stepInfo[step];
+                const nm = c ? escn(c.approverName || c.approver || '') : '';
+                const d = c ? fmtD(c.approveTime || c.approvedAt || c.time) : '';
+                return `<div class="memo-sign"><div style="height:40px"></div><div class="dots"></div><div class="role">${label}</div><div class="nm">${nm || '&nbsp;'}</div>${d ? `<div style="font-size:11px;color:#94a3b8;margin-top:2px">${d}</div>` : ''}</div>`;
+              }).join('')}
+            </div>
+          </div>`;
         }
         let posHtml = '';
         if (Array.isArray(pr.pos) && pr.pos.length) {
