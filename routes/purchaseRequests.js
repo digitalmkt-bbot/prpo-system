@@ -10,6 +10,9 @@ export default function(pool) {
   // Ensure per-item approval status + per-item issued-PO columns exist
   pool.query("ALTER TABLE pr_items ADD COLUMN IF NOT EXISTS item_status VARCHAR(20) DEFAULT 'approved'").catch(() => {});
   pool.query("ALTER TABLE pr_items ADD COLUMN IF NOT EXISTS po_no VARCHAR(50)").catch(() => {});
+  // Product code + category (auto-filled from product master when a coded product is picked)
+  pool.query("ALTER TABLE pr_items ADD COLUMN IF NOT EXISTS code VARCHAR(80)").catch(() => {});
+  pool.query("ALTER TABLE pr_items ADD COLUMN IF NOT EXISTS category VARCHAR(200)").catch(() => {});
   // Designated first approver (Manager email) copied from the creator at PR creation; null = auto (same-dept manager)
   pool.query("ALTER TABLE purchase_requests ADD COLUMN IF NOT EXISTS first_approver VARCHAR(150)").catch(() => {});
   // Requester contact phone + delivery location
@@ -33,6 +36,8 @@ export default function(pool) {
             'product_name', pri.product_name,
             'description', pri.description,
             'unit', pri.unit,
+            'code', pri.code,
+            'category', pri.category,
             'quantity', pri.quantity,
             'unit_price', pri.unit_price,
             'total_price', pri.total_price,
@@ -102,6 +107,8 @@ export default function(pool) {
             'product_name', pri.product_name,
             'description', pri.description,
             'unit', pri.unit,
+            'code', pri.code,
+            'category', pri.category,
             'quantity', pri.quantity,
             'unit_price', pri.unit_price,
             'total_price', pri.total_price,
@@ -208,9 +215,9 @@ export default function(pool) {
       for (const item of items) {
         await client.query(`
           INSERT INTO pr_items
-          (pr_id, product_name, description, unit, quantity, unit_price)
-          VALUES ($1, $2, $3, $4, $5, $6)
-        `, [pr_id, item.product_name, item.description || null, item.unit || null, item.quantity, item.unit_price]);
+          (pr_id, product_name, description, unit, quantity, unit_price, code, category)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        `, [pr_id, item.product_name, item.description || null, item.unit || null, item.quantity, item.unit_price, item.code || null, item.category || null]);
       }
 
       await client.query('COMMIT');

@@ -685,12 +685,14 @@
               <thead>
                 <tr>
                   <th style="width:28px;text-align:center">#</th>
-                  <th style="width:26%">รายการ</th>
-                  <th style="width:22%">รายละเอียด</th>
-                  <th style="width:80px;text-align:center">จำนวน</th>
-                  <th style="width:110px">หน่วย</th>
-                  <th style="width:120px">ราคา/หน่วย</th>
-                  <th style="width:110px;text-align:right">รวม</th>
+                  <th style="width:110px">รหัส</th>
+                  <th style="width:22%">รายการ</th>
+                  <th style="width:18%">รายละเอียด</th>
+                  <th style="width:130px">หมวดหมู่</th>
+                  <th style="width:72px;text-align:center">จำนวน</th>
+                  <th style="width:100px">หน่วย</th>
+                  <th style="width:110px">ราคา/หน่วย</th>
+                  <th style="width:100px;text-align:right">รวม</th>
                   <th style="width:36px"></th>
                 </tr>
               </thead>
@@ -1392,8 +1394,10 @@
             : `<td style="text-align:center">${rejected ? '<span class="tag rejected">ปฏิเสธ</span>' : (it.po_no ? `<span class="tag approved" title="ออก PO แล้ว">${it.po_no}</span>` : '<span class="tag pending">รอออก PO</span>')}</td>`;
           return `<tr${rejected && !canApprove ? ' style="opacity:.5;text-decoration:line-through"' : ''}>
             <td style="text-align:center">${idx + 1}</td>
+            <td style="color:#64748b">${nz(it.code)}</td>
             <td>${nz(it.product_name)}</td>
             <td>${nz(it.description)}</td>
+            <td style="color:#64748b">${nz(it.category)}</td>
             <td style="text-align:center">${it.quantity}</td>
             <td>${nz(it.unit)}</td>
             <td style="text-align:right">${Number(it.unit_price || 0).toLocaleString()}</td>
@@ -1458,7 +1462,7 @@
             <div style="grid-column:1/-1"><div class="k">วัตถุประสงค์</div>${nz(pr.purpose)}</div>
           </div>
           <table class="pr-items">
-            <thead><tr><th style="width:30px">#</th><th>รายการ</th><th>รายละเอียด</th><th style="text-align:center">จำนวน</th><th>หน่วย</th><th style="text-align:right">ราคา/หน่วย</th><th style="text-align:right">รวม</th><th style="text-align:center">${canApprove ? 'อนุมัติ' : 'สถานะ'}</th></tr></thead>
+            <thead><tr><th style="width:30px">#</th><th style="width:100px">รหัส</th><th>รายการ</th><th>รายละเอียด</th><th style="width:120px">หมวดหมู่</th><th style="text-align:center">จำนวน</th><th>หน่วย</th><th style="text-align:right">ราคา/หน่วย</th><th style="text-align:right">รวม</th><th style="text-align:center">${canApprove ? 'อนุมัติ' : 'สถานะ'}</th></tr></thead>
             <tbody>${rows || '<tr><td colspan="8" class="dash-empty">ไม่มีรายการ</td></tr>'}</tbody>
           </table>
           <div style="text-align:right;margin-top:14px;font-size:16px;font-weight:700">ยอดรวม${canApprove ? ' (เฉพาะที่อนุมัติ)' : ''}: ฿<span id="pr-appr-total">${Number(pr.total_amount || 0).toLocaleString()}</span></div>
@@ -2200,17 +2204,21 @@
       let dl = document.getElementById('prod-datalist');
       if (!dl) { dl = document.createElement('datalist'); dl.id = 'prod-datalist'; document.body.appendChild(dl); }
       dl.innerHTML = PRODUCTS.map(p => `<option value="${String(p.name || '').replace(/"/g, '&quot;')}">${p.code ? p.code : ''}${p.unit ? ' · ' + p.unit : ''}</option>`).join('');
-      window.__prodByName = {};
-      PRODUCTS.forEach(p => { if (p.name) window.__prodByName[String(p.name).trim().toLowerCase()] = p; });
+      let cl = document.getElementById('prodcode-datalist');
+      if (!cl) { cl = document.createElement('datalist'); cl.id = 'prodcode-datalist'; document.body.appendChild(cl); }
+      cl.innerHTML = PRODUCTS.filter(p => p.code).map(p => `<option value="${String(p.code).replace(/"/g, '&quot;')}">${String(p.name || '').replace(/</g, '&lt;')}</option>`).join('');
+      window.__prodByName = {}; window.__prodByCode = {};
+      PRODUCTS.forEach(p => { if (p.name) window.__prodByName[String(p.name).trim().toLowerCase()] = p; if (p.code) window.__prodByCode[String(p.code).trim().toLowerCase()] = p; });
       return PRODUCTS;
     }
     window.ensureProducts = ensureProducts;
-    // When a product name is picked/typed, auto-fill unit (and code stored on row)
-    function onPickProduct(inp) {
-      const p = (window.__prodByName || {})[inp.value.trim().toLowerCase()];
-      if (!p) return;
-      const tr = inp.closest('tr');
-      tr.dataset.pcode = p.code || '';
+    // Fill a PR item row from a product master record (code, name, unit, category)
+    function fillRowFromProduct(tr, p) {
+      if (!tr || !p) return;
+      const setV = (sel, v) => { const el = tr.querySelector(sel); if (el && v != null && String(v) !== '') el.value = v; };
+      setV('.it-code', p.code);
+      setV('.it-name', p.name);
+      setV('.it-cat', p.category);
       const us = tr.querySelector('.it-unit');
       if (us && p.unit) {
         let opt = [...us.options].find(o => o.value === p.unit || o.text === p.unit);
@@ -2218,14 +2226,25 @@
         us.value = p.unit;
       }
     }
+    function onPickProduct(inp) {
+      const p = (window.__prodByName || {})[inp.value.trim().toLowerCase()];
+      if (p) fillRowFromProduct(inp.closest('tr'), p);
+    }
     window.onPickProduct = onPickProduct;
+    function onPickProductCode(inp) {
+      const p = (window.__prodByCode || {})[inp.value.trim().toLowerCase()];
+      if (p) fillRowFromProduct(inp.closest('tr'), p);
+    }
+    window.onPickProductCode = onPickProductCode;
 
     function addPrItem() {
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td class="it-no" style="text-align:center;color:#cbd5e1"></td>
+        <td><input class="it-code" placeholder="รหัส" list="prodcode-datalist" onchange="onPickProductCode(this)" autocomplete="off"></td>
         <td><input class="it-name" list="prod-datalist" onchange="onPickProduct(this)" placeholder="พิมพ์เพื่อค้นหาสินค้า..." autocomplete="off"></td>
         <td><input class="it-desc" placeholder="รายละเอียด"></td>
+        <td><input class="it-cat" placeholder="หมวดหมู่" readonly style="background:#f8fafc;color:#64748b"></td>
         <td><input class="it-qty" type="number" min="0" step="1" value="1" style="text-align:center" oninput="recalcPR()"></td>
         <td><select class="it-unit"><option>ชิ้น</option><option>กล่อง</option><option>ชุด</option><option>แพ็ค</option><option>ม้วน</option><option>ลิตร</option><option>กิโลกรัม</option><option>เดือน</option><option>ครั้ง</option></select></td>
         <td><input class="it-price" type="number" min="0" step="0.01" value="0" oninput="recalcPR()"></td>
@@ -2259,6 +2278,8 @@
           product_name: tr.querySelector('.it-name').value.trim(),
           description: tr.querySelector('.it-desc').value.trim(),
           unit: tr.querySelector('.it-unit').value,
+          code: (tr.querySelector('.it-code') || {}).value ? tr.querySelector('.it-code').value.trim() : null,
+          category: (tr.querySelector('.it-cat') || {}).value ? tr.querySelector('.it-cat').value.trim() : null,
           quantity: parseFloat(tr.querySelector('.it-qty').value) || 0,
           unit_price: parseFloat(tr.querySelector('.it-price').value) || 0,
         })).filter(i => i.product_name && i.quantity > 0);
