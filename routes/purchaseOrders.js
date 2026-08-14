@@ -46,7 +46,7 @@ export default function(pool) {
       const {
         pr_no, supplier_id, reference = null, note = null,
         contact_name = null, contact_phone = null, contact_email = null,
-        wht_amount = 0, items: bodyItems, pr_item_ids = [],
+        wht_amount = 0, items: bodyItems, pr_item_ids = [], pr_line_qty = [],
         quotation_no = null, invoice_no = null, tax_no = null, payment_terms = null,
         cat_department = null, cat_branch = null, cat_program = null,
         price_type = 'exclusive', doc_discount = 0, tags = null, is_draft = false,
@@ -119,9 +119,22 @@ export default function(pool) {
             it.quantity || 0, it.unit_price || 0, it.discount || 0, it.vat_rate ?? (pr.has_vat ? 7 : 0), it.account_code || null]);
       }
 
-      // Mark the issued PR items so they are not issued again (enables multiple POs per PR)
-      if (Array.isArray(pr_item_ids) && pr_item_ids.length) {
-        await client.query('UPDATE pr_items SET po_no = $1 WHERE id = ANY($2::uuid[]) AND pr_id = $3', [po_no, pr_item_ids, pr.id]);
+      // Partial ordering: increment issued_qty per PR line; mark po_no only when fully issued.
+      if (Array.isArray(pr_line_qty) && pr_line_qty.length) {
+        for (const l of pr_line_qty) {
+          if (!l || !l.id) continue;
+          const qy = Number(l.quantity) || 0;
+          if (qy <= 0) continue;
+          await client.query(
+            `UPDATE pr_items
+             SET issued_qty = LEAST(COALESCE(issued_qty,0) + $1, quantity),
+                 po_no = CASE WHEN COALESCE(issued_qty,0) + $1 >= quantity THEN $2 ELSE po_no END
+             WHERE id = $3 AND pr_id = $4`,
+            [qy, po_no, l.id, pr.id]);
+        }
+      } else if (Array.isArray(pr_item_ids) && pr_item_ids.length) {
+        // Backward-compat: mark selected lines fully issued
+        await client.query('UPDATE pr_items SET issued_qty = quantity, po_no = $1 WHERE id = ANY($2::uuid[]) AND pr_id = $3', [po_no, pr_item_ids, pr.id]);
       }
       await client.query('UPDATE purchase_requests SET po_no = COALESCE(po_no, $1), updated_at = NOW() WHERE id = $2', [po_no, pr.id]);
       await client.query('COMMIT');

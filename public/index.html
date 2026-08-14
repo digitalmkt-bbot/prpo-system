@@ -1391,7 +1391,15 @@
           const rejected = it.item_status === 'rejected';
           const statusCell = canApprove
             ? `<td style="text-align:center"><label style="display:inline-flex;align-items:center;gap:5px;cursor:pointer;font-size:12px"><input type="checkbox" class="pr-appr-chk" data-id="${it.id}" data-total="${lineTotal}" ${rejected ? '' : 'checked'} onchange="recalcPRApprove()" style="width:auto"> อนุมัติ</label></td>`
-            : `<td style="text-align:center">${rejected ? '<span class="tag rejected">ปฏิเสธ</span>' : (it.po_no ? `<span class="tag approved" title="ออก PO แล้ว">${it.po_no}</span>` : '<span class="tag pending">รอออก PO</span>')}</td>`;
+            : (() => {
+                const iq = Number(it.issued_qty) || 0, qy = Number(it.quantity) || 0;
+                let inner;
+                if (rejected) inner = '<span class="tag rejected">ปฏิเสธ</span>';
+                else if (iq >= qy && qy > 0) inner = `<span class="tag approved" title="ออก PO ครบแล้ว">${nz(it.po_no)}</span>`;
+                else if (iq > 0) inner = `<span class="tag pending" style="background:#e0f2fe;color:#0369a1" title="ออก PO บางส่วน">ออกแล้ว ${iq}/${qy}</span>`;
+                else inner = '<span class="tag pending">รอออก PO</span>';
+                return `<td style="text-align:center">${inner}</td>`;
+              })();
           return `<tr${rejected && !canApprove ? ' style="opacity:.5;text-decoration:line-through"' : ''}>
             <td style="text-align:center">${idx + 1}</td>
             <td style="color:#64748b">${nz(it.code)}</td>
@@ -2423,7 +2431,9 @@
         const idt = document.getElementById('iss-issue-date'); if (idt) idt.value = dstr;
         document.getElementById('iss-wht').value = '0';
         document.getElementById('iss-vat-all').checked = true;
-        const items = (pr.items || []).filter(i => i && i.product_name && i.item_status !== 'rejected' && !i.po_no);
+        const rem = i => (Number(i.quantity) || 0) - (Number(i.issued_qty) || 0);
+        const items = (pr.items || []).filter(i => i && i.product_name && i.item_status !== 'rejected' && rem(i) > 0)
+          .map(i => ({ ...i, remaining: rem(i), quantity: rem(i) }));
         if (!items.length) { toast('รายการในใบนี้ออก PO ครบแล้ว', true); return; }
         await ensureAcctOpts();
         await fillCatSelect('iss-cat-dept');
@@ -2524,13 +2534,14 @@
         <td class="ii-no" style="text-align:center;color:#cbd5e1"></td>
         <td><input class="ii-name" value="${esc(it.product_name)}" placeholder="เลือกสินค้า/บริการ"><textarea class="ii-desc" placeholder="กรุณาพิมพ์คำอธิบายรายการ ไม่เกิน 1,000 ตัวอักษร" maxlength="1000" style="width:100%;min-height:30px;margin-top:5px;font-size:12px;background:#f8fafc;border:1px solid #eef2f0;border-radius:8px;padding:5px 8px;resize:vertical">${esc(it.description).replace(/</g,'&lt;')}</textarea></td>
         <td><input class="ii-acct" list="acct-datalist" placeholder="พิมพ์/เลือกบัญชี" autocomplete="off"></td>
-        <td><div class="qty-step"><button type="button" onclick="stepQty(this,-1)">−</button><input class="ii-qty" type="number" min="0" step="1" value="${it.quantity != null ? it.quantity : 1}" oninput="recalcIssue()"><button type="button" onclick="stepQty(this,1)">+</button></div></td>
+        <td><div class="qty-step"><button type="button" onclick="stepQty(this,-1)">−</button><input class="ii-qty" type="number" min="0" step="1" value="${it.quantity != null ? it.quantity : 1}" oninput="recalcIssue()"><button type="button" onclick="stepQty(this,1)">+</button></div>${it.remaining != null ? `<div style="font-size:10px;color:#94a3b8;text-align:center;margin-top:2px">เหลือ : ${Number(it.remaining).toLocaleString()}</div>` : ''}</td>
         <td><input class="ii-price" type="number" min="0" step="0.01" value="${it.unit_price != null ? it.unit_price : 0}" oninput="recalcIssue()"></td>
         <td><div style="display:flex;gap:3px"><input class="ii-disc" type="number" min="0" step="0.01" value="${it.discount != null ? it.discount : 0}" oninput="recalcIssue()" style="min-width:0"><select class="ii-disc-type" onchange="recalcIssue()" style="width:46px;padding:6px 2px"><option value="baht">฿</option><option value="pct">%</option></select></div></td>
         <td><select class="ii-vat" onchange="recalcIssue()"><option value="0" ${(it.vat_rate != null ? it.vat_rate : defVat) == 0 ? 'selected' : ''}>ไม่มี</option><option value="7" ${(it.vat_rate != null ? it.vat_rate : defVat) == 7 ? 'selected' : ''}>7%</option></select></td>
         <td class="ii-line" style="text-align:right;font-weight:600">0.00</td>
         <td style="text-align:center"><button title="ลบรายการนี้" style="background:none;border:none;color:#fca5a5;cursor:pointer;font-size:15px" onclick="this.closest('tr').remove();recalcIssue()">🗑</button></td>`;
       tr.dataset.prid = it.id || '';
+      if (it.remaining != null) tr.dataset.remaining = it.remaining;
       document.getElementById('iss-items').appendChild(tr);
       if (it.account_code) { const sel = tr.querySelector('.ii-acct'); if (sel) sel.value = it.account_code; }
       recalcIssue();
@@ -2629,9 +2640,20 @@
           vat_rate: +tr.querySelector('.ii-vat').value || 0,
         })).filter(i => i.product_name);
         if (!items.length) return toast('ต้องมีรายการอย่างน้อย 1 รายการ', true);
-        const pr_item_ids = trs.filter(tr => tr.querySelector('.ii-name').value.trim() && tr.dataset.prid).map(tr => tr.dataset.prid);
+        const prRows = trs.filter(tr => tr.querySelector('.ii-name').value.trim() && tr.dataset.prid);
+        const pr_item_ids = prRows.map(tr => tr.dataset.prid);
+        // Per-line ordered quantity (partial ordering). Validate against remaining.
+        const pr_line_qty = [];
+        for (const tr of prRows) {
+          const qy = +tr.querySelector('.ii-qty').value || 0;
+          const remaining = tr.dataset.remaining != null && tr.dataset.remaining !== '' ? +tr.dataset.remaining : null;
+          if (remaining != null && qy > remaining) {
+            return toast(`จำนวนที่สั่ง (${qy}) เกินจำนวนคงเหลือ (${remaining}) ในรายการ "${tr.querySelector('.ii-name').value.trim()}"`, true);
+          }
+          pr_line_qty.push({ id: tr.dataset.prid, quantity: qy });
+        }
         const res = await api.issuePO({
-          pr_no: _issuePR.pr_no, supplier_id, items, pr_item_ids,
+          pr_no: _issuePR.pr_no, supplier_id, items, pr_item_ids, pr_line_qty,
           reference: val('iss-reference'), note: val('iss-note'), issue_date: val('iss-issue-date') || null,
           quotation_no: val('iss-quotation') || null, invoice_no: val('iss-invoice') || null,
           tax_no: val('iss-taxno') || null, payment_terms: val('iss-payment') || null,

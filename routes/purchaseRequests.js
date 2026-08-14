@@ -13,6 +13,8 @@ export default function(pool) {
   // Product code + category (auto-filled from product master when a coded product is picked)
   pool.query("ALTER TABLE pr_items ADD COLUMN IF NOT EXISTS code VARCHAR(80)").catch(() => {});
   pool.query("ALTER TABLE pr_items ADD COLUMN IF NOT EXISTS category VARCHAR(200)").catch(() => {});
+  // Quantity already issued onto PO(s) — enables partial ordering (เหลือ = quantity - issued_qty)
+  pool.query("ALTER TABLE pr_items ADD COLUMN IF NOT EXISTS issued_qty NUMERIC DEFAULT 0").catch(() => {});
   // Designated first approver (Manager email) copied from the creator at PR creation; null = auto (same-dept manager)
   pool.query("ALTER TABLE purchase_requests ADD COLUMN IF NOT EXISTS first_approver VARCHAR(150)").catch(() => {});
   // Requester contact phone + delivery location
@@ -30,7 +32,7 @@ export default function(pool) {
           pr.total_amount, pr.has_vat, pr.requested_by, pr.po_no,
           pr.current_approval_step, pr.total_approval_steps,
           s.name as supplier_name, d.name as department_name,
-          COUNT(*) FILTER (WHERE pri.id IS NOT NULL AND COALESCE(pri.item_status,'approved') <> 'rejected' AND pri.po_no IS NULL) AS unissued_count,
+          COUNT(*) FILTER (WHERE pri.id IS NOT NULL AND COALESCE(pri.item_status,'approved') <> 'rejected' AND COALESCE(pri.issued_qty,0) < pri.quantity) AS unissued_count,
           json_agg(json_build_object(
             'id', pri.id,
             'product_name', pri.product_name,
@@ -39,6 +41,7 @@ export default function(pool) {
             'code', pri.code,
             'category', pri.category,
             'quantity', pri.quantity,
+            'issued_qty', COALESCE(pri.issued_qty, 0),
             'unit_price', pri.unit_price,
             'total_price', pri.total_price,
             'item_status', pri.item_status,
@@ -110,6 +113,7 @@ export default function(pool) {
             'code', pri.code,
             'category', pri.category,
             'quantity', pri.quantity,
+            'issued_qty', COALESCE(pri.issued_qty, 0),
             'unit_price', pri.unit_price,
             'total_price', pri.total_price,
             'item_status', pri.item_status,
