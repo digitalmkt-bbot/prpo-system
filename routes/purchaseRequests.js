@@ -195,10 +195,16 @@ export default function(pool) {
 
       // Resolve the creator's designated first approver (null = auto / same-dept manager)
       let firstApprover = null;
+      let creatorRole = req.user?.role || '';
       try {
-        const ur = await client.query('SELECT first_approver FROM users WHERE id = $1', [req.user?.id]);
+        const ur = await client.query('SELECT first_approver, role FROM users WHERE id = $1', [req.user?.id]);
         firstApprover = ur.rows[0]?.first_approver || null;
+        if (ur.rows[0]?.role) creatorRole = ur.rows[0].role;
       } catch { /* ignore */ }
+
+      // If a Manager creates the PR, skip the Manager step and go straight to MD (step 3).
+      let startStep = 1;
+      if (creatorRole === 'Manager') startStep = 3;
 
       // Create PR (supplier chosen later at the PO stage)
       await client.query(`
@@ -210,7 +216,7 @@ export default function(pool) {
         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)
       `, [
         pr_id, pr_no, date, supplier_id, department_id, 'Pending',
-        total, has_vat, requested_by, 1, totalSteps, '[]',
+        total, has_vat, requested_by, startStep, totalSteps, '[]',
         requester_name, needed_date || null, purchase_type, purpose, firstApprover,
         requester_phone, delivery_location
       ]);
