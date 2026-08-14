@@ -2804,7 +2804,8 @@
             <td>${nz(u.department_name)}</td>
             <td>${u.active === false ? 'ปิดใช้งาน' : 'ใช้งาน'}${u.has_password ? '' : ' <span class="tag rejected" style="font-size:10px">ยังไม่มีรหัส</span>'}</td>
             <td style="white-space:nowrap"><button class="btn secondary" style="padding:4px 10px;" onclick="showUserModal('${u.id}')">แก้ไข</button>
-              <button class="btn secondary" style="padding:4px 10px;" onclick="resetUserPwd('${u.id}')">🔑</button></td>
+              <button class="btn secondary" style="padding:4px 10px;" onclick="resetUserPwd('${u.id}')">🔑</button>
+              <button class="btn secondary" style="padding:4px 10px;border-color:#e11d48;color:#e11d48" onclick="deleteUserRow('${u.id}','${(u.name || '').replace(/'/g, '')}')">🗑 ลบ</button></td>
           </tr>`).join('') || '<tr><td colspan="6" class="dash-empty">ยังไม่มีผู้ใช้</td></tr>';
       } catch (e) {
         toast('โหลดผู้ใช้ไม่สำเร็จ: ' + e.message, true);
@@ -2821,6 +2822,18 @@
       } catch (e) { toast('ตั้งรหัสไม่สำเร็จ: ' + e.message, true); }
     }
     window.resetUserPwd = resetUserPwd;
+
+    async function deleteUserRow(id, name) {
+      const me = api.getStoredUser() || {};
+      if (String(me.id) === String(id)) return toast('ลบบัญชีตัวเองไม่ได้', true);
+      if (!confirm('ยืนยันลบผู้ใช้: ' + (name || '') + ' ?\nการลบนี้ถาวร กู้คืนไม่ได้')) return;
+      try {
+        await api.deleteUser(id);
+        toast('ลบผู้ใช้แล้ว');
+        loadUsers();
+      } catch (e) { toast('ลบไม่สำเร็จ: ' + e.message, true); }
+    }
+    window.deleteUserRow = deleteUserRow;
 
     async function bulkResetPwd() {
       try {
