@@ -294,7 +294,8 @@
     .qty-step { display:flex; align-items:center; gap:4px; justify-content:center; }
     .qty-step button { width:22px; height:22px; border:1px solid var(--line); background:#f6faf8; border-radius:7px; cursor:pointer; font-weight:700; color:var(--brand-dark); line-height:1; padding:0; }
     .qty-step button:hover { background:var(--accent-soft); }
-    .qty-step input { width:52px; text-align:center; }
+    .qty-step input { width:52px; text-align:center; -moz-appearance:textfield; appearance:textfield; }
+    .qty-step input::-webkit-outer-spin-button, .qty-step input::-webkit-inner-spin-button { -webkit-appearance:none; margin:0; }
     /* Dark total card (สรุปข้อมูล) */
     .po-total-card { background:#2b3245; color:#fff; border-radius:16px; padding:18px 24px; display:flex; align-items:center; justify-content:space-between; min-width:320px; box-shadow:0 6px 18px rgba(43,50,69,.22); }
     .po-total-card .t { font-size:14px; font-weight:600; opacity:.85; }
