@@ -739,7 +739,7 @@
             <div class="pr-grid">
               <div class="pr-field full typeahead" style="position:relative">
                 <label>ชื่อผู้ขาย (Supplier) *</label>
-                <input id="issue-supplier-search" placeholder="คลิกเพื่อเลือก หรือพิมพ์ค้นหาชื่อ/รหัสผู้ขาย..." autocomplete="off" oninput="filterIssueSupplier()" onfocus="openIssueSupplier()">
+                <input id="issue-supplier-search" placeholder="คลิกเพื่อเลือก หรือพิมพ์ค้นหาชื่อ/รหัสผู้ขาย..." autocomplete="off" oninput="filterIssueSupplier()" onfocus="openIssueSupplier()" onclick="openIssueSupplier()">
                 <span onclick="openIssueSupplier(true)" style="position:absolute;right:12px;top:34px;cursor:pointer;color:#9ca3af;font-size:12px">▼</span>
                 <input type="hidden" id="issue-supplier">
                 <div class="typeahead-results" id="issue-supplier-results"></div>
@@ -1743,7 +1743,6 @@
         const attachTxt = [po.quotation_no ? 'ใบเสนอราคา ' + po.quotation_no : '', po.invoice_no ? 'ใบแจ้งหนี้ ' + po.invoice_no : ''].filter(Boolean).join(' · ') || '-';
         document.getElementById('po-detail-card').innerHTML = `
           <div class="memo">
-            <img class="memo-wm" src="/memo-watermark.png" alt="" aria-hidden="true">
             <div class="memo-head">
               <div>
                 <div class="memo-co">Love Island Co., Ltd.</div>
@@ -1844,7 +1843,7 @@
           <div class="pr-grid">
             <div class="pr-field full typeahead" style="position:relative">
               <label>ชื่อผู้ขาย (Supplier) *</label>
-              <input id="ed-supplier-search" placeholder="คลิกเพื่อเลือก หรือพิมพ์ค้นหา..." autocomplete="off" value="${esc((po.supplier_code ? po.supplier_code + ' ' : '') + (po.supplier_name || ''))}" oninput="filterEditSupplier()" onfocus="openEditSupplier()">
+              <input id="ed-supplier-search" placeholder="คลิกเพื่อเลือก หรือพิมพ์ค้นหา..." autocomplete="off" value="${esc((po.supplier_code ? po.supplier_code + ' ' : '') + (po.supplier_name || ''))}" oninput="filterEditSupplier()" onfocus="openEditSupplier()" onclick="openEditSupplier()">
               <span onclick="openEditSupplier(true)" style="position:absolute;right:12px;top:34px;cursor:pointer;color:#9ca3af;font-size:12px">▼</span>
               <input type="hidden" id="ed-supplier" value="${esc(po.supplier_id)}">
               <div class="typeahead-results" id="ed-supplier-results"></div>
@@ -1937,7 +1936,7 @@
       tr.innerHTML = `
         <td class="ei-no" style="text-align:center;color:#cbd5e1"></td>
         <td><input class="ei-name" value="${esc(it.product_name)}" placeholder="ชื่อรายการ"><input type="hidden" class="ei-desc" value="${esc(it.description)}"></td>
-        <td><select class="ei-acct">${window.__acctOpts || '<option value=""></option>'}</select></td>
+        <td><input class="ei-acct" list="acct-datalist" placeholder="พิมพ์/เลือกบัญชี" autocomplete="off"></td>
         <td><input class="ei-qty" type="number" min="0" step="1" value="${it.quantity != null ? it.quantity : 1}" style="text-align:center" oninput="recalcEdit()"></td>
         <td><input class="ei-unit" value="${esc(it.unit)}" style="text-align:center" placeholder="หน่วย"></td>
         <td><input class="ei-price" type="number" min="0" step="0.01" value="${it.unit_price != null ? it.unit_price : 0}" oninput="recalcEdit()"></td>
@@ -2271,8 +2270,8 @@
     window.submitPR = submitPR;
 
     // ===== Issue PO (choose supplier here) =====
-    function filterIssueSupplier() {
-      const q = document.getElementById('issue-supplier-search').value.toLowerCase().trim();
+    function filterIssueSupplier(showAll) {
+      const q = showAll ? '' : document.getElementById('issue-supplier-search').value.toLowerCase().trim();
       const box = document.getElementById('issue-supplier-results');
       const list = [...SUPPLIERS].sort((a, b) => String(a.code || '').localeCompare(String(b.code || ''), 'en', { numeric: true }));
       const m = (q
@@ -2285,8 +2284,9 @@
     }
     window.filterIssueSupplier = filterIssueSupplier;
     function openIssueSupplier(clear) {
-      if (clear) { const s = document.getElementById('issue-supplier-search'); s.value = ''; s.focus(); }
-      filterIssueSupplier();
+      const s = document.getElementById('issue-supplier-search');
+      if (clear) { s.value = ''; s.focus(); }
+      filterIssueSupplier(true); // clicking/focusing always shows the full list
     }
     window.openIssueSupplier = openIssueSupplier;
     function pickIssueSupplier(id, el) {
@@ -2316,8 +2316,8 @@
     });
 
     // Edit-PO supplier dropdown (searchable)
-    function filterEditSupplier() {
-      const q = document.getElementById('ed-supplier-search').value.toLowerCase().trim();
+    function filterEditSupplier(showAll) {
+      const q = showAll ? '' : document.getElementById('ed-supplier-search').value.toLowerCase().trim();
       const box = document.getElementById('ed-supplier-results');
       const list = [...SUPPLIERS].sort((a, b) => String(a.code || '').localeCompare(String(b.code || ''), 'en', { numeric: true }));
       const m = (q ? list.filter(s => (s.name || '').toLowerCase().includes(q) || (s.code || '').toLowerCase().includes(q)) : list).slice(0, 100);
@@ -2328,8 +2328,9 @@
     }
     window.filterEditSupplier = filterEditSupplier;
     function openEditSupplier(clear) {
-      if (clear) { const s = document.getElementById('ed-supplier-search'); s.value = ''; s.focus(); }
-      filterEditSupplier();
+      const s = document.getElementById('ed-supplier-search');
+      if (clear) { s.value = ''; s.focus(); }
+      filterEditSupplier(true);
     }
     window.openEditSupplier = openEditSupplier;
     function pickEditSupplier(id, el) {
@@ -2457,10 +2458,14 @@
 
     // Load chart-of-accounts options once (shared across item rows)
     async function ensureAcctOpts() {
-      if (window.__acctOpts) return;
+      if (window.__acctReady) return;
       let accts = [];
       try { accts = await api.getAccounts(); } catch {}
-      window.__acctOpts = '<option value="">— เลือกบัญชี —</option>' + accts.map(a => `<option value="${a.code}">${a.code} - ${a.name}</option>`).join('');
+      const opts = accts.map(a => `<option value="${String(a.code || '').replace(/"/g, '&quot;')}">${a.code} - ${String(a.name || '').replace(/</g, '&lt;')}</option>`).join('');
+      let dl = document.getElementById('acct-datalist');
+      if (!dl) { dl = document.createElement('datalist'); dl.id = 'acct-datalist'; document.body.appendChild(dl); }
+      dl.innerHTML = opts;
+      window.__acctReady = true;
     }
     window.ensureAcctOpts = ensureAcctOpts;
     async function fillCatSelect(id, group) {
@@ -2480,7 +2485,7 @@
       tr.innerHTML = `
         <td class="ii-no" style="text-align:center;color:#cbd5e1"></td>
         <td><input class="ii-name" value="${esc(it.product_name)}" placeholder="เลือกสินค้า/บริการ"><textarea class="ii-desc" placeholder="กรุณาพิมพ์คำอธิบายรายการ ไม่เกิน 1,000 ตัวอักษร" maxlength="1000" style="width:100%;min-height:30px;margin-top:5px;font-size:12px;background:#f8fafc;border:1px solid #eef2f0;border-radius:8px;padding:5px 8px;resize:vertical">${esc(it.description).replace(/</g,'&lt;')}</textarea></td>
-        <td><select class="ii-acct">${window.__acctOpts || '<option value=""></option>'}</select></td>
+        <td><input class="ii-acct" list="acct-datalist" placeholder="พิมพ์/เลือกบัญชี" autocomplete="off"></td>
         <td><div class="qty-step"><button type="button" onclick="stepQty(this,-1)">−</button><input class="ii-qty" type="number" min="0" step="1" value="${it.quantity != null ? it.quantity : 1}" oninput="recalcIssue()"><button type="button" onclick="stepQty(this,1)">+</button></div></td>
         <td><input class="ii-price" type="number" min="0" step="0.01" value="${it.unit_price != null ? it.unit_price : 0}" oninput="recalcIssue()"></td>
         <td><input class="ii-disc" type="number" min="0" step="0.01" value="${it.discount != null ? it.discount : 0}" oninput="recalcIssue()"></td>
