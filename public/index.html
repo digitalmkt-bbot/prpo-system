@@ -800,8 +800,8 @@
               <thead><tr>
                 <th style="width:26px">#</th><th>สินค้า/บริการ</th><th style="width:150px">บัญชี</th>
                 <th style="width:96px;text-align:center">จำนวน</th><th style="width:100px">ราคา/หน่วย</th>
-                <th style="width:100px">ส่วนลด/หน่วย</th><th style="width:70px;text-align:center">ภาษี</th>
-                <th style="width:120px;text-align:right">มูลค่าก่อนภาษี</th><th style="width:30px"></th>
+                <th style="width:120px">ส่วนลด (฿/%)</th><th style="width:70px;text-align:center">ภาษี</th>
+                <th style="width:120px;text-align:right">มูลค่า (รวมภาษี)</th><th style="width:30px"></th>
               </tr></thead>
               <tbody id="iss-items"></tbody>
             </table>
@@ -1953,7 +1953,7 @@
         <td><input class="ei-qty" type="number" min="0" step="1" value="${it.quantity != null ? it.quantity : 1}" style="text-align:center" oninput="recalcEdit()"></td>
         <td><input class="ei-unit" value="${esc(it.unit)}" style="text-align:center" placeholder="หน่วย"></td>
         <td><input class="ei-price" type="number" min="0" step="0.01" value="${it.unit_price != null ? it.unit_price : 0}" oninput="recalcEdit()"></td>
-        <td><input class="ei-disc" type="number" min="0" step="0.01" value="${it.discount != null ? it.discount : 0}" oninput="recalcEdit()"></td>
+        <td><div style="display:flex;gap:3px"><input class="ei-disc" type="number" min="0" step="0.01" value="${it.discount != null ? it.discount : 0}" oninput="recalcEdit()" style="min-width:0"><select class="ei-disc-type" onchange="recalcEdit()" style="width:46px;padding:6px 2px"><option value="baht">฿</option><option value="pct">%</option></select></div></td>
         <td><input class="ei-vat" type="number" min="0" step="1" value="${it.vat_rate != null ? it.vat_rate : 0}" style="text-align:center" oninput="recalcEdit()"></td>
         <td class="ei-line" style="text-align:right;font-weight:600">0.00</td>
         <td style="text-align:center"><button style="background:none;border:none;color:#fca5a5;cursor:pointer;font-size:15px" onclick="this.closest('tr').remove();recalcEdit()">🗑</button></td>`;
@@ -1969,12 +1969,16 @@
       document.querySelectorAll('#ed-items tr').forEach(tr => {
         n++; tr.querySelector('.ei-no').textContent = n;
         const q = +tr.querySelector('.ei-qty').value || 0, p = +tr.querySelector('.ei-price').value || 0,
-              d = +tr.querySelector('.ei-disc').value || 0, v = +tr.querySelector('.ei-vat').value || 0;
-        const gross = q * p - d;
-        let base;
-        if (inclusive) { base = v ? gross / (1 + v / 100) : gross; subtotal += base; vat += gross - base; }
-        else { base = gross; subtotal += gross; vat += gross * v / 100; }
-        tr.querySelector('.ei-line').textContent = base.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+              dRaw = +tr.querySelector('.ei-disc').value || 0, v = +tr.querySelector('.ei-vat').value || 0;
+        const dtype = (tr.querySelector('.ei-disc-type') || {}).value || 'baht';
+        const gross0 = q * p;
+        const dAmt = dtype === 'pct' ? gross0 * dRaw / 100 : dRaw;
+        const gross = gross0 - dAmt;
+        let base, vatLine;
+        if (inclusive) { base = v ? gross / (1 + v / 100) : gross; vatLine = gross - base; }
+        else { base = gross; vatLine = gross * v / 100; }
+        subtotal += base; vat += vatLine;
+        tr.querySelector('.ei-line').textContent = (base + vatLine).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
       });
       const docDisc = +(document.getElementById('ed-docdisc') || {}).value || 0;
       const total = subtotal + vat - docDisc;
@@ -2007,7 +2011,7 @@
           unit: tr.querySelector('.ei-unit').value.trim(),
           quantity: +tr.querySelector('.ei-qty').value || 0,
           unit_price: +tr.querySelector('.ei-price').value || 0,
-          discount: +tr.querySelector('.ei-disc').value || 0,
+          discount: (() => { const dr = +tr.querySelector('.ei-disc').value || 0; const dt = (tr.querySelector('.ei-disc-type') || {}).value || 'baht'; const g0 = (+tr.querySelector('.ei-qty').value || 0) * (+tr.querySelector('.ei-price').value || 0); return dt === 'pct' ? +(g0 * dr / 100).toFixed(2) : dr; })(),
           vat_rate: +tr.querySelector('.ei-vat').value || 0,
         })).filter(i => i.product_name);
         if (!items.length) return toast('ต้องมีรายการอย่างน้อย 1 รายการ', true);
@@ -2501,7 +2505,7 @@
         <td><input class="ii-acct" list="acct-datalist" placeholder="พิมพ์/เลือกบัญชี" autocomplete="off"></td>
         <td><div class="qty-step"><button type="button" onclick="stepQty(this,-1)">−</button><input class="ii-qty" type="number" min="0" step="1" value="${it.quantity != null ? it.quantity : 1}" oninput="recalcIssue()"><button type="button" onclick="stepQty(this,1)">+</button></div></td>
         <td><input class="ii-price" type="number" min="0" step="0.01" value="${it.unit_price != null ? it.unit_price : 0}" oninput="recalcIssue()"></td>
-        <td><input class="ii-disc" type="number" min="0" step="0.01" value="${it.discount != null ? it.discount : 0}" oninput="recalcIssue()"></td>
+        <td><div style="display:flex;gap:3px"><input class="ii-disc" type="number" min="0" step="0.01" value="${it.discount != null ? it.discount : 0}" oninput="recalcIssue()" style="min-width:0"><select class="ii-disc-type" onchange="recalcIssue()" style="width:46px;padding:6px 2px"><option value="baht">฿</option><option value="pct">%</option></select></div></td>
         <td><input class="ii-vat" type="number" min="0" step="1" value="${it.vat_rate != null ? it.vat_rate : defVat}" style="text-align:center" oninput="recalcIssue()"></td>
         <td class="ii-line" style="text-align:right;font-weight:600">0.00</td>
         <td style="text-align:center"><button title="ลบรายการนี้" style="background:none;border:none;color:#fca5a5;cursor:pointer;font-size:15px" onclick="this.closest('tr').remove();recalcIssue()">🗑</button></td>`;
@@ -2518,12 +2522,16 @@
       document.querySelectorAll('#iss-items tr').forEach(tr => {
         n++; tr.querySelector('.ii-no').textContent = n;
         const q = +tr.querySelector('.ii-qty').value || 0, p = +tr.querySelector('.ii-price').value || 0,
-              d = +tr.querySelector('.ii-disc').value || 0, v = +tr.querySelector('.ii-vat').value || 0;
-        const gross = q * p - d;
-        let base;
-        if (inclusive) { base = v ? gross / (1 + v / 100) : gross; subtotal += base; vat += gross - base; }
-        else { base = gross; subtotal += gross; vat += gross * v / 100; }
-        tr.querySelector('.ii-line').textContent = base.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+              dRaw = +tr.querySelector('.ii-disc').value || 0, v = +tr.querySelector('.ii-vat').value || 0;
+        const dtype = (tr.querySelector('.ii-disc-type') || {}).value || 'baht';
+        const gross0 = q * p;
+        const dAmt = dtype === 'pct' ? gross0 * dRaw / 100 : dRaw;
+        const gross = gross0 - dAmt;
+        let base, vatLine;
+        if (inclusive) { base = v ? gross / (1 + v / 100) : gross; vatLine = gross - base; }
+        else { base = gross; vatLine = gross * v / 100; }
+        subtotal += base; vat += vatLine;
+        tr.querySelector('.ii-line').textContent = (base + vatLine).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
       });
       const docDisc = +(document.getElementById('iss-docdisc') || {}).value || 0;
       const total = subtotal + vat - docDisc;
@@ -2596,7 +2604,7 @@
           account_code: (tr.querySelector('.ii-acct') || {}).value || null,
           quantity: +tr.querySelector('.ii-qty').value || 0,
           unit_price: +tr.querySelector('.ii-price').value || 0,
-          discount: +tr.querySelector('.ii-disc').value || 0,
+          discount: (() => { const dr = +tr.querySelector('.ii-disc').value || 0; const dt = (tr.querySelector('.ii-disc-type') || {}).value || 'baht'; const g0 = (+tr.querySelector('.ii-qty').value || 0) * (+tr.querySelector('.ii-price').value || 0); return dt === 'pct' ? +(g0 * dr / 100).toFixed(2) : dr; })(),
           vat_rate: +tr.querySelector('.ii-vat').value || 0,
         })).filter(i => i.product_name);
         if (!items.length) return toast('ต้องมีรายการอย่างน้อย 1 รายการ', true);
