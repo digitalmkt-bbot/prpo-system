@@ -514,6 +514,53 @@
     .ic-green { background:linear-gradient(135deg,#7dd3fc,#34D399); }
     .ic-amber { background:linear-gradient(135deg,#fbbf24,#f59e0b); }
     .ic-red { background:linear-gradient(135deg,#fb7185,#e11d48); }
+    /* ===== Right rail (BuildAxis Notifications / Alerts / AI) ===== */
+    .rightrail { width:304px; flex-shrink:0; background:#fff; border-left:1px solid #e2e8f0; display:none; flex-direction:column; overflow-y:auto; padding:18px 16px; gap:16px; }
+    .container:has(#page-dashboard.active) .rightrail { display:flex; }
+    @media (max-width:1399px){ .container:has(#page-dashboard.active) .rightrail { display:none; } }
+    [data-theme="dark"] .rightrail { background:#18181c; border-color:#26262b; }
+    .rr-sec { border-bottom:1px solid #f1f5f9; padding-bottom:16px; }
+    .rr-sec:last-child { border-bottom:none; padding-bottom:0; }
+    .rr-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+    .rr-head > span { font-size:11px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; color:#94a3b8; }
+    .rr-head a { font-size:11px; color:#2563eb; font-weight:600; cursor:pointer; }
+    .rr-noti { display:flex; align-items:flex-start; gap:10px; padding:7px 0; }
+    .rr-noti .dot { width:8px; height:8px; border-radius:50%; margin-top:5px; flex-shrink:0; }
+    .rr-noti .dot.success{background:#10b981} .rr-noti .dot.info{background:#3b82f6} .rr-noti .dot.warn{background:#f59e0b} .rr-noti .dot.danger{background:#ef4444}
+    .rr-noti .rr-nt { flex:1; min-width:0; }
+    .rr-noti .rr-nt b { font-size:12px; font-weight:600; color:#334155; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .rr-noti .rr-nt span { font-size:10px; color:#94a3b8; }
+    .rr-alert { border-radius:10px; padding:10px 12px; margin-bottom:8px; }
+    .rr-alert:last-child { margin-bottom:0; }
+    .rr-alert.amber { background:#fffbeb; border:1px solid #fde68a; }
+    .rr-alert.red { background:#fef2f2; border:1px solid #fecaca; }
+    .rr-alert.blue { background:#eff6ff; border:1px solid #bfdbfe; }
+    .rr-alert b { font-size:12px; font-weight:700; display:flex; align-items:center; gap:6px; }
+    .rr-alert.amber b{color:#b45309} .rr-alert.red b{color:#b91c1c} .rr-alert.blue b{color:#1d4ed8}
+    .rr-alert p { margin:3px 0 0; font-size:11px; color:#64748b; line-height:1.45; }
+    .rr-assist { display:flex; flex-direction:column; flex:1; min-height:300px; }
+    .rr-assist-head { display:flex; align-items:center; gap:9px; padding-bottom:10px; border-bottom:1px solid #f1f5f9; margin-bottom:11px; }
+    .rr-bot { width:30px; height:30px; border-radius:9px; background:#2563eb; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .rr-bot svg { width:16px; height:16px; stroke:#fff; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+    .rr-bot-name { font-size:12px; font-weight:700; color:#0f172a; }
+    .rr-beta { font-size:8px; background:#dbeafe; color:#2563eb; padding:1px 5px; border-radius:4px; margin-left:3px; font-weight:800; }
+    .rr-bot-status { font-size:10px; color:#10b981; font-weight:600; }
+    .rr-chips { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:11px; }
+    .rr-chips button { font-size:10.5px; font-weight:600; background:#f1f5f9; color:#475569; border:none; border-radius:7px; padding:5px 9px; cursor:pointer; transition:background .15s; }
+    .rr-chips button:hover { background:#dbeafe; color:#2563eb; }
+    .rr-chat { flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:8px; margin-bottom:11px; max-height:300px; }
+    .rr-msg { padding:8px 11px; border-radius:12px; font-size:12px; max-width:88%; line-height:1.45; }
+    .rr-msg.bot { background:#f1f5f9; color:#334155; border-bottom-left-radius:3px; align-self:flex-start; }
+    .rr-msg.user { background:#2563eb; color:#fff; border-bottom-right-radius:3px; align-self:flex-end; }
+    .rr-input { position:relative; }
+    .rr-input input { width:100%; padding:9px 38px 9px 12px; border:1px solid #e2e8f0; border-radius:9px; font-size:12px; }
+    .rr-input button { position:absolute; right:6px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; color:#2563eb; padding:4px; display:flex; }
+    .rr-input button svg { width:16px; height:16px; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+    [data-theme="dark"] .rr-sec, [data-theme="dark"] .rr-assist-head { border-color:#26262b; }
+    [data-theme="dark"] .rr-bot-name { color:#f3f4f6; }
+    [data-theme="dark"] .rr-chips button { background:#26262b; color:#cbd5e1; }
+    [data-theme="dark"] .rr-msg.bot { background:#26262b; color:#e5e7eb; }
+    [data-theme="dark"] .rr-input input { background:#1f1f23; border-color:#2a2a30; color:#e5e7eb; }
   </style>
 </head>
 <body>
@@ -1118,6 +1165,33 @@
         </div>
       </div>
     </div>
+    <aside class="rightrail" id="rightrail">
+      <div class="rr-sec">
+        <div class="rr-head"><span>การแจ้งเตือน</span><a onclick="document.querySelector('.nav a[data-page=&quot;prs&quot;]').click()">ดูทั้งหมด →</a></div>
+        <div id="rr-notis"><div style="font-size:12px;color:#94a3b8">ยังไม่มีกิจกรรม</div></div>
+      </div>
+      <div class="rr-sec">
+        <div class="rr-head"><span>การแจ้งเตือนอัจฉริยะ</span></div>
+        <div id="rr-alerts"></div>
+      </div>
+      <div class="rr-sec rr-assist">
+        <div class="rr-assist-head">
+          <span class="rr-bot"><svg viewBox="0 0 24 24"><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M12 8V5M9 2h6M9 14h.01M15 14h.01"/></svg></span>
+          <div><div class="rr-bot-name">ผู้ช่วย AI <span class="rr-beta">Beta</span></div><div class="rr-bot-status">● พร้อมช่วยเหลือ</div></div>
+        </div>
+        <div class="rr-chips">
+          <button type="button" onclick="askAI('สรุปภาพรวม')">สรุปภาพรวม</button>
+          <button type="button" onclick="askAI('รออนุมัติ')">รออนุมัติ</button>
+          <button type="button" onclick="askAI('มูลค่ารวม')">มูลค่ารวม</button>
+          <button type="button" onclick="askAI('PR ล่าสุด')">PR ล่าสุด</button>
+        </div>
+        <div class="rr-chat" id="rr-chat"></div>
+        <div class="rr-input">
+          <input id="rr-ai-input" placeholder="พิมพ์คำถาม..." onkeydown="if(event.key==='Enter')askAI()">
+          <button type="button" onclick="askAI()" aria-label="ส่ง"><svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
+        </div>
+      </div>
+    </aside>
   </div>
 
   <div class="toast" id="toast"></div>
@@ -1242,6 +1316,8 @@
         setTxt('dash-hero-orders', docTotal.toLocaleString());
         const bb = document.getElementById('tb-bell-badge');
         if (bb) { if (pendingCount > 0) { bb.style.display = ''; bb.textContent = pendingCount > 99 ? '99+' : pendingCount; } else bb.style.display = 'none'; }
+        window.__dashStats = s;
+        renderRightRail(s, pendingCount);
         // Row 3: recent PR table + CTA pending count + recent PO list
         renderDashRecent('pr-recent', s.pr.recent);
         setTxt('cta-pending', pendingCount);
@@ -1266,6 +1342,61 @@
       });
     }
     window.globalSearch = globalSearch;
+
+    // ===== Right rail: Notifications / Smart Alerts / AI assistant =====
+    function statusTh(st) {
+      return ({ Pending:'รออนุมัติ', Approved:'อนุมัติแล้ว', Rejected:'ปฏิเสธ', Active:'กำลังดำเนินการ', Completed:'เสร็จสิ้น', Cancelled:'ยกเลิก' })[st] || st || '';
+    }
+    function renderRightRail(s, pendingCount) {
+      const nz2 = v => (v == null || v === '') ? '-' : v;
+      // Notifications from recent PR + PO
+      const notis = [];
+      (s.pr && s.pr.recent || []).slice(0, 4).forEach(r => {
+        const type = r.status === 'Approved' ? 'success' : r.status === 'Rejected' ? 'danger' : 'warn';
+        notis.push({ t: `${r.no} · ${nz2(r.party)}`, s: 'ใบขอซื้อ · ' + statusTh(r.status), type });
+      });
+      (s.po && s.po.recent || []).slice(0, 2).forEach(r => {
+        notis.push({ t: `ออก PO ${r.no || r.po_no || ''}`, s: 'ใบสั่งซื้อใหม่', type: 'info' });
+      });
+      const nEl = document.getElementById('rr-notis');
+      if (nEl) nEl.innerHTML = notis.length
+        ? notis.map(n => `<div class="rr-noti"><span class="dot ${n.type}"></span><div class="rr-nt"><b>${n.t}</b><span>${n.s}</span></div></div>`).join('')
+        : '<div style="font-size:12px;color:#94a3b8">ยังไม่มีกิจกรรม</div>';
+      // Smart alerts
+      const alerts = [];
+      if (pendingCount > 0) alerts.push({ c: 'amber', t: 'รออนุมัติ', p: `มี ${pendingCount} ใบขอซื้อรอการอนุมัติ` });
+      const rej = (s.pr && s.pr.status && s.pr.status.Rejected) || 0;
+      if (rej > 0) alerts.push({ c: 'red', t: 'ถูกปฏิเสธ', p: `${rej} ใบขอซื้อถูกปฏิเสธ` });
+      if (!alerts.length) alerts.push({ c: 'blue', t: 'ทุกอย่างเรียบร้อย', p: 'ไม่มีรายการที่ต้องดำเนินการด่วน' });
+      const aEl = document.getElementById('rr-alerts');
+      if (aEl) aEl.innerHTML = alerts.map(a => `<div class="rr-alert ${a.c}"><b>⚠ ${a.t}</b><p>${a.p}</p></div>`).join('');
+      // Seed a greeting once
+      const chat = document.getElementById('rr-chat');
+      if (chat && !chat.dataset.seeded) { chat.dataset.seeded = '1'; addAIMsg('bot', 'สวัสดีครับ ผมเป็นผู้ช่วย AI ของระบบจัดซื้อ ถามผมเรื่องยอด PR/PO, รายการรออนุมัติ หรือมูลค่ารวมได้เลยครับ'); }
+    }
+    window.renderRightRail = renderRightRail;
+    function addAIMsg(who, text) {
+      const c = document.getElementById('rr-chat'); if (!c) return;
+      const d = document.createElement('div'); d.className = 'rr-msg ' + who; d.textContent = text;
+      c.appendChild(d); c.scrollTop = c.scrollHeight;
+    }
+    function askAI(preset) {
+      const inp = document.getElementById('rr-ai-input');
+      const q = String(preset || (inp ? inp.value : '') || '').trim();
+      if (!q) return;
+      if (inp) inp.value = '';
+      addAIMsg('user', q);
+      const s = window.__dashStats || {};
+      const money = v => Number(v || 0).toLocaleString('th-TH');
+      let a = 'ผมช่วยดูข้อมูล PR/PO ให้ได้ครับ ลองถามเรื่อง "รออนุมัติ", "มูลค่ารวม", "PR ล่าสุด" หรือ "สรุปภาพรวม" ได้เลยครับ';
+      if (/รออนุมัติ|อนุมัติ|pending/i.test(q)) { a = `ตอนนี้มีใบขอซื้อรออนุมัติ ${(s.pr && s.pr.status && s.pr.status.Pending) || 0} รายการครับ`; }
+      else if (/มูลค่า|ยอดรวม|value|บาท/i.test(q)) { const t = Math.round(Number(s.pr && s.pr.total_amount || 0) + Number(s.po && s.po.total_amount || 0)); a = `มูลค่ารวม PR + PO ทั้งหมด ${money(t)} บาทครับ`; }
+      else if (/สรุป|ภาพรวม|summary/i.test(q)) { a = `สรุปภาพรวม: PR ${(s.pr && s.pr.total_count) || 0} ใบ, PO ${(s.po && s.po.total_count) || 0} ใบ, รออนุมัติ ${(s.pr && s.pr.status && s.pr.status.Pending) || 0} รายการครับ`; }
+      else if (/ล่าสุด|recent|pr/i.test(q)) { const r = (s.pr && s.pr.recent || [])[0]; a = r ? `PR ล่าสุดคือ ${r.no} (${statusTh(r.status)}) มูลค่า ${money(r.total_amount)} บาทครับ` : 'ยังไม่มีใบขอซื้อในระบบครับ'; }
+      setTimeout(() => addAIMsg('bot', a), 350);
+    }
+    window.askAI = askAI;
+
     function applyDashFilter() { loadDashboard(); }
     function resetDashFilter() {
       document.getElementById('f-from').value = '';
