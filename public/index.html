@@ -249,6 +249,30 @@
     .memo-addr { font-size:11.5px; color:#475569; line-height:1.7; }
     .memo-logo { width:180px; }
     .memo-docno { text-align:right; font-size:13px; font-weight:700; color:#1e293b; margin-top:26px; }
+    /* PEAK-style PO header (buyer / seller / doc box / contact-back) */
+    .po2-top { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:18px; }
+    .po2-logo { height:76px; width:auto; }
+    .po2-titlewrap { text-align:right; }
+    .po2-orig { font-size:13px; color:#64748b; margin-bottom:2px; }
+    .po2-title { font-size:38px; font-weight:800; color:#2f6fed; line-height:1; letter-spacing:.5px; }
+    .po2-parties { display:grid; grid-template-columns:1.5fr 1fr; gap:26px; }
+    .po2-div { border:none; border-top:1px solid #e5e7eb; margin:12px 0; }
+    .po2-party { display:grid; grid-template-columns:1fr 172px; gap:2px 14px; align-items:start; }
+    .po2-party .pp-main { min-width:0; }
+    .pp-line { font-size:12px; color:#334155; line-height:1.65; }
+    .pp-line .k { color:#1e293b; font-weight:700; margin-right:4px; }
+    .pp-line b { font-weight:700; color:#1e293b; }
+    .pp-contact { font-size:12px; color:#334155; display:flex; flex-direction:column; gap:6px; padding-top:1px; }
+    .pp-contact > div { display:flex; align-items:center; gap:7px; word-break:break-word; }
+    .po2-ic { display:inline-flex; width:15px; flex-shrink:0; color:#64748b; }
+    .po2-ic svg { width:14px; height:14px; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+    .po2-docbox { background:#eef1fb; border-radius:12px; padding:14px 16px; }
+    .po2-docbox .dr { display:flex; justify-content:space-between; gap:10px; font-size:12.5px; padding:3px 0; }
+    .po2-docbox .dr span { color:#475569; }
+    .po2-docbox .dr b { color:#1e293b; font-weight:700; text-align:right; }
+    .po2-contactback { margin-top:16px; }
+    .po2-contactback .cb-h { font-size:12.5px; font-weight:700; color:#1e293b; margin-bottom:8px; }
+    .po2-contactback .cb-row { display:flex; align-items:center; gap:8px; font-size:12px; color:#334155; padding:3px 0; word-break:break-word; }
     .memo-rule { border:none; border-top:2px solid #1e293b; margin:10px 0; }
     .memo-title { text-align:center; font-size:22px; font-weight:700; color:#1e293b; letter-spacing:.5px; }
     .memo-date { text-align:right; font-size:13px; font-weight:700; color:#1e293b; margin:8px 0 14px; }
@@ -2000,49 +2024,87 @@
           const gross = (it.quantity || 0) * (it.unit_price || 0);
           const base = gross - (it.discount || 0);
           grossTotal += gross; discountTotal += Number(it.discount || 0);
+          const vr = it.vat_rate != null ? Number(it.vat_rate) : (po.has_vat ? 7 : 0);
+          const codeTxt = it.code ? ` <span style="color:#64748b;font-weight:400">(${nz(it.code)})</span>` : '';
+          const desc = it.description ? String(it.description).replace(/</g, '&lt;') : '';
           return `<tr>
-            <td style="text-align:center">${i + 1}</td>
-            <td>${nz(it.product_name)}${it.account_code ? '<div style="color:#64748b;font-size:10.5px">บัญชี: ' + it.account_code + '</div>' : ''}</td>
-            <td>${it.description ? String(it.description) : '-'}</td>
-            <td style="text-align:center">${Number(it.quantity).toLocaleString()}</td>
-            <td style="text-align:center">${nz(it.unit)}</td>
+            <td><div><b>${i + 1}. ${nz(it.product_name)}</b>${codeTxt}</div>${desc ? `<div style="color:#64748b;font-size:11px;margin-top:1px">${desc}</div>` : ''}${it.account_code ? '<div style="color:#94a3b8;font-size:10.5px">บัญชี: ' + it.account_code + '</div>' : ''}</td>
+            <td style="text-align:center;white-space:nowrap">${Number(it.quantity).toLocaleString()} ${nz(it.unit)}</td>
             <td style="text-align:right">${money(it.unit_price)}</td>
+            <td style="text-align:right">${money(it.discount || 0)}</td>
+            <td style="text-align:center">${vr ? vr + '%' : '-'}</td>
             <td style="text-align:right">${money(base)}</td>
           </tr>`;
         }).join('');
         const attachTxt = [po.quotation_no ? 'ใบเสนอราคา ' + po.quotation_no : '', po.invoice_no ? 'ใบแจ้งหนี้ ' + po.invoice_no : ''].filter(Boolean).join(' · ') || '-';
+        const _ic = p => `<span class="po2-ic"><svg viewBox="0 0 24 24">${p}</svg></span>`;
+        const icPhone = _ic('<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/>');
+        const icMail = _ic('<rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/>');
+        const icWeb = _ic('<circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20"/>');
+        const icUser = _ic('<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>');
+        const buyerName = co.name || 'บริษัท เลิฟ ไอแลนด์ จำกัด';
+        const buyerAddr = co.address || 'เลขที่ 9/239-240 ถนน ศักดิเดช ตำบลตลาดเหนือ อำเภอเมืองภูเก็ต จังหวัดภูเก็ต 83000';
+        const buyerTax = co.tax_id || '0825554000447 (สำนักงานใหญ่)';
+        const buyerPhone = co.phone || '098-6911063';
+        const buyerEmail = co.email || 'fc@loveandaman.com';
+        const poRef = nz(po.reference || po.source_pr_no);
         document.getElementById('po-detail-card').innerHTML = `
           <div class="memo">
-            <div class="memo-head">
-              <div>
-                <div class="memo-co">Love Island Co., Ltd.</div>
-                <div class="memo-accent"></div>
-                <div class="memo-addr">9/239-240 Sakdidej Road<br>T.Talat Nuea A.Mueang Phuket 83000<br>T: +66 76 390 250<br>E-mail : info@loveandaman.com</div>
-              </div>
-              <div style="text-align:right;flex-shrink:0">
-                <img class="memo-logo" src="/memo-logo-full.png" alt="LOVE andaman">
-                <div class="memo-docno">เลขที่เอกสาร : ${po.po_no}</div>
-              </div>
+            <div class="po2-top">
+              <img class="po2-logo" src="/seal-loveandaman.png" alt="LOVE andaman">
+              <div class="po2-titlewrap"><div class="po2-orig">(ต้นฉบับ)</div><div class="po2-title">ใบสั่งซื้อ</div></div>
             </div>
-            <hr class="memo-rule">
-            <div class="memo-title">ใบสั่งซื้อ</div>
-            <hr class="memo-rule">
-            <div class="memo-date">วันที่ : ${dt}</div>
-            <div class="memo-fields">
-              <div class="f"><b>แผนก :</b><span>${nz(po.cat_department)}</span></div>
-              <div class="f"><b>ประเภท :</b><span>ใบสั่งซื้อ</span></div>
-              <div class="f"><b>ผู้ขาย :</b><span>${nz(po.supplier_code)} ${nz(po.supplier_name)}</span></div>
-              <div class="f"><b>เรื่อง :</b><span>ขออนุมัติสั่งซื้อสินค้า / บริการ</span></div>
-              <div class="f"><b>เอกสารแนบ :</b><span>${attachTxt}</span></div>
+            <div class="po2-parties">
+              <div class="po2-left">
+                <div class="po2-party">
+                  <div class="pp-main">
+                    <div class="pp-line"><span class="k">ผู้ซื้อ :</span> <b>${buyerName}</b></div>
+                    <div class="pp-line"><span class="k">ที่อยู่ :</span> <span>${buyerAddr}</span></div>
+                    <div class="pp-line"><span class="k">เลขที่ภาษี :</span> <span>${buyerTax}</span></div>
+                  </div>
+                  <div class="pp-contact">
+                    <div>${icPhone} ${buyerPhone}</div>
+                    <div>${icMail} ${buyerEmail}</div>
+                    <div>${icWeb} -</div>
+                  </div>
+                </div>
+                <hr class="po2-div">
+                <div class="po2-party">
+                  <div class="pp-main">
+                    <div class="pp-line"><span class="k">ผู้ขาย :</span> <b>${nz(po.supplier_code)} ${nz(po.supplier_name)}</b></div>
+                    <div class="pp-line"><span class="k">ที่อยู่ :</span> <span>${nz(po.supplier_address)}</span></div>
+                    <div class="pp-line"><span class="k">เลขที่ภาษี :</span> <span>${nz(po.supplier_tax_id)}</span></div>
+                    <div class="pp-line"><span class="k">เรียน :</span> <span>-</span></div>
+                  </div>
+                  <div class="pp-contact">
+                    <div>${icPhone} ${po.supplier_phone || '-'}</div>
+                    <div>${icMail} ${po.supplier_email || '-'}</div>
+                    <div>${icWeb} -</div>
+                  </div>
+                </div>
+              </div>
+              <div class="po2-right">
+                <div class="po2-docbox">
+                  <div class="dr"><span>เลขที่เอกสาร :</span><b>${po.po_no}</b></div>
+                  <div class="dr"><span>วันที่ออก :</span><b>${dt}</b></div>
+                  <div class="dr"><span>อ้างอิง :</span><b>${poRef}</b></div>
+                </div>
+                <div class="po2-contactback">
+                  <div class="cb-h">ติดต่อกลับที่ :</div>
+                  <div class="cb-row">${icUser} ภัทราภรณ์ แว่นพิมาย</div>
+                  <div class="cb-row">${icPhone} 0804426356</div>
+                  <div class="cb-row">${icMail} apm@loveandaman.com</div>
+                </div>
+              </div>
             </div>
             <div class="memo-sec">รายการสินค้า / บริการ</div>
             <table class="memo-items">
-              <thead><tr><th class="c" style="width:34px">No.</th><th>รายการ</th><th>รายละเอียด</th><th class="c" style="width:54px">จำนวน</th><th class="c" style="width:50px">หน่วย</th><th class="r" style="width:88px">ราคา/หน่วย</th><th class="r" style="width:98px">รวม</th></tr></thead>
-              <tbody>${rows || '<tr><td colspan="7" style="text-align:center;color:#9ca3af;padding:14px">ไม่มีรายการ</td></tr>'}</tbody>
+              <thead><tr><th>คำอธิบาย</th><th class="c" style="width:72px">จำนวน</th><th class="r" style="width:86px">ราคา</th><th class="r" style="width:78px">ส่วนลด</th><th class="c" style="width:50px">VAT</th><th class="r" style="width:104px">มูลค่าก่อนภาษี</th></tr></thead>
+              <tbody>${rows || '<tr><td colspan="6" style="text-align:center;color:#9ca3af;padding:14px">ไม่มีรายการ</td></tr>'}</tbody>
               <tfoot>
-                <tr><td colspan="6" style="text-align:right">มูลค่าก่อนภาษี</td><td style="text-align:right">${money(po.subtotal)}</td></tr>
-                <tr><td colspan="6" style="text-align:right">ภาษีมูลค่าเพิ่ม (VAT)</td><td style="text-align:right">${money(po.vat_amount)}</td></tr>
-                <tr><td colspan="6" style="text-align:right">จำนวนเงินรวมทั้งสิ้น</td><td style="text-align:right">${money(po.total_amount)} บาท</td></tr>
+                <tr><td colspan="5" style="text-align:right">มูลค่าก่อนภาษี</td><td style="text-align:right">${money(po.subtotal)}</td></tr>
+                <tr><td colspan="5" style="text-align:right">ภาษีมูลค่าเพิ่ม (VAT)</td><td style="text-align:right">${money(po.vat_amount)}</td></tr>
+                <tr><td colspan="5" style="text-align:right">จำนวนเงินรวมทั้งสิ้น</td><td style="text-align:right">${money(po.total_amount)} บาท</td></tr>
               </tfoot>
             </table>
             <div style="text-align:right;font-size:11.5px;font-style:italic;color:#475569;margin-top:5px">(${bahtText(po.total_amount)})</div>
