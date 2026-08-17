@@ -6,6 +6,7 @@
   <title>PR/PO Procurement System - Railway</title>
   <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -269,6 +270,20 @@
     .memo-sign .dots { border-top:1.5px dotted #64748b; margin:0 10px 6px; padding-top:0; }
     .memo-sign .role { font-size:12px; font-weight:700; color:#1e293b; }
     .memo-sign .nm { font-size:12px; color:#475569; margin-top:2px; }
+    /* PO certification band (buyer/seller signatures + seals + QR) */
+    .memo-cert { display:grid; grid-template-columns:46px 106px 1fr 1fr 1fr 1fr 1fr; gap:10px; margin-top:16px; align-items:start; }
+    .memo-cert .mc-col { display:flex; flex-direction:column; align-items:center; text-align:center; }
+    .memo-cert .mc-h { font-size:10px; font-weight:700; color:#1e293b; line-height:1.3; min-height:28px; margin-bottom:8px; }
+    .memo-cert .mc-certlabel { flex-direction:row; align-items:center; justify-content:flex-start; gap:5px; font-size:12px; font-weight:700; color:#1e293b; margin-top:34px; white-space:nowrap; }
+    .memo-cert .mc-chk { width:16px; height:16px; border-radius:50%; background:#16a34a; display:inline-flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .memo-cert .mc-chk svg { width:10px; height:10px; stroke:#fff; fill:none; stroke-width:3; stroke-linecap:round; stroke-linejoin:round; }
+    .memo-cert .mc-qr { width:88px; height:88px; }
+    .memo-cert .mc-sig { height:46px; max-width:100%; object-fit:contain; margin-bottom:2px; }
+    .memo-cert .mc-seal { height:60px; max-width:100%; object-fit:contain; }
+    .memo-cert .mc-nm { font-size:11px; font-weight:600; color:#1e293b; margin-top:3px; line-height:1.3; }
+    .memo-cert .mc-dt { font-size:10px; color:#64748b; margin-top:1px; }
+    .memo-cert .mc-recv { width:100%; height:46px; border-bottom:1.5px dotted #94a3b8; }
+    .memo-cert .mc-box { width:74px; height:74px; border:1.5px dashed #cbd5e1; border-radius:4px; margin-top:2px; }
     .detail-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px 24px; font-size:13px; margin-bottom:18px; }
     .detail-grid .k { color:var(--muted); font-size:11px; margin-bottom:2px; }
     .detail-close { background:none; border:none; font-size:20px; cursor:pointer; color:var(--muted); }
@@ -2033,11 +2048,15 @@
             <div style="text-align:right;font-size:11.5px;font-style:italic;color:#475569;margin-top:5px">(${bahtText(po.total_amount)})</div>
             <div class="memo-sec">รายละเอียด</div>
             <div class="memo-note">${po.note ? String(po.note).replace(/</g, '&lt;') : ''}</div>
-            <div class="memo-sign-h">ลายมือชื่อผู้อนุมัติ</div>
-            <div class="memo-signs">
-              <div class="memo-sign"><div style="height:40px"></div><div class="dots"></div><div class="role">ผู้จัดการแผนก / Manager</div><div class="nm">&nbsp;</div></div>
-              <div class="memo-sign"><div style="height:40px"></div><div class="dots"></div><div class="role">ผู้บริหาร / Executive</div><div class="nm">&nbsp;</div></div>
-              <div class="memo-sign"><div style="height:40px"></div><div class="dots"></div><div class="role">กรรมการผู้จัดการ / MD</div><div class="nm">&nbsp;</div></div>
+            <hr class="memo-rule" style="margin-top:26px">
+            <div class="memo-cert">
+              <div class="mc-col mc-certlabel"><span class="mc-chk"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span> รับรอง</div>
+              <div class="mc-col"><div class="mc-h">สแกนเพื่อเปิดด้วยเว็บไซต์</div><canvas class="mc-qr" id="po-qr" width="96" height="96"></canvas></div>
+              <div class="mc-col"><div class="mc-h">ผู้ออกเอกสาร (ผู้ซื้อ)</div><img class="mc-sig" src="/sign-authorized.png" alt="signature"><div class="mc-nm">ภัทราภรณ์ แว่นพิมาย</div><div class="mc-dt">${dt}</div></div>
+              <div class="mc-col"><div class="mc-h">ผู้อนุมัติเอกสาร (ผู้ซื้อ)</div><img class="mc-sig" src="/sign-authorized.png" alt="signature"><div class="mc-nm">ภัทราภรณ์ แว่นพิมาย</div><div class="mc-dt">${dt}</div></div>
+              <div class="mc-col"><div class="mc-h">ตราประทับ (ผู้ซื้อ)</div><img class="mc-seal" src="/seal-loveandaman.png" alt="ตราประทับ"></div>
+              <div class="mc-col"><div class="mc-h">ผู้รับเอกสาร (ผู้ขาย)</div><div class="mc-recv"></div><div class="mc-nm">${nz(po.supplier_name)}</div></div>
+              <div class="mc-col"><div class="mc-h">ตราประทับ (ผู้ขาย)</div><div class="mc-box"></div></div>
             </div>
           </div>
           <div class="po-print-hide" style="margin-top:18px;border-top:1px solid var(--line);padding-top:12px">
@@ -2055,6 +2074,12 @@
           </div>
           <button class="detail-close po-print-hide" onclick="closePODetail()" style="position:absolute;top:18px;right:24px">✕</button>`;
         loadPoAttachments(po.po_no, 'po-att-list');
+        // Render QR that opens this PO on the website
+        try {
+          const qc = document.getElementById('po-qr');
+          const link = window.location.origin + '/?po=' + encodeURIComponent(po.po_no);
+          if (qc && typeof QRious !== 'undefined') new QRious({ element: qc, value: link, size: 96, level: 'M', background: '#ffffff', foreground: '#111827' });
+        } catch (e) { /* qr optional */ }
         document.getElementById('po-detail-overlay').style.display = 'flex';
       } catch (e) {
         toast('โหลดใบ PO ไม่สำเร็จ: ' + e.message, true);
