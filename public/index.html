@@ -1420,19 +1420,22 @@
           </tr>`;
         }).join('');
         let chain = '';
-        if (Array.isArray(pr.approval_chain) && pr.approval_chain.length) {
-          const stepInfo = {}; pr.approval_chain.forEach(c => { if (c && c.step != null) stepInfo[c.step] = c; });
+        {
+          const stepInfo = {}; (Array.isArray(pr.approval_chain) ? pr.approval_chain : []).forEach(c => { if (c && c.step != null) stepInfo[c.step] = c; });
           const fmtD = t => { try { return t ? new Date(t).toLocaleDateString('th-TH') : ''; } catch { return ''; } };
           const escn = v => (v == null ? '' : String(v).replace(/</g, '&lt;'));
-          const cols = [['ผู้จัดการแผนก / Manager', 1], ['ผู้บริหาร / Executive', 2], ['กรรมการผู้จัดการ / MD', 3]];
+          const apprNm = s => stepInfo[s] ? escn(stepInfo[s].approverName || stepInfo[s].approver || '') : '';
+          const apprDt = s => stepInfo[s] ? fmtD(stepInfo[s].approveTime || stepInfo[s].approvedAt || stepInfo[s].time) : '';
+          const cols = [
+            { label: 'ผู้ขอซื้อ / Requester', nm: escn(pr.requester_name || ''), d: fmtD(pr.date) },
+            { label: 'ผู้จัดการแผนก / Manager', nm: apprNm(1), d: apprDt(1) },
+            { label: 'กรรมการผู้จัดการ / MD', nm: apprNm(3), d: apprDt(3) },
+          ];
           chain = `<div style="margin-top:22px"><b>ลายมือชื่อผู้อนุมัติ</b>
             <div class="memo-signs" style="margin-top:36px">
-              ${cols.map(([label, step]) => {
-                const c = stepInfo[step];
-                const nm = c ? escn(c.approverName || c.approver || '') : '';
-                const d = c ? fmtD(c.approveTime || c.approvedAt || c.time) : '';
-                const sig = nm ? `<div style="height:40px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:3px;font-size:14px;font-weight:600;color:#1e293b;font-family:'Sarabun','IBM Plex Sans Thai',cursive">${nm}</div>` : `<div style="height:40px"></div>`;
-                return `<div class="memo-sign">${sig}<div class="dots"></div><div class="role">${label}</div><div class="nm">${nm || '&nbsp;'}</div>${d ? `<div style="font-size:11px;color:#94a3b8;margin-top:2px">${d}</div>` : ''}</div>`;
+              ${cols.map(c => {
+                const sig = c.nm ? `<div style="height:40px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:3px;font-size:14px;font-weight:600;color:#1e293b;font-family:'Sarabun','IBM Plex Sans Thai',cursive">${c.nm}</div>` : `<div style="height:40px"></div>`;
+                return `<div class="memo-sign">${sig}<div class="dots"></div><div class="role">${c.label}</div><div class="nm">${c.nm || '&nbsp;'}</div>${c.d ? `<div style="font-size:11px;color:#94a3b8;margin-top:2px">${c.d}</div>` : ''}</div>`;
               }).join('')}
             </div>
           </div>`;
