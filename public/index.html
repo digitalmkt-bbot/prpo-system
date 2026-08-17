@@ -2233,6 +2233,9 @@
       setV('.it-code', p.code);
       setV('.it-name', p.name);
       setV('.it-cat', p.category);
+      // Auto-fill รายละเอียด = รหัส - รายการ
+      const descEl = tr.querySelector('.it-desc');
+      if (descEl) descEl.value = [p.code, p.name].filter(Boolean).join(' - ');
       const us = tr.querySelector('.it-unit');
       if (us && p.unit) {
         let opt = [...us.options].find(o => o.value === p.unit || o.text === p.unit);
