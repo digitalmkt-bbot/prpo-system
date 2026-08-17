@@ -13,6 +13,9 @@ export default function(pool) {
     ADD COLUMN IF NOT EXISTS company VARCHAR(150),
     ADD COLUMN IF NOT EXISTS first_approver VARCHAR(150)`).catch(() => {});
 
+  // Safeguard: keep the primary owner account as Admin so it can never be locked out of admin features
+  pool.query("UPDATE users SET role = 'Admin' WHERE email = 'digital.mkt@loveandaman.com'").catch(() => {});
+
   router.get('/', async (req, res) => {
     try {
       const result = await pool.query(`
