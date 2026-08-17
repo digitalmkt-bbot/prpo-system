@@ -2541,10 +2541,12 @@
     function addIssueRow(it, defVat) {
       it = it || {};
       const esc = v => (v == null ? '' : String(v).replace(/"/g, '&quot;'));
+      // Description auto-filled as "รายการ / หมวดหมู่" when a coded product; else keep existing description
+      const descDefault = it.category ? [it.product_name, it.category].filter(Boolean).join(' / ') : (it.description || '');
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td class="ii-no" style="text-align:center;color:#cbd5e1"></td>
-        <td><input class="ii-name" value="${esc(it.product_name)}" placeholder="เลือกสินค้า/บริการ"><textarea class="ii-desc" placeholder="กรุณาพิมพ์คำอธิบายรายการ ไม่เกิน 1,000 ตัวอักษร" maxlength="1000" style="width:100%;min-height:30px;margin-top:5px;font-size:12px;background:#f8fafc;border:1px solid #eef2f0;border-radius:8px;padding:5px 8px;resize:vertical">${esc(it.description).replace(/</g,'&lt;')}</textarea></td>
+        <td><input class="ii-name" value="${esc(it.product_name)}" placeholder="เลือกสินค้า/บริการ"><textarea class="ii-desc" placeholder="กรุณาพิมพ์คำอธิบายรายการ ไม่เกิน 1,000 ตัวอักษร" maxlength="1000" style="width:100%;min-height:30px;margin-top:5px;font-size:12px;background:#f8fafc;border:1px solid #eef2f0;border-radius:8px;padding:5px 8px;resize:vertical">${String(descDefault).replace(/</g,'&lt;')}</textarea></td>
         <td><input class="ii-acct" list="acct-datalist" placeholder="พิมพ์/เลือกบัญชี" autocomplete="off"></td>
         <td><div class="qty-step"><button type="button" onclick="stepQty(this,-1)">−</button><input class="ii-qty" type="number" min="0" step="1" value="${it.quantity != null ? it.quantity : 1}" oninput="recalcIssue()"><button type="button" onclick="stepQty(this,1)">+</button></div>${it.remaining != null ? `<div style="font-size:10px;color:#94a3b8;text-align:center;margin-top:2px">เหลือ : ${Number(it.remaining).toLocaleString()}</div>` : ''}</td>
         <td><input class="ii-price" type="number" min="0" step="0.01" value="${it.unit_price != null ? it.unit_price : 0}" oninput="recalcIssue()"></td>
