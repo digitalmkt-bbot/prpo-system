@@ -600,6 +600,38 @@
     [data-theme="dark"] .rr-chips button { background:#26262b; color:#cbd5e1; }
     [data-theme="dark"] .rr-msg.bot { background:#26262b; color:#e5e7eb; }
     [data-theme="dark"] .rr-input input { background:#1f1f23; border-color:#2a2a30; color:#e5e7eb; }
+    /* ===== Report dashboard ===== */
+    .rp-head { display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap; margin-bottom:16px; }
+    #page-dashboard > .rp-head h1 { font-size:26px; margin:0; }
+    .rp-periods { display:inline-flex; background:#fff; border:1px solid #e2e8f0; border-radius:10px; padding:3px; gap:2px; }
+    .rp-periods button { border:none; background:none; padding:6px 12px; border-radius:7px; font-size:12px; font-weight:600; color:#64748b; cursor:pointer; }
+    .rp-periods button.active { background:#2563eb; color:#fff; }
+    .rp-dl { display:inline-flex; align-items:center; gap:6px; background:#2563eb; color:#fff; border:none; border-radius:10px; padding:8px 14px; font-size:13px; font-weight:600; cursor:pointer; box-shadow:0 4px 12px rgba(37,99,235,.2); }
+    .rp-dl:hover { background:#1d4ed8; }
+    .rp-cards { display:grid; grid-template-columns:repeat(6,1fr); gap:14px; margin-bottom:18px; }
+    @media (max-width:1200px){ .rp-cards{ grid-template-columns:repeat(3,1fr);} }
+    @media (max-width:700px){ .rp-cards{ grid-template-columns:repeat(2,1fr);} }
+    .rp-kpi { background:#fff; border:1px solid #e2e8f0; border-radius:14px; padding:14px 15px; box-shadow:0 1px 3px rgba(15,23,42,.05); }
+    .rp-kpi-top { display:flex; align-items:center; gap:10px; margin-bottom:9px; }
+    .rp-ic { width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .rp-ic svg { width:18px; height:18px; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+    .rp-ic.blue{background:#eff6ff;color:#2563eb} .rp-ic.green{background:#ecfdf5;color:#059669} .rp-ic.amber{background:#fffbeb;color:#d97706} .rp-ic.indigo{background:#eef2ff;color:#6366f1} .rp-ic.sky{background:#f0f9ff;color:#0ea5e9} .rp-ic.rose{background:#fff1f2;color:#e11d48}
+    .rp-kpi-label { font-size:11.5px; color:#64748b; font-weight:500; }
+    .rp-kpi-val { font-size:20px; font-weight:800; color:#0f172a; letter-spacing:-.3px; line-height:1.1; }
+    .rp-kpi-val .u { font-size:12px; font-weight:600; color:#64748b; }
+    .rp-kpi-sub { font-size:10.5px; font-weight:700; margin-top:5px; }
+    .rp-row3 { display:grid; grid-template-columns:1fr 1.6fr 1fr; gap:14px; margin-bottom:14px; }
+    .rp-row3 > .pr-card { margin-bottom:0; min-width:0; }
+    @media (max-width:1100px){ .rp-row3{ grid-template-columns:1fr; } }
+    .rp-sum-row { display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px dashed #eef2f7; font-size:13px; color:#475569; }
+    .rp-sum-row b { color:#0f172a; font-weight:700; }
+    .rp-sum-row.total { border-bottom:none; margin-top:6px; padding-top:12px; border-top:1px solid #e2e8f0; }
+    .rp-sum-row.total b { color:#2563eb; font-size:15px; }
+    [data-theme="dark"] .rp-periods { background:#18181c; border-color:#26262b; }
+    [data-theme="dark"] .rp-kpi { background:#18181c; border-color:#26262b; }
+    [data-theme="dark"] .rp-kpi-val { color:#f3f4f6; }
+    [data-theme="dark"] .rp-sum-row { border-bottom-color:#26262b; color:#cbd5e1; }
+    [data-theme="dark"] .rp-sum-row b { color:#f3f4f6; }
   </style>
 </head>
 <body>
@@ -697,20 +729,20 @@
       </div>
       <!-- DASHBOARD -->
       <div class="page active pr-form" id="page-dashboard">
-        <!-- Greeting hero (BuildAxis style) -->
-        <div class="dash-hero">
-          <div class="dash-hero-l">
-            <h1 class="dash-hero-hi">สวัสดี, <span id="dash-hello">ผู้ใช้</span> 👋</h1>
-            <p class="dash-hero-sub">ภาพรวมระบบการจัดซื้อของ Love Andaman วันนี้</p>
-            <div class="dash-hero-chips">
-              <span class="dash-chip"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg><span id="dash-hero-date">—</span></span>
-              <span class="dash-chip live"><span class="live-dot"></span> ข้อมูลเรียลไทม์</span>
-            </div>
+        <!-- Report header -->
+        <div class="rp-head">
+          <div>
+            <h1>รายงาน &amp; วิเคราะห์การจัดซื้อ</h1>
+            <p class="subtitle" style="margin:2px 0 0">ภาพรวมผลการจัดซื้อ มูลค่า และแนวโน้ม (PR / PO)</p>
           </div>
-          <div class="dash-hero-r">
-            <div class="dash-hero-stat"><div class="dhs-v" id="dash-hero-pending">0</div><div class="dhs-l">รออนุมัติ</div></div>
-            <div class="dash-hero-sep"></div>
-            <div class="dash-hero-stat"><div class="dhs-v" id="dash-hero-orders">0</div><div class="dhs-l">เอกสารทั้งหมด</div></div>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <div class="rp-periods" id="rp-periods">
+              <button type="button" onclick="setPeriod('7d',this)">7 วัน</button>
+              <button type="button" class="active" onclick="setPeriod('30d',this)">30 วัน</button>
+              <button type="button" onclick="setPeriod('q',this)">ไตรมาส</button>
+              <button type="button" onclick="setPeriod('y',this)">ปีนี้</button>
+            </div>
+            <button class="rp-dl" onclick="exportReport()"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> ดาวน์โหลดรายงาน</button>
           </div>
         </div>
 
@@ -737,69 +769,77 @@
           <button class="btn secondary" onclick="resetDashFilter()">ล้าง</button>
         </div>
 
-        <!-- Row 1: BuildAxis KPI cards -->
-        <div class="sw-cards">
-          <div class="sw-mc c-sky">
-            <div class="sw-mc-top"><span class="sw-mc-label">ใบขอซื้อทั้งหมด</span><span class="sw-mc-ic"><svg viewBox="0 0 24 24"><path d="M9 2h6a1 1 0 0 1 1 1v1h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2V3a1 1 0 0 1 1-1z"/><path d="M9 12h6M9 16h4"/></svg></span></div>
-            <div class="sw-mc-val"><span id="pr-total-count">0</span></div>
-            <div class="sw-mc-trend up" id="b-pr"></div>
+        <!-- Row 1: KPI cards (report style) -->
+        <div class="rp-cards">
+          <div class="rp-kpi">
+            <div class="rp-kpi-top"><span class="rp-ic blue"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span><span class="rp-kpi-label">มูลค่าจัดซื้อรวม</span></div>
+            <div class="rp-kpi-val">฿<span id="val-total">0</span></div>
+            <div class="rp-kpi-sub sw-mc-trend up" id="b-val"></div>
           </div>
-          <div class="sw-mc c-indigo po-only">
-            <div class="sw-mc-top"><span class="sw-mc-label">ใบสั่งซื้อทั้งหมด</span><span class="sw-mc-ic"><svg viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></span></div>
-            <div class="sw-mc-val"><span id="po-total-count">0</span></div>
-            <div class="sw-mc-trend up" id="b-po"></div>
+          <div class="rp-kpi">
+            <div class="rp-kpi-top"><span class="rp-ic sky"><svg viewBox="0 0 24 24"><path d="M9 2h6a1 1 0 0 1 1 1v1h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2V3a1 1 0 0 1 1-1z"/><path d="M9 12h6M9 16h4"/></svg></span><span class="rp-kpi-label">มูลค่า PR</span></div>
+            <div class="rp-kpi-val">฿<span id="pr-value-total">0</span></div>
+            <div class="rp-kpi-sub"><span class="tsub" style="color:#94a3b8;font-weight:500">รวมใบขอซื้อ</span></div>
           </div>
-          <div class="sw-mc c-amber">
-            <div class="sw-mc-top"><span class="sw-mc-label">รออนุมัติ</span><span class="sw-mc-ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span></div>
-            <div class="sw-mc-val"><span id="pending-total-count">0</span></div>
-            <div class="sw-mc-trend"><span class="tsub">รอดำเนินการในระบบ</span></div>
+          <div class="rp-kpi po-only">
+            <div class="rp-kpi-top"><span class="rp-ic indigo"><svg viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></span><span class="rp-kpi-label">มูลค่า PO</span></div>
+            <div class="rp-kpi-val">฿<span id="po-value-total">0</span></div>
+            <div class="rp-kpi-sub"><span class="tsub" style="color:#94a3b8;font-weight:500">รวมใบสั่งซื้อ</span></div>
           </div>
-          <div class="sw-mc c-pink">
-            <div class="sw-mc-top"><span class="sw-mc-label">มูลค่ารวม</span><span class="sw-mc-ic"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span></div>
-            <div class="sw-mc-val"><span id="val-total">0</span><span class="u">บาท</span></div>
-            <div class="sw-mc-trend up" id="b-val"></div>
+          <div class="rp-kpi">
+            <div class="rp-kpi-top"><span class="rp-ic green"><svg viewBox="0 0 24 24"><path d="M9 2h6a1 1 0 0 1 1 1v1h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2V3a1 1 0 0 1 1-1z"/><path d="M9 12h6M9 16h4"/></svg></span><span class="rp-kpi-label">ใบขอซื้อ (PR)</span></div>
+            <div class="rp-kpi-val"><span id="pr-total-count">0</span> <span class="u">ใบ</span></div>
+            <div class="rp-kpi-sub sw-mc-trend up" id="b-pr"></div>
+          </div>
+          <div class="rp-kpi po-only">
+            <div class="rp-kpi-top"><span class="rp-ic sky"><svg viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></span><span class="rp-kpi-label">ใบสั่งซื้อ (PO)</span></div>
+            <div class="rp-kpi-val"><span id="po-total-count">0</span> <span class="u">ใบ</span></div>
+            <div class="rp-kpi-sub sw-mc-trend up" id="b-po"></div>
+          </div>
+          <div class="rp-kpi">
+            <div class="rp-kpi-top"><span class="rp-ic amber"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><span class="rp-kpi-label">รออนุมัติ</span></div>
+            <div class="rp-kpi-val"><span id="pending-total-count">0</span> <span class="u">รายการ</span></div>
+            <div class="rp-kpi-sub"><span class="tsub" style="color:#94a3b8;font-weight:500">รอดำเนินการ</span></div>
           </div>
         </div>
 
-        <!-- Row 2: big area chart (Total Sales style) + right column -->
-        <div class="fv-row2">
-          <div class="fv-chart-card">
-            <div class="fv-chart-head"><h3>Total Value — มูลค่าจัดซื้อ</h3>
-              <button class="fv-pill" type="button">This Period 📅</button></div>
-            <div class="dash-chart-box" style="height:320px;"><canvas id="pr-chart"></canvas></div>
-          </div>
-          <div class="fv-rightcol">
-            <div class="fv-prod-card">
-              <div class="fv-prod-top"><h3>Top แผนก</h3><span class="fv-prod-pct" id="prod-top-pct">0%</span></div>
-              <div class="fv-prod-inner">
-                <div class="fv-prod-h"><span>Department by Value</span><span>▲</span></div>
-                <div id="prod-list"></div>
-              </div>
-            </div>
-            <div class="fv-benef po-only">
-              <div class="fv-benef-r">
-                <div class="fv-benef-t">Total Orders</div>
-                <div class="fv-benef-v" id="benef-val">0</div>
-                <div class="fv-benef-s"><span id="benef-badge">+0%</span> Growth last week</div>
-              </div>
+        <!-- Row 2: breakdown donut + trend line + report summary -->
+        <div class="rp-row3">
+          <div class="pr-card">
+            <div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> สัดส่วนมูลค่าตามแผนก</div></div>
+            <div class="pr-card-body">
+              <div style="position:relative;height:186px"><canvas id="dept-donut"></canvas><div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none"><div style="font-size:10px;color:#94a3b8">มูลค่ารวม</div><div id="dept-donut-center" style="font-size:16px;font-weight:800;color:#0f172a">฿0</div></div></div>
+              <div class="rings-legend" id="dept-legend" style="margin-top:14px"></div>
             </div>
           </div>
+          <div class="pr-card">
+            <div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> มูลค่าจัดซื้อตามช่วงเวลา</div><span style="font-size:11px;color:#94a3b8">มูลค่า PR</span></div>
+            <div class="pr-card-body"><div class="dash-chart-box" style="height:236px"><canvas id="pr-chart"></canvas></div></div>
+          </div>
+          <div class="pr-card">
+            <div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> สรุปรายงาน</div></div>
+            <div class="pr-card-body">
+              <div class="rp-sum-row"><span>ใบขอซื้อ (PR)</span><b id="rs-pr-count">0</b></div>
+              <div class="rp-sum-row po-only"><span>ใบสั่งซื้อ (PO)</span><b id="rs-po-count">0</b></div>
+              <div class="rp-sum-row"><span>รออนุมัติ</span><b id="rs-pending">0</b></div>
+              <div class="rp-sum-row"><span>อนุมัติแล้ว</span><b id="rs-approved">0</b></div>
+              <div class="rp-sum-row"><span>ปฏิเสธ</span><b id="rs-rejected">0</b></div>
+              <div class="rp-sum-row total"><span>มูลค่าจัดซื้อรวม</span><b id="rs-total">฿0</b></div>
+            </div>
+          </div>
         </div>
 
-        <!-- Row 3: recent PR table | CTA | recent PO list -->
-        <div class="solar-row3">
-          <div class="pr-card"><div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> PR ล่าสุด</div></div><div class="pr-card-body"><table class="pr-items"><thead><tr><th>PR No</th><th>แผนก</th><th style="text-align:right">มูลค่า</th><th>สถานะ</th></tr></thead><tbody id="pr-recent"></tbody></table></div></div>
-          <div class="cta-card"><h3>PR/PO System</h3><p>รออนุมัติ <b id="cta-pending">0</b> รายการ — จัดการใบขอซื้อและออกใบสั่งซื้อได้จากที่นี่</p><button class="cta-btn" onclick="document.querySelector('.nav a[data-page=&quot;prs&quot;]').click()">ไปที่ PR List →</button></div>
-          <div class="pr-card po-only"><div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> PO ล่าสุด</div></div><div class="pr-card-body"><div class="sh-list" id="po-recent-list"></div></div></div>
+        <!-- Row 3: department table + supplier ranking -->
+        <div class="dash-row r-2-1">
+          <div class="pr-card"><div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> สรุปตามแผนก</div></div><div class="pr-card-body"><table class="pr-items"><thead><tr><th>แผนก</th><th style="text-align:center">จำนวนใบ</th><th style="text-align:right">มูลค่า</th><th style="text-align:right">สัดส่วน</th></tr></thead><tbody id="dept-table"></tbody></table></div></div>
+          <div class="pr-card po-only"><div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> อันดับผู้ขาย (มูลค่า)</div></div><div class="pr-card-body"><div class="sh-list" id="sup-list"></div></div></div>
         </div>
 
-        <!-- Row 4: product reports -->
+        <!-- Row 4: top products + recent PR -->
         <div class="dash-row r-1-1">
-          <div class="pr-card"><div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> สินค้าที่มียอดสูงสุด (มูลค่า)</div></div><div class="pr-card-body"><div class="dash-chart-box sm"><canvas id="prod-value"></canvas></div></div></div>
-          <div class="pr-card"><div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> อันดับแผนก (มูลค่า)</div></div><div class="pr-card-body"><div class="dash-chart-box sm"><canvas id="prod-orders"></canvas></div></div></div>
+          <div class="pr-card"><div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> อันดับสินค้า (มูลค่า)</div></div><div class="pr-card-body"><div class="dash-chart-box sm"><canvas id="prod-value"></canvas></div></div></div>
+          <div class="pr-card"><div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> PR ล่าสุด</div></div><div class="pr-card-body"><table class="pr-items"><thead><tr><th>PR No</th><th>แผนก</th><th style="text-align:right">มูลค่า</th><th>สถานะ</th></tr></thead><tbody id="pr-recent"></tbody></table></div></div>
         </div>
-
-        <div class="panel" style="margin-top:14px;"><div class="status" id="api-status">✅ API Connected</div></div>
       </div>
 
       <!-- CREATE PR -->
@@ -1334,37 +1374,41 @@
         const setBadge = (id, pct) => { const el = document.getElementById(id); if (!el) return; const up = pct >= 0; el.textContent = (up ? '+' : '') + pct + '%'; el.style.background = up ? '#dcfce7' : '#fee2e2'; el.style.color = up ? '#059669' : '#e11d48'; };
         const setKpiTrend = (id, pct) => { const el = document.getElementById(id); if (!el) return; const up = pct >= 0; el.className = 'sw-mc-trend ' + (up ? 'up' : 'down'); el.innerHTML = `<span class="ta">${up ? '↑' : '↓'}</span> ${Math.abs(pct)}% <span class="tsub">เทียบช่วงก่อน</span>`; };
         const trend = (arr, key) => { const a = (arr || []).map(r => Number(r[key] || 0)); if (a.length < 2) return 0; const h = Math.floor(a.length / 2); const past = a.slice(0, h).reduce((x, y) => x + y, 0); const now = a.slice(h).reduce((x, y) => x + y, 0); if (past === 0) return now > 0 ? 100 : 0; return Math.round((now - past) / past * 100); };
-        // Row 1: 3 metric cards (PRs / POs / Total Value)
-        setTxt('pr-total-count', s.pr.total_count);
-        setTxt('po-total-count', s.po.total_count);
-        const totalVal = Math.round(Number(s.pr.total_amount || 0) + Number(s.po.total_amount || 0));
+        // Row 1: KPI cards (value + counts)
+        const prVal = Math.round(Number(s.pr.total_amount || 0));
+        const poVal = Math.round(Number(s.po.total_amount || 0));
+        const totalVal = prVal + poVal;
         setTxt('val-total', money(totalVal));
+        setTxt('pr-value-total', money(prVal));
+        setTxt('po-value-total', money(poVal));
+        setTxt('pr-total-count', Number(s.pr.total_count || 0).toLocaleString());
+        setTxt('po-total-count', Number(s.po.total_count || 0).toLocaleString());
         setKpiTrend('b-pr', trend(s.pr.by_day, 'c'));
         setKpiTrend('b-po', trend(s.po.by_day, 'c'));
         setKpiTrend('b-val', trend(s.pr.by_day, 'a'));
-        // Row 2: big area chart (purchase value/day) + Top departments list + Total Orders card
-        drawDayChart('pr-chart', s.pr.by_day, '#2563eb', 'a');
-        renderProdList('prod-list', 'prod-top-pct', s.pr.top);
-        setTxt('benef-val', (Number(s.pr.total_count || 0) + Number(s.po.total_count || 0)).toLocaleString());
-        setBadge('benef-badge', trend(s.po.by_day, 'c'));
-        // Pending KPI + hero stats
         const pendingCount = s.pr.status.Pending || 0;
-        const docTotal = (Number(s.pr.total_count || 0) + Number(s.po.total_count || 0));
         setTxt('pending-total-count', pendingCount);
-        setTxt('dash-hero-pending', pendingCount);
-        setTxt('dash-hero-orders', docTotal.toLocaleString());
+        // Row 2: department breakdown donut + trend line + report summary
+        drawDeptDonut('dept-donut', 'dept-legend', 'dept-donut-center', s.pr.top);
+        drawDayChart('pr-chart', s.pr.by_day, '#2563eb', 'a');
+        setTxt('rs-pr-count', Number(s.pr.total_count || 0).toLocaleString() + ' ใบ');
+        setTxt('rs-po-count', Number(s.po.total_count || 0).toLocaleString() + ' ใบ');
+        setTxt('rs-pending', (s.pr.status.Pending || 0) + ' รายการ');
+        setTxt('rs-approved', (s.pr.status.Approved || 0) + ' รายการ');
+        setTxt('rs-rejected', (s.pr.status.Rejected || 0) + ' รายการ');
+        setTxt('rs-total', '฿' + money(totalVal));
+        // Row 3: department table + supplier ranking
+        renderDeptTable('dept-table', s.pr.top);
+        renderSupplierList('sup-list', s.po.top);
+        // Row 4: top products + recent PR
+        const prod = s.products || { by_value: [], by_orders: [] };
+        drawTopValueBar('prod-value', prod.by_value, '#2563eb', 'value', true);
+        renderDashRecent('pr-recent', s.pr.recent);
+        // Header bell + right rail
         const bb = document.getElementById('tb-bell-badge');
         if (bb) { if (pendingCount > 0) { bb.style.display = ''; bb.textContent = pendingCount > 99 ? '99+' : pendingCount; } else bb.style.display = 'none'; }
         window.__dashStats = s;
         renderRightRail(s, pendingCount);
-        // Row 3: recent PR table + CTA pending count + recent PO list
-        renderDashRecent('pr-recent', s.pr.recent);
-        setTxt('cta-pending', pendingCount);
-        renderPOList('po-recent-list', s.po.recent);
-        // Row 4: product reports (combined PR + PO)
-        const prod = s.products || { by_value: [], by_orders: [] };
-        drawTopValueBar('prod-value', prod.by_value, '#2563eb', 'value', true);
-        drawTopValueBar('prod-orders', s.pr.top, '#2563eb', 'a', true);
       } catch (e) {
         toast('โหลด Dashboard ไม่สำเร็จ: ' + e.message, true);
       }
@@ -1381,6 +1425,59 @@
       });
     }
     window.globalSearch = globalSearch;
+
+    // ===== Report dashboard helpers =====
+    function drawDeptDonut(canvasId, legendId, centerId, top) {
+      const list = (top || []).slice(0, 6);
+      const colors = ['#2563eb', '#6366f1', '#0ea5e9', '#14b8a6', '#f59e0b', '#94a3b8'];
+      const total = list.reduce((x, r) => x + Number(r.a || 0), 0) || 0;
+      upsertChart(canvasId, 'doughnut',
+        { labels: list.map(r => nz(r.name)), datasets: [{ data: list.map(r => Number(r.a || 0)), backgroundColor: colors.slice(0, list.length || 1), borderWidth: 2, borderColor: '#fff' }] },
+        { ...NO_RESIZE, cutout: '66%', plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ' ฿' + Number(c.parsed).toLocaleString() } } } });
+      const c = document.getElementById(centerId); if (c) c.textContent = '฿' + Number(total).toLocaleString();
+      const leg = document.getElementById(legendId);
+      if (leg) leg.innerHTML = list.length ? list.map((r, i) => { const pct = total ? Math.round(Number(r.a || 0) / total * 100) : 0; return `<div class="rl"><span class="dotc" style="background:${colors[i % colors.length]}"></span><span class="rl-n">${nz(r.name)}</span><span class="rl-p">${pct}%</span></div>`; }).join('') : '<div class="dash-empty">ยังไม่มีข้อมูล</div>';
+    }
+    function renderDeptTable(id, top) {
+      const tb = document.getElementById(id); if (!tb) return;
+      const list = top || [];
+      const total = list.reduce((x, r) => x + Number(r.a || 0), 0) || 1;
+      tb.innerHTML = list.length ? list.map(r => { const pct = Math.round(Number(r.a || 0) / total * 100); return `<tr><td><b>${nz(r.name)}</b></td><td style="text-align:center">${Number(r.c || 0).toLocaleString()}</td><td style="text-align:right">฿${Number(r.a || 0).toLocaleString()}</td><td style="text-align:right"><div style="display:flex;align-items:center;gap:8px;justify-content:flex-end"><span>${pct}%</span><div style="width:52px;height:6px;border-radius:999px;background:#eef2f7;overflow:hidden"><div style="height:100%;width:${pct}%;background:#2563eb"></div></div></div></td></tr>`; }).join('') : '<tr><td colspan="4" class="dash-empty">ยังไม่มีข้อมูล</td></tr>';
+    }
+    function renderSupplierList(id, top) {
+      const el = document.getElementById(id); if (!el) return;
+      const list = top || [];
+      el.innerHTML = list.length ? list.map(r => `<div class="sh-row"><span class="sh-av">${String(nz(r.name)).trim().charAt(0).toUpperCase()}</span><div class="sh-main"><div class="sh-name">${nz(r.name)}</div><div class="sh-sub">${Number(r.c || 0).toLocaleString()} ใบสั่งซื้อ</div></div><div class="sh-amt">฿${Number(r.a || 0).toLocaleString()}</div></div>`).join('') : '<div class="dash-empty">ยังไม่มีข้อมูล</div>';
+    }
+    function setPeriod(p, btn) {
+      const tabs = document.getElementById('rp-periods');
+      if (tabs && btn) { tabs.querySelectorAll('button').forEach(b => b.classList.remove('active')); btn.classList.add('active'); }
+      const to = new Date(); const from = new Date();
+      if (p === '7d') from.setDate(to.getDate() - 6);
+      else if (p === '30d') from.setDate(to.getDate() - 29);
+      else if (p === 'q') from.setMonth(to.getMonth() - 3);
+      else if (p === 'y') { from.setMonth(0); from.setDate(1); }
+      const fmt = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+      const ff = document.getElementById('f-from'), ft = document.getElementById('f-to');
+      if (ff) ff.value = fmt(from); if (ft) ft.value = fmt(to);
+      loadDashboard();
+    }
+    window.setPeriod = setPeriod;
+    function exportReport() {
+      try {
+        const s = window.__dashStats;
+        if (!s || typeof XLSX === 'undefined') return toast('ยังไม่มีข้อมูลรายงาน', true);
+        const wb = XLSX.utils.book_new();
+        const summary = [['รายงานการจัดซื้อ Love Andaman', ''], ['ใบขอซื้อ (PR)', Number(s.pr.total_count || 0)], ['ใบสั่งซื้อ (PO)', Number(s.po.total_count || 0)], ['มูลค่า PR', Number(s.pr.total_amount || 0)], ['มูลค่า PO', Number(s.po.total_amount || 0)], ['รออนุมัติ', s.pr.status.Pending || 0], ['อนุมัติแล้ว', s.pr.status.Approved || 0], ['ปฏิเสธ', s.pr.status.Rejected || 0]];
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(summary), 'สรุป');
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['แผนก', 'จำนวนใบ', 'มูลค่า'], ...(s.pr.top || []).map(r => [r.name, r.c, r.a])]), 'ตามแผนก');
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['ผู้ขาย', 'จำนวนใบ', 'มูลค่า'], ...(s.po.top || []).map(r => [r.name, r.c, r.a])]), 'ผู้ขาย');
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['สินค้า', 'มูลค่า', 'จำนวนครั้ง'], ...((s.products && s.products.by_value) || []).map(r => [r.name, r.value, r.orders])]), 'สินค้า');
+        XLSX.writeFile(wb, `procurement-report-${new Date().toISOString().slice(0, 10)}.xlsx`);
+        toast('ดาวน์โหลดรายงานแล้ว');
+      } catch (e) { toast('สร้างรายงานไม่สำเร็จ: ' + e.message, true); }
+    }
+    window.exportReport = exportReport;
 
     // ===== Right rail: Notifications / Smart Alerts / AI assistant =====
     function statusTh(st) {
