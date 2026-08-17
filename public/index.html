@@ -1622,7 +1622,7 @@
           const unissued = Number(p.unissued_count || 0);
           const poReady = p.status !== 'Rejected' && Number(p.current_approval_step || 1) > PO_AFTER_STEP; // ผ่านขั้น 3 แล้ว
           const parts = [];
-          if (poReady && unissued > 0 && canSeePO()) parts.push(`<button class="btn-issue" onclick="event.stopPropagation();showIssuePO('${p.pr_no}')">ออก PO${p.po_no ? ' (รายการที่เหลือ)' : ''}</button>`);
+          if (poReady && canSeePO()) { const _lbl = unissued > 0 ? (p.po_no ? 'ออก PO (รายการที่เหลือ)' : 'ออก PO') : 'ออก PO เพิ่ม'; parts.push(`<button class="btn-issue" onclick="event.stopPropagation();showIssuePO('${p.pr_no}')">${_lbl}</button>`); }
           if (p.po_no) parts.push(`<span style="color:var(--green);font-weight:600">${p.po_no}</span>`);
           if (parts.length) action = parts.join(' ');
           return `<tr style="cursor:pointer" onclick="showPRDetail('${p.pr_no}')">
@@ -2751,9 +2751,15 @@
         document.getElementById('iss-wht').value = '0';
         document.getElementById('iss-vat-all').checked = true;
         const rem = i => (Number(i.quantity) || 0) - (Number(i.issued_qty) || 0);
-        const items = (pr.items || []).filter(i => i && i.product_name && i.item_status !== 'rejected' && rem(i) > 0)
+        let items = (pr.items || []).filter(i => i && i.product_name && i.item_status !== 'rejected' && rem(i) > 0)
           .map(i => ({ ...i, remaining: rem(i), quantity: rem(i) }));
-        if (!items.length) { toast('รายการในใบนี้ออก PO ครบแล้ว', true); return; }
+        if (!items.length) {
+          // ออก PO ครบทุกชิ้นแล้ว — เปิดออก PO เพิ่ม (ออกใบใหม่จากรายการเต็ม)
+          items = (pr.items || []).filter(i => i && i.product_name && i.item_status !== 'rejected')
+            .map(i => ({ ...i, remaining: null, quantity: Number(i.quantity) || 0 }));
+          if (items.length) toast('รายการนี้ออก PO ครบแล้ว — เปิดออก PO เพิ่ม (ใบใหม่)');
+        }
+        if (!items.length) { toast('ไม่มีรายการให้ออก PO', true); return; }
         await ensureAcctOpts();
         await fillCatSelect('iss-cat-dept');
         ['iss-cat-branch', 'iss-cat-program', 'iss-tags', 'iss-files'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
