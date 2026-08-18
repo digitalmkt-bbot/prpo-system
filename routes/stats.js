@@ -111,7 +111,21 @@ export default function (pool) {
         by_orders: [...prod].sort((a, b) => b.orders - a.orders).slice(0, 8),
       };
 
-      res.json({ pr: prS.out, po: poS.out, products });
+      // Spend by product category (from PR items) — respects date/status/scope filter
+      const catParams = [];
+      const cCond = [];
+      if (from) { catParams.push(from); cCond.push(`pr.date >= $${catParams.length}`); }
+      if (to) { catParams.push(to); cCond.push(`pr.date <= $${catParams.length}`); }
+      if (status && PR_STATUSES.includes(status)) { catParams.push(status); cCond.push(`pr.status = $${catParams.length}`); }
+      if (prScopeCol) { catParams.push(prScopeVal); cCond.push(prCondSql('pr', catParams.length)); }
+      const cWhere = cCond.length ? 'WHERE ' + cCond.join(' AND ') : '';
+      const categories = (await pool.query(`
+        SELECT COALESCE(NULLIF(btrim(pri.category),''),'(ไม่ระบุ)') name,
+               COALESCE(SUM(pri.total_price),0)::float a, COUNT(*)::int c
+        FROM pr_items pri JOIN purchase_requests pr ON pri.pr_id = pr.id ${cWhere}
+        GROUP BY 1 ORDER BY a DESC LIMIT 8`, catParams)).rows;
+
+      res.json({ pr: prS.out, po: poS.out, products, categories });
     } catch (err) {
       res.status(500).json({ error: err.message });
     }

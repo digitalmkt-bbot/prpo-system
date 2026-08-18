@@ -824,6 +824,9 @@
               <div class="rp-sum-row"><span>รออนุมัติ</span><b id="rs-pending">0</b></div>
               <div class="rp-sum-row"><span>อนุมัติแล้ว</span><b id="rs-approved">0</b></div>
               <div class="rp-sum-row"><span>ปฏิเสธ</span><b id="rs-rejected">0</b></div>
+              <div class="rp-sum-row"><span>อัตราอนุมัติ</span><b id="rs-approval">0%</b></div>
+              <div class="rp-sum-row"><span>มูลค่าเฉลี่ย/PR</span><b id="rs-avg-pr">฿0</b></div>
+              <div class="rp-sum-row po-only"><span>มูลค่าเฉลี่ย/PO</span><b id="rs-avg-po">฿0</b></div>
               <div class="rp-sum-row total"><span>มูลค่าจัดซื้อรวม</span><b id="rs-total">฿0</b></div>
             </div>
           </div>
@@ -839,6 +842,25 @@
         <div class="dash-row r-1-1">
           <div class="pr-card"><div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> อันดับสินค้า (มูลค่า)</div></div><div class="pr-card-body"><div class="dash-chart-box sm"><canvas id="prod-value"></canvas></div></div></div>
           <div class="pr-card"><div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> PR ล่าสุด</div></div><div class="pr-card-body"><table class="pr-items"><thead><tr><th>PR No</th><th>แผนก</th><th style="text-align:right">มูลค่า</th><th>สถานะ</th></tr></thead><tbody id="pr-recent"></tbody></table></div></div>
+        </div>
+
+        <!-- Row 5: document status + category breakdown -->
+        <div class="dash-row" style="grid-template-columns:1fr 1fr 1fr">
+          <div class="pr-card"><div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> สถานะใบขอซื้อ (PR)</div></div><div class="pr-card-body"><div class="dash-chart-box" style="height:150px"><canvas id="pr-status-donut"></canvas></div><div class="rings-legend" id="pr-status-legend" style="margin-top:12px"></div></div></div>
+          <div class="pr-card po-only"><div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> สถานะใบสั่งซื้อ (PO)</div></div><div class="pr-card-body"><div class="dash-chart-box" style="height:150px"><canvas id="po-status-donut"></canvas></div><div class="rings-legend" id="po-status-legend" style="margin-top:12px"></div></div></div>
+          <div class="pr-card"><div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> สัดส่วนตามหมวดหมู่สินค้า</div></div><div class="pr-card-body"><div style="position:relative;height:150px"><canvas id="cat-donut"></canvas><div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none"><div style="font-size:10px;color:#94a3b8">รวม</div><div id="cat-donut-center" style="font-size:14px;font-weight:800;color:#0f172a">฿0</div></div></div><div class="rings-legend" id="cat-legend" style="margin-top:12px"></div></div></div>
+        </div>
+
+        <!-- Row 6: category table + recent PO -->
+        <div class="dash-row r-2-1">
+          <div class="pr-card"><div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> สรุปตามหมวดหมู่สินค้า</div></div><div class="pr-card-body"><table class="pr-items"><thead><tr><th>หมวดหมู่</th><th style="text-align:center">รายการ</th><th style="text-align:right">มูลค่า</th><th style="text-align:right">สัดส่วน</th></tr></thead><tbody id="cat-table"></tbody></table></div></div>
+          <div class="pr-card po-only"><div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> PO ล่าสุด</div></div><div class="pr-card-body"><div class="sh-list" id="po-recent-list"></div></div></div>
+        </div>
+
+        <!-- Row 7: top products by orders + PR vs PO daily -->
+        <div class="dash-row r-1-1">
+          <div class="pr-card"><div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> อันดับสินค้า (จำนวนครั้ง)</div></div><div class="pr-card-body"><div class="dash-chart-box sm"><canvas id="prod-orders"></canvas></div></div></div>
+          <div class="pr-card po-only"><div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> จำนวนเอกสารรายวัน (PR vs PO)</div></div><div class="pr-card-body"><div class="dash-chart-box sm"><canvas id="pr-po-bars"></canvas></div></div></div>
         </div>
       </div>
 
@@ -1396,6 +1418,12 @@
         setTxt('rs-pending', (s.pr.status.Pending || 0) + ' รายการ');
         setTxt('rs-approved', (s.pr.status.Approved || 0) + ' รายการ');
         setTxt('rs-rejected', (s.pr.status.Rejected || 0) + ' รายการ');
+        const avgPr = s.pr.total_count ? Math.round(Number(s.pr.total_amount || 0) / s.pr.total_count) : 0;
+        const avgPo = s.po.total_count ? Math.round(Number(s.po.total_amount || 0) / s.po.total_count) : 0;
+        const apprRate = s.pr.total_count ? Math.round((s.pr.status.Approved || 0) / s.pr.total_count * 100) : 0;
+        setTxt('rs-approval', apprRate + '%');
+        setTxt('rs-avg-pr', '฿' + money(avgPr));
+        setTxt('rs-avg-po', '฿' + money(avgPo));
         setTxt('rs-total', '฿' + money(totalVal));
         // Row 3: department table + supplier ranking
         renderDeptTable('dept-table', s.pr.top);
@@ -1404,6 +1432,23 @@
         const prod = s.products || { by_value: [], by_orders: [] };
         drawTopValueBar('prod-value', prod.by_value, '#2563eb', 'value', true);
         renderDashRecent('pr-recent', s.pr.recent);
+        // Row 5: document status donuts + category donut
+        drawStatusDonut('pr-status-donut', 'pr-status-legend', [
+          { label: 'รออนุมัติ', value: s.pr.status.Pending || 0, color: '#d97706' },
+          { label: 'อนุมัติแล้ว', value: s.pr.status.Approved || 0, color: '#059669' },
+          { label: 'ปฏิเสธ', value: s.pr.status.Rejected || 0, color: '#e11d48' }]);
+        drawStatusDonut('po-status-donut', 'po-status-legend', [
+          { label: 'กำลังดำเนินการ', value: s.po.status.Active || 0, color: '#2563eb' },
+          { label: 'เสร็จสิ้น', value: s.po.status.Completed || 0, color: '#059669' },
+          { label: 'ยกเลิก', value: s.po.status.Cancelled || 0, color: '#94a3b8' }]);
+        const cats = s.categories || [];
+        drawDeptDonut('cat-donut', 'cat-legend', 'cat-donut-center', cats);
+        // Row 6: category table + recent PO
+        renderDeptTable('cat-table', cats);
+        renderPOList('po-recent-list', s.po.recent);
+        // Row 7: top products by orders + PR vs PO daily bars
+        drawTopValueBar('prod-orders', prod.by_orders, '#6366f1', 'orders', false);
+        drawBalance('pr-po-bars', s.pr.by_day, s.po.by_day);
         // Header bell + right rail
         const bb = document.getElementById('tb-bell-badge');
         if (bb) { if (pendingCount > 0) { bb.style.display = ''; bb.textContent = pendingCount > 99 ? '99+' : pendingCount; } else bb.style.display = 'none'; }
@@ -1444,6 +1489,15 @@
       const total = list.reduce((x, r) => x + Number(r.a || 0), 0) || 1;
       tb.innerHTML = list.length ? list.map(r => { const pct = Math.round(Number(r.a || 0) / total * 100); return `<tr><td><b>${nz(r.name)}</b></td><td style="text-align:center">${Number(r.c || 0).toLocaleString()}</td><td style="text-align:right">฿${Number(r.a || 0).toLocaleString()}</td><td style="text-align:right"><div style="display:flex;align-items:center;gap:8px;justify-content:flex-end"><span>${pct}%</span><div style="width:52px;height:6px;border-radius:999px;background:#eef2f7;overflow:hidden"><div style="height:100%;width:${pct}%;background:#2563eb"></div></div></div></td></tr>`; }).join('') : '<tr><td colspan="4" class="dash-empty">ยังไม่มีข้อมูล</td></tr>';
     }
+    function drawStatusDonut(canvasId, legendId, entries) {
+      const list = (entries || []).filter(Boolean);
+      const total = list.reduce((x, e) => x + Number(e.value || 0), 0) || 0;
+      upsertChart(canvasId, 'doughnut',
+        { labels: list.map(e => e.label), datasets: [{ data: list.map(e => Number(e.value || 0)), backgroundColor: list.map(e => e.color), borderWidth: 2, borderColor: '#fff' }] },
+        { ...NO_RESIZE, cutout: '62%', plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ' ' + Number(c.parsed).toLocaleString() } } } });
+      const leg = document.getElementById(legendId);
+      if (leg) leg.innerHTML = (total > 0) ? list.map(e => { const pct = Math.round(Number(e.value || 0) / total * 100); return `<div class="rl"><span class="dotc" style="background:${e.color}"></span><span class="rl-n">${e.label}</span><span class="rl-p">${Number(e.value || 0).toLocaleString()} (${pct}%)</span></div>`; }).join('') : '<div class="dash-empty">ยังไม่มีข้อมูล</div>';
+    }
     function renderSupplierList(id, top) {
       const el = document.getElementById(id); if (!el) return;
       const list = top || [];
@@ -1472,6 +1526,7 @@
         XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(summary), 'สรุป');
         XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['แผนก', 'จำนวนใบ', 'มูลค่า'], ...(s.pr.top || []).map(r => [r.name, r.c, r.a])]), 'ตามแผนก');
         XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['ผู้ขาย', 'จำนวนใบ', 'มูลค่า'], ...(s.po.top || []).map(r => [r.name, r.c, r.a])]), 'ผู้ขาย');
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['หมวดหมู่', 'รายการ', 'มูลค่า'], ...((s.categories) || []).map(r => [r.name, r.c, r.a])]), 'หมวดหมู่');
         XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['สินค้า', 'มูลค่า', 'จำนวนครั้ง'], ...((s.products && s.products.by_value) || []).map(r => [r.name, r.value, r.orders])]), 'สินค้า');
         XLSX.writeFile(wb, `procurement-report-${new Date().toISOString().slice(0, 10)}.xlsx`);
         toast('ดาวน์โหลดรายงานแล้ว');
