@@ -588,7 +588,7 @@
     .rr-chips button { font-size:10.5px; font-weight:600; background:#f1f5f9; color:#475569; border:none; border-radius:7px; padding:5px 9px; cursor:pointer; transition:background .15s; }
     .rr-chips button:hover { background:#dbeafe; color:#2563eb; }
     .rr-chat { flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:8px; margin-bottom:11px; max-height:300px; }
-    .rr-msg { padding:8px 11px; border-radius:12px; font-size:12px; max-width:88%; line-height:1.45; }
+    .rr-msg { padding:8px 11px; border-radius:12px; font-size:12px; max-width:88%; line-height:1.5; white-space:pre-wrap; }
     .rr-msg.bot { background:#f1f5f9; color:#334155; border-bottom-left-radius:3px; align-self:flex-start; }
     .rr-msg.user { background:#2563eb; color:#fff; border-bottom-right-radius:3px; align-self:flex-end; }
     .rr-input { position:relative; }
@@ -1284,7 +1284,9 @@
           <button type="button" onclick="askAI('สรุปภาพรวม')">สรุปภาพรวม</button>
           <button type="button" onclick="askAI('รออนุมัติ')">รออนุมัติ</button>
           <button type="button" onclick="askAI('มูลค่ารวม')">มูลค่ารวม</button>
-          <button type="button" onclick="askAI('PR ล่าสุด')">PR ล่าสุด</button>
+          <button type="button" onclick="askAI('อันดับผู้ขาย')">อันดับผู้ขาย</button>
+          <button type="button" onclick="askAI('หมวดหมู่ที่ใช้งบมากสุด')">หมวดหมู่</button>
+          <button type="button" onclick="askAI('ช่วยอะไรได้บ้าง')">ช่วยอะไรได้บ้าง</button>
         </div>
         <div class="rr-chat" id="rr-chat"></div>
         <div class="rr-input">
@@ -1563,7 +1565,7 @@
       if (aEl) aEl.innerHTML = alerts.map(a => `<div class="rr-alert ${a.c}"><b>⚠ ${a.t}</b><p>${a.p}</p></div>`).join('');
       // Seed a greeting once
       const chat = document.getElementById('rr-chat');
-      if (chat && !chat.dataset.seeded) { chat.dataset.seeded = '1'; addAIMsg('bot', 'สวัสดีครับ ผมเป็นผู้ช่วย AI ของระบบจัดซื้อ ถามผมเรื่องยอด PR/PO, รายการรออนุมัติ หรือมูลค่ารวมได้เลยครับ'); }
+      if (chat && !chat.dataset.seeded) { chat.dataset.seeded = '1'; addAIMsg('bot', 'สวัสดีครับ 👋 ผมช่วยดูข้อมูลจัดซื้อได้หลายเรื่อง เช่น ยอด PR/PO, อันดับแผนก/ผู้ขาย/สินค้า, หมวดหมู่, สถานะเอกสาร หรือพิมพ์เลขเอกสารเพื่อเปิดดู\nพิมพ์ "ช่วยอะไรได้บ้าง" เพื่อดูทั้งหมดครับ'); }
     }
     window.renderRightRail = renderRightRail;
     function addAIMsg(who, text) {
@@ -1577,16 +1579,52 @@
       if (!q) return;
       if (inp) inp.value = '';
       addAIMsg('user', q);
-      const s = window.__dashStats || {};
-      const money = v => Number(v || 0).toLocaleString('th-TH');
-      let a = 'ผมช่วยดูข้อมูล PR/PO ให้ได้ครับ ลองถามเรื่อง "รออนุมัติ", "มูลค่ารวม", "PR ล่าสุด" หรือ "สรุปภาพรวม" ได้เลยครับ';
-      if (/รออนุมัติ|อนุมัติ|pending/i.test(q)) { a = `ตอนนี้มีใบขอซื้อรออนุมัติ ${(s.pr && s.pr.status && s.pr.status.Pending) || 0} รายการครับ`; }
-      else if (/มูลค่า|ยอดรวม|value|บาท/i.test(q)) { const t = Math.round(Number(s.pr && s.pr.total_amount || 0) + Number(s.po && s.po.total_amount || 0)); a = `มูลค่ารวม PR + PO ทั้งหมด ${money(t)} บาทครับ`; }
-      else if (/สรุป|ภาพรวม|summary/i.test(q)) { a = `สรุปภาพรวม: PR ${(s.pr && s.pr.total_count) || 0} ใบ, PO ${(s.po && s.po.total_count) || 0} ใบ, รออนุมัติ ${(s.pr && s.pr.status && s.pr.status.Pending) || 0} รายการครับ`; }
-      else if (/ล่าสุด|recent|pr/i.test(q)) { const r = (s.pr && s.pr.recent || [])[0]; a = r ? `PR ล่าสุดคือ ${r.no} (${statusTh(r.status)}) มูลค่า ${money(r.total_amount)} บาทครับ` : 'ยังไม่มีใบขอซื้อในระบบครับ'; }
-      setTimeout(() => addAIMsg('bot', a), 350);
+      setTimeout(() => addAIMsg('bot', answerAI(q)), 320);
     }
     window.askAI = askAI;
+    function answerAI(q) {
+      const s = window.__dashStats || {};
+      if (!s.pr) return 'กำลังโหลดข้อมูล ลองเปิดหน้าแดชบอร์ดสักครู่แล้วถามใหม่ครับ';
+      const ql = q.toLowerCase();
+      const B = v => '฿' + Number(v || 0).toLocaleString('th-TH');
+      const depts = s.pr.top || [], sups = s.po.top || [], cats = (s.categories || []).filter(c => c.name && c.name !== '(ไม่ระบุ)');
+      const pByVal = (s.products || {}).by_value || [], pByOrd = (s.products || {}).by_orders || [];
+      const st = s.pr.status || {}, pst = s.po.status || {};
+      const totalVal = Math.round(Number(s.pr.total_amount || 0) + Number(s.po.total_amount || 0));
+      const rank = (list, valKey, unit) => list.slice(0, 3).map((r, i) => `${i + 1}. ${nz(r.name)} — ${valKey === 'value' ? B(r.value) : valKey === 'orders' ? Number(r.orders || 0).toLocaleString() + ' ' + (unit || 'ครั้ง') : B(r.a)}`).join('\n');
+      // Open a document by number
+      const mPr = q.match(/PR-\d{6}-\d{3}/i), mPo = q.match(/PO-\d{6}-\d{3}/i);
+      if (mPr) { try { closeRailAnd(() => showPRDetail(mPr[0].toUpperCase())); return 'กำลังเปิด ' + mPr[0].toUpperCase() + ' ให้ครับ'; } catch { } }
+      if (mPo) { try { closeRailAnd(() => showPODetail(mPo[0].toUpperCase())); return 'กำลังเปิด ' + mPo[0].toUpperCase() + ' ให้ครับ'; } catch { } }
+      // Help / greeting
+      if (/ช่วยอะไร|ทำอะไรได้|ถามอะไรได้|help|เมนู|คำสั่ง/.test(ql)) return 'ถามผมได้เลยครับ เช่น:\n• รออนุมัติ / อนุมัติแล้ว / ถูกปฏิเสธ\n• มูลค่ารวม / มูลค่า PR / มูลค่า PO / มูลค่าเฉลี่ย\n• อันดับแผนก / อันดับผู้ขาย / หมวดหมู่ที่ใช้งบมากสุด\n• สินค้ายอดนิยม / สินค้ามูลค่าสูงสุด\n• อัตราอนุมัติ / สรุปภาพรวม\n• PR ล่าสุด / PO ล่าสุด\n• พิมพ์เลขเอกสาร เช่น PR-202608-001 เพื่อเปิดดู';
+      if (/^(สวัสดี|hello|hi|หวัดดี|ดีครับ|ดีค่ะ)/.test(ql)) return 'สวัสดีครับ 👋 ถามผมเรื่องยอดจัดซื้อ อันดับแผนก/ผู้ขาย/สินค้า หรือสถานะเอกสารได้เลยครับ (พิมพ์ "ช่วยอะไรได้บ้าง" เพื่อดูรายการ)';
+      // Named-entity lookup (department / supplier / category by name in the question)
+      const hit = (list) => list.find(r => r.name && r.name !== '(ไม่ระบุ)' && String(r.name).toLowerCase().length > 1 && ql.includes(String(r.name).toLowerCase()));
+      const hd = hit(depts); if (hd && /แผนก|งบ|มูลค่า|เท่าไหร่|เท่าไร/.test(ql)) return `แผนก ${hd.name}: ${hd.c || 0} ใบ มูลค่า ${B(hd.a)} ครับ`;
+      const hsp = hit(sups); if (hsp) return `ผู้ขาย ${hsp.name}: ${hsp.c || 0} ใบสั่งซื้อ มูลค่า ${B(hsp.a)} ครับ`;
+      const hc = hit(cats); if (hc) return `หมวดหมู่ ${hc.name}: ${hc.c || 0} รายการ มูลค่า ${B(hc.a)} ครับ`;
+      // Intents
+      if (/ถูกปฏิเสธ|ปฏิเสธ|reject/.test(ql)) return `ใบขอซื้อที่ถูกปฏิเสธมี ${st.Rejected || 0} รายการครับ`;
+      if (/อนุมัติแล้ว|ผ่านอนุมัติ|approved/.test(ql)) return `อนุมัติแล้ว ${st.Approved || 0} รายการ จากทั้งหมด ${s.pr.total_count || 0} ใบครับ`;
+      if (/อัตราอนุมัติ|approval rate|กี่เปอร์เซ็นต์อนุมัติ/.test(ql)) { const r = s.pr.total_count ? Math.round((st.Approved || 0) / s.pr.total_count * 100) : 0; return `อัตราอนุมัติอยู่ที่ ${r}% (อนุมัติ ${st.Approved || 0} จาก ${s.pr.total_count || 0} ใบ) ครับ`; }
+      if (/รออนุมัติ|รอ อนุมัติ|pending|ค้างอนุมัติ|คงค้าง/.test(ql)) return `ตอนนี้มีใบขอซื้อรออนุมัติ ${st.Pending || 0} รายการครับ`;
+      if (/เฉลี่ย|average|เฉลี่ยต่อ/.test(ql)) { const ap = s.pr.total_count ? Math.round(s.pr.total_amount / s.pr.total_count) : 0; const ao = s.po.total_count ? Math.round(s.po.total_amount / s.po.total_count) : 0; return `มูลค่าเฉลี่ยต่อ PR ${B(ap)} และต่อ PO ${B(ao)} ครับ`; }
+      if (/มูลค่า\s*pr|ยอด\s*pr|pr.*มูลค่า/.test(ql)) return `มูลค่ารวมใบขอซื้อ (PR) ${B(s.pr.total_amount)} จาก ${s.pr.total_count || 0} ใบครับ`;
+      if (/มูลค่า\s*po|ยอด\s*po|po.*มูลค่า/.test(ql)) return `มูลค่ารวมใบสั่งซื้อ (PO) ${B(s.po.total_amount)} จาก ${s.po.total_count || 0} ใบครับ`;
+      if (/มูลค่า|ยอดรวม|ยอดจัดซื้อ|value|งบรวม|กี่บาท/.test(ql)) return `มูลค่าจัดซื้อรวม PR + PO ${B(totalVal)} ครับ (PR ${B(s.pr.total_amount)} · PO ${B(s.po.total_amount)})`;
+      if (/แผนก|department|หน่วยงาน|ฝ่าย/.test(ql)) return depts.length ? `อันดับแผนกที่ใช้งบสูงสุด:\n${rank(depts, 'a')}` : 'ยังไม่มีข้อมูลแผนกครับ';
+      if (/ผู้ขาย|ซัพพลาย|supplier|vendor|เจ้าไหน/.test(ql)) return sups.length ? `อันดับผู้ขาย (มูลค่า):\n${rank(sups, 'a')}` : 'ยังไม่มีข้อมูลผู้ขายครับ';
+      if (/หมวด|category|ประเภทสินค้า/.test(ql)) return cats.length ? `หมวดหมู่ที่ใช้งบสูงสุด:\n${rank(cats, 'a')}` : 'ยังไม่มีข้อมูลหมวดหมู่ (ตั้งหมวดหมู่ในรายการ PR ก่อนครับ)';
+      if (/บ่อย|ยอดนิยม|สั่งบ่อย|ซื้อบ่อย|popular|frequent/.test(ql)) return pByOrd.length ? `สินค้าที่สั่งซื้อบ่อยสุด:\n${rank(pByOrd, 'orders')}` : 'ยังไม่มีข้อมูลสินค้าครับ';
+      if (/สินค้า|product|item|วัสดุ/.test(ql)) return pByVal.length ? `สินค้ามูลค่าสูงสุด:\n${rank(pByVal, 'value')}` : 'ยังไม่มีข้อมูลสินค้าครับ';
+      if (/po.*ล่าสุด|ล่าสุด.*po|ใบสั่งซื้อล่าสุด/.test(ql)) { const r = (s.po.recent || [])[0]; return r ? `PO ล่าสุดคือ ${r.no} (${statusTh(r.status)}) ผู้ขาย ${nz(r.party)} มูลค่า ${B(r.total_amount)} ครับ` : 'ยังไม่มีใบสั่งซื้อครับ'; }
+      if (/ล่าสุด|recent|ใบล่าสุด|pr/.test(ql)) { const r = (s.pr.recent || [])[0]; return r ? `PR ล่าสุดคือ ${r.no} (${statusTh(r.status)}) แผนก ${nz(r.party)} มูลค่า ${B(r.total_amount)} ครับ` : 'ยังไม่มีใบขอซื้อครับ'; }
+      if (/สรุป|ภาพรวม|summary|รายงาน|overview/.test(ql)) return `สรุปภาพรวม:\n• ใบขอซื้อ (PR) ${s.pr.total_count || 0} ใบ · มูลค่า ${B(s.pr.total_amount)}\n• ใบสั่งซื้อ (PO) ${s.po.total_count || 0} ใบ · มูลค่า ${B(s.po.total_amount)}\n• รออนุมัติ ${st.Pending || 0} · อนุมัติแล้ว ${st.Approved || 0} · ปฏิเสธ ${st.Rejected || 0}\n• มูลค่าจัดซื้อรวม ${B(totalVal)}`;
+      if (/จำนวน|กี่ใบ|count/.test(ql)) return `PR ${s.pr.total_count || 0} ใบ และ PO ${s.po.total_count || 0} ใบครับ`;
+      return 'ยังไม่เข้าใจคำถามครับ 🙏 ลองพิมพ์ "ช่วยอะไรได้บ้าง" เพื่อดูสิ่งที่ผมตอบได้ หรือถามเช่น "อันดับผู้ขาย", "หมวดหมู่ที่ใช้งบมากสุด", "รออนุมัติ"';
+    }
+    function closeRailAnd(fn) { try { fn(); } catch { } }
 
     function applyDashFilter() { loadDashboard(); }
     function resetDashFilter() {
