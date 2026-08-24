@@ -632,6 +632,71 @@
     [data-theme="dark"] .rp-kpi-val { color:#f3f4f6; }
     [data-theme="dark"] .rp-sum-row { border-bottom-color:#26262b; color:#cbd5e1; }
     [data-theme="dark"] .rp-sum-row b { color:#f3f4f6; }
+    .dash-row.rp-3 { grid-template-columns:1fr 1fr 1fr; }
+    @media (max-width:980px){ .dash-row.rp-3 { grid-template-columns:1fr; } }
+    /* ===== Mobile off-canvas nav (hamburger) ===== */
+    .nav-toggle { display:none; align-items:center; justify-content:center; width:38px; height:38px; border-radius:10px; background:#f1f5f9; border:1px solid #e2e8f0; color:#475569; cursor:pointer; flex-shrink:0; }
+    .nav-toggle svg { stroke:currentColor; }
+    .nav-scrim { display:none; position:fixed; inset:0; background:rgba(15,23,42,.45); z-index:1100; }
+    [data-theme="dark"] .nav-toggle { background:#1f1f23; border-color:#2a2a30; color:#cbd5e1; }
+    /* ===== Responsive: tablet & mobile ===== */
+    @media (max-width:1024px){
+      .main { padding:22px 20px; }
+    }
+    @media (max-width:900px){
+      .sidebar { position:fixed; top:0; left:0; bottom:0; width:264px; z-index:1200; transform:translateX(-100%); transition:transform .25s ease; box-shadow:0 0 44px rgba(15,23,42,.22); overflow-y:auto; }
+      body.nav-open .sidebar { transform:translateX(0); }
+      body.nav-open .nav-scrim { display:block; }
+      .nav-toggle { display:inline-flex; }
+      .main { padding:16px 14px; }
+      .app-topbar { gap:8px; }
+      .tb-create span { display:none; }
+      .tb-create { padding:0 11px; }
+      .topbar-user { padding:4px; }
+      .topbar-user .tu-meta { display:none; }
+      .app-search { max-width:none; }
+    }
+    @media (max-width:760px){
+      h1, #page-dashboard > .rp-head h1, #page-dashboard > h1 { font-size:21px; }
+      .main::before { display:none; }
+      /* horizontal scroll for wide tables */
+      .pr-card-body, .panel, .detail-card, .modal-card { -webkit-overflow-scrolling:touch; }
+      .pr-card-body > table, .panel > table { display:block; overflow-x:auto; white-space:nowrap; }
+      table.pr-items { min-width:0; }
+      .page:not(#page-dashboard) table { min-width:560px; }
+      .page:not(#page-dashboard) .pr-card-body, .page:not(#page-dashboard) .panel { overflow-x:auto; }
+      /* stack forms */
+      .pr-grid { grid-template-columns:1fr; }
+      .pr-sig, .memo-signs { grid-template-columns:1fr; gap:14px; }
+      .po-topbar { flex-direction:column; align-items:stretch; }
+      .po-docboxes { width:100%; flex-wrap:wrap; }
+      .po-docbox { flex:1 1 46%; min-width:0; }
+      .pr-wf { flex-wrap:wrap; }
+      .pr-wf-step { flex:1 1 46%; }
+      /* PO document header stacks */
+      .po2-parties { grid-template-columns:1fr; gap:16px; }
+      .po2-party { grid-template-columns:1fr; gap:6px; }
+      .po2-title { font-size:30px; }
+      .memo { overflow-x:auto; }
+      .memo-cert { min-width:640px; }
+      table.memo-items { min-width:560px; }
+      /* detail modals fill screen */
+      .detail-overlay { padding:12px 8px; }
+      .detail-card { width:100%; padding:18px 14px; }
+      .sub-tabs { overflow-x:auto; }
+      .dash-filter { gap:8px; }
+      .dash-filter input, .dash-filter select { flex:1 1 40%; min-width:0; }
+    }
+    @media (max-width:560px){
+      .search-kbd { display:none; }
+      .app-search input { font-size:12px; padding:9px 12px 9px 38px; }
+      .rp-head { gap:10px; }
+      .rp-periods button { padding:6px 9px; }
+      .topbar-right { gap:7px; }
+      .tb-sep { display:none; }
+      .rp-cards { grid-template-columns:repeat(2,1fr); }
+      .memo, .detail-card { font-size:12px; }
+    }
   </style>
 </head>
 <body>
@@ -708,9 +773,11 @@
         <button class="logout-btn" onclick="doLogout()">ออกจากระบบ</button>
       </div>
     </div>
+    <div class="nav-scrim" onclick="toggleNav()"></div>
 
     <div class="main">
       <div class="app-topbar">
+        <button class="nav-toggle" onclick="toggleNav()" aria-label="เมนู" title="เมนู"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
         <div class="app-search topbar-search">
           <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
           <input type="text" id="global-search" placeholder="ค้นหาใบขอซื้อ ใบสั่งซื้อ ผู้ขาย สินค้า…" aria-label="Search" oninput="globalSearch(this.value)">
@@ -845,7 +912,7 @@
         </div>
 
         <!-- Row 5: document status + category breakdown -->
-        <div class="dash-row" style="grid-template-columns:1fr 1fr 1fr">
+        <div class="dash-row rp-3">
           <div class="pr-card"><div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> สถานะใบขอซื้อ (PR)</div></div><div class="pr-card-body"><div class="dash-chart-box" style="height:150px"><canvas id="pr-status-donut"></canvas></div><div class="rings-legend" id="pr-status-legend" style="margin-top:12px"></div></div></div>
           <div class="pr-card po-only"><div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> สถานะใบสั่งซื้อ (PO)</div></div><div class="pr-card-body"><div class="dash-chart-box" style="height:150px"><canvas id="po-status-donut"></canvas></div><div class="rings-legend" id="po-status-legend" style="margin-top:12px"></div></div></div>
           <div class="pr-card"><div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> สัดส่วนตามหมวดหมู่สินค้า</div></div><div class="pr-card-body"><div style="position:relative;height:150px"><canvas id="cat-donut"></canvas><div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none"><div style="font-size:10px;color:#94a3b8">รวม</div><div id="cat-donut-center" style="font-size:14px;font-weight:800;color:#0f172a">฿0</div></div></div><div class="rings-legend" id="cat-legend" style="margin-top:12px"></div></div></div>
@@ -1336,6 +1403,7 @@
         document.querySelectorAll('.nav a').forEach(l => l.classList.remove('active'));
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         e.target.classList.add('active');
+        document.body.classList.remove('nav-open');
         const page = e.target.dataset.page;
         document.getElementById(`page-${page}`).classList.add('active');
 
@@ -1472,6 +1540,8 @@
       });
     }
     window.globalSearch = globalSearch;
+    function toggleNav() { document.body.classList.toggle('nav-open'); }
+    window.toggleNav = toggleNav;
 
     // ===== Report dashboard helpers =====
     function drawDeptDonut(canvasId, legendId, centerId, top) {
