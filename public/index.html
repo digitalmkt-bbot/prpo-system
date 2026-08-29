@@ -901,7 +901,7 @@
 
         <!-- Row 3: department table + supplier ranking -->
         <div class="dash-row r-2-1">
-          <div class="pr-card"><div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> สรุปตามแผนก</div></div><div class="pr-card-body"><table class="pr-items"><thead><tr><th>แผนก</th><th style="text-align:center">จำนวนใบ</th><th style="text-align:right">มูลค่า</th><th style="text-align:right">สัดส่วน</th></tr></thead><tbody id="dept-table"></tbody></table></div></div>
+          <div class="pr-card"><div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> สรุปตามแผนก</div></div><div class="pr-card-body"><table class="pr-items"><thead><tr><th>แผนก</th><th style="text-align:center">จำนวนใบ</th><th style="text-align:right">มูลค่า</th><th style="text-align:right">สัดส่วน</th></tr></thead><tbody id="dash-dept-table"></tbody></table></div></div>
           <div class="pr-card po-only"><div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> อันดับผู้ขาย (มูลค่า)</div></div><div class="pr-card-body"><div class="sh-list" id="sup-list"></div></div></div>
         </div>
 
@@ -1514,7 +1514,7 @@
         setTxt('rs-avg-po', '฿' + money(avgPo));
         setTxt('rs-total', '฿' + money(totalVal));
         // Row 3: department table + supplier ranking
-        renderDeptTable('dept-table', s.pr.top);
+        renderDeptTable('dash-dept-table', s.pr.top);
         renderSupplierList('sup-list', s.po.top);
         // Row 4: top products + recent PR
         const prod = s.products || { by_value: [], by_orders: [] };
@@ -2383,8 +2383,10 @@
               <tbody>${rows || '<tr><td colspan="6" style="text-align:center;color:#9ca3af;padding:14px">ไม่มีรายการ</td></tr>'}</tbody>
               <tfoot>
                 <tr><td colspan="5" style="text-align:right">มูลค่าก่อนภาษี</td><td style="text-align:right">${money(po.subtotal)}</td></tr>
+                ${Number(po.doc_discount || 0) > 0 ? `<tr><td colspan="5" style="text-align:right">ส่วนลดท้ายบิล</td><td style="text-align:right">-${money(po.doc_discount)}</td></tr>` : ''}
                 <tr><td colspan="5" style="text-align:right">ภาษีมูลค่าเพิ่ม (VAT)</td><td style="text-align:right">${money(po.vat_amount)}</td></tr>
                 <tr><td colspan="5" style="text-align:right">จำนวนเงินรวมทั้งสิ้น</td><td style="text-align:right">${money(po.total_amount)} บาท</td></tr>
+                ${Number(po.wht_amount || 0) > 0 ? `<tr><td colspan="5" style="text-align:right">หัก ณ ที่จ่าย</td><td style="text-align:right">-${money(po.wht_amount)}</td></tr><tr><td colspan="5" style="text-align:right">ยอดชำระสุทธิ</td><td style="text-align:right">${money(po.net_amount)} บาท</td></tr>` : ''}
               </tfoot>
             </table>
             <div style="text-align:right;font-size:11.5px;font-style:italic;color:#475569;margin-top:5px">(${bahtText(po.total_amount)})</div>
@@ -2445,7 +2447,7 @@
     // ===== Edit issued PO (Purchasing / Admin only) =====
     function canEditPO() {
       const u = api.getStoredUser() || {};
-      return ['admin', 'purchasing'].includes(String(u.role || '').toLowerCase());
+      return PO_ROLES.includes(u.role);
     }
     window.canEditPO = canEditPO;
 

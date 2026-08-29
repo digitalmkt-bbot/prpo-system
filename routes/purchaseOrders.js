@@ -46,7 +46,7 @@ export default function(pool) {
       const {
         pr_no, supplier_id, reference = null, note = null,
         contact_name = null, contact_phone = null, contact_email = null,
-        wht_amount = 0, items: bodyItems, pr_item_ids = [], pr_line_qty = [],
+        wht_amount = 0, items: bodyItems, pr_item_ids = [], pr_line_qty = [], issue_date = null,
         quotation_no = null, invoice_no = null, tax_no = null, payment_terms = null,
         cat_department = null, cat_branch = null, cat_program = null,
         price_type = 'exclusive', doc_discount = 0, tags = null, is_draft = false,
@@ -104,12 +104,12 @@ export default function(pool) {
            subtotal, vat_amount, wht_amount, net_amount, issued_by,
            quotation_no, invoice_no, tax_no, payment_terms,
            cat_department, cat_branch, cat_program, price_type, doc_discount, tags, is_draft)
-        VALUES ($1,$2,CURRENT_DATE,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28)
+        VALUES ($1,$2,COALESCE($29::date, CURRENT_DATE),$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28)
       `, [po_id, po_no, pr.id, supplier_id, poStatus, total, vat_amount > 0, reference, note,
           contact_name, contact_phone, contact_email, subtotal, vat_amount, wht, net,
           (req.user && (req.user.name || req.user.email)) || null,
           quotation_no, invoice_no, tax_no, payment_terms,
-          cat_department, cat_branch, cat_program, priceType, docDisc, tags, !!is_draft]);
+          cat_department, cat_branch, cat_program, priceType, docDisc, tags, !!is_draft, issue_date || null]);
 
       for (const it of items) {
         await client.query(`

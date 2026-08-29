@@ -246,7 +246,7 @@ export default function(pool) {
       const { prNo } = req.params;
 
       const prResult = await pool.query(
-        'SELECT id, status FROM purchase_requests WHERE pr_no = $1',
+        'SELECT id, status, requested_by FROM purchase_requests WHERE pr_no = $1',
         [prNo]
       );
 
@@ -256,6 +256,14 @@ export default function(pool) {
 
       if (prResult.rows[0].status !== 'Pending') {
         return res.status(400).json({ error: 'Can only delete pending PRs' });
+      }
+
+      // Only the creator or an authorized role may delete a pending PR
+      const DELETE_ROLES = ['Admin', 'Executive', 'Managing Director', 'Owner', 'Purchase Manager'];
+      const vrole = req.user?.role;
+      const isOwner = String(prResult.rows[0].requested_by || '').toLowerCase() === String(req.user?.email || '').toLowerCase();
+      if (!DELETE_ROLES.includes(vrole) && !isOwner) {
+        return res.status(403).json({ error: 'ไม่มีสิทธิ์ลบใบขอซื้อนี้' });
       }
 
       await pool.query('DELETE FROM purchase_requests WHERE pr_no = $1', [prNo]);
