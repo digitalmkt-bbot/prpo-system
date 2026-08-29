@@ -92,6 +92,7 @@ pool.on('error', (err) => {
     app.use('/api/approval', requireAuth, (await import('./routes/approval.js')).default(pool));
     app.use('/api/stats', requireAuth, (await import('./routes/stats.js')).default(pool));
     app.use('/api/purchase-types', requireAuth, (await import('./routes/purchaseTypes.js')).default(pool));
+    app.use('/api/peak', requireAuth, (await import('./routes/peak.js')).default(pool));
 
     // Static files — disable caching for HTML/JS so deploys show immediately (no hard-refresh needed)
     app.use(express.static('public', {
