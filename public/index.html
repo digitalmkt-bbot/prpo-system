@@ -1398,26 +1398,44 @@
     let currentUser = null;
 
     // Navigation
-    document.querySelectorAll('.nav a').forEach(link => {
-      link.addEventListener('click', (e) => {
-        document.querySelectorAll('.nav a').forEach(l => l.classList.remove('active'));
-        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        e.target.classList.add('active');
-        document.body.classList.remove('nav-open');
-        const page = e.target.dataset.page;
-        document.getElementById(`page-${page}`).classList.add('active');
-
+    // ===== SPA router with browser-history support (Back/Forward) =====
+    function runPageLoader(page) {
+      try {
         if (page === 'dashboard') loadDashboard();
-        if (page === 'create') loadCreateForm();
-        if (page === 'prs') loadPRs();
-        if (page === 'pos') loadPOs();
-        if (page === 'approvals') loadApprovals();
-        if (page === 'suppliers') switchSupTab('suppliers');
-        if (page === 'products') loadProducts();
-        if (page === 'departments') loadDepartments();
-        if (page === 'companies') loadCompanies();
-        if (page === 'users') loadUsers();
-      });
+        else if (page === 'create') loadCreateForm();
+        else if (page === 'prs') loadPRs();
+        else if (page === 'pos') loadPOs();
+        else if (page === 'approvals') loadApprovals();
+        else if (page === 'suppliers') switchSupTab('suppliers');
+        else if (page === 'products') loadProducts();
+        else if (page === 'departments') loadDepartments();
+        else if (page === 'companies') loadCompanies();
+        else if (page === 'users') loadUsers();
+      } catch (e) { /* loader may be async elsewhere */ }
+    }
+    function currentPage() { const p = document.querySelector('.page.active'); return p ? p.id.replace('page-', '') : 'dashboard'; }
+    function overlayEls() { return ['pr-detail-overlay', 'po-detail-overlay', 'po-edit-overlay'].map(id => document.getElementById(id)).filter(Boolean).concat([...document.querySelectorAll('.modal-overlay')]); }
+    function anyOverlayVisible() { return overlayEls().some(el => el && getComputedStyle(el).display !== 'none'); }
+    function closeAllOverlays() { overlayEls().forEach(el => { if (el) el.style.display = 'none'; }); }
+    function goToPage(page, push) {
+      if (!document.getElementById('page-' + page)) return;
+      document.querySelectorAll('.nav a').forEach(l => l.classList.remove('active'));
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      const a = document.querySelector(`.nav a[data-page="${page}"]`); if (a) a.classList.add('active');
+      document.getElementById('page-' + page).classList.add('active');
+      document.body.classList.remove('nav-open');
+      if (push !== false) { try { history.pushState({ page }, '', '#' + page); } catch { } }
+      runPageLoader(page);
+    }
+    window.goToPage = goToPage;
+    document.querySelectorAll('.nav a').forEach(link => {
+      link.addEventListener('click', (e) => { const page = e.currentTarget.dataset.page; if (page) goToPage(page, true); });
+    });
+    window.addEventListener('popstate', (e) => {
+      // Back closes an open dialog first (without leaving the page)
+      if (anyOverlayVisible()) { closeAllOverlays(); try { history.pushState({ page: currentPage() }, '', '#' + currentPage()); } catch { } return; }
+      const page = (e.state && e.state.page) || (location.hash ? location.hash.slice(1) : '') || 'dashboard';
+      goToPage(page, false);
     });
 
     // Show '-' for empty/null values
@@ -2012,6 +2030,7 @@
             <button class="btn secondary" onclick="closePRDetail()">ปิด</button>
           </div>`;
         document.getElementById('pr-detail-overlay').style.display = 'flex';
+        try { history.pushState({ overlay: 1 }, '', '#' + currentPage()); } catch { }
         if (canApprove) recalcPRApprove();
       } catch (e) {
         toast('โหลดใบ PR ไม่สำเร็จ: ' + e.message, true);
@@ -2206,6 +2225,7 @@
       document.getElementById('modal-title').textContent = title;
       document.getElementById('modal-body').innerHTML = bodyHtml;
       document.getElementById('modal-overlay').style.display = 'flex';
+      try { history.pushState({ overlay: 1 }, '', '#' + currentPage()); } catch { }
       window._modalSave = onSave;
     }
     function closeModal() {
@@ -2403,6 +2423,7 @@
           if (qc && typeof QRious !== 'undefined') new QRious({ element: qc, value: link, size: 96, level: 'M', background: '#ffffff', foreground: '#111827' });
         } catch (e) { /* qr optional */ }
         document.getElementById('po-detail-overlay').style.display = 'flex';
+        try { history.pushState({ overlay: 1 }, '', '#' + currentPage()); } catch { }
       } catch (e) {
         toast('โหลดใบ PO ไม่สำเร็จ: ' + e.message, true);
       }
@@ -2524,6 +2545,7 @@
         (items.length ? items : [{}]).forEach(it => addEditRow(it));
         recalcEdit();
         document.getElementById('po-edit-overlay').style.display = 'flex';
+        try { history.pushState({ overlay: 1 }, '', '#' + currentPage()); } catch { }
       } catch (e) {
         toast('โหลดใบ PO ไม่สำเร็จ: ' + e.message, true);
       }
@@ -2980,14 +3002,7 @@
     window.pickEditSupplier = pickEditSupplier;
 
     // Switch SPA page programmatically (for non-nav pages like Issue PO)
-    function showPage(name) {
-      document.querySelectorAll('.nav a').forEach(l => l.classList.remove('active'));
-      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-      const a = document.querySelector(`.nav a[data-page="${name}"]`);
-      if (a) a.classList.add('active');
-      const pg = document.getElementById('page-' + name);
-      if (pg) pg.classList.add('active');
-    }
+    function showPage(name) { goToPage(name, true); }
     window.showPage = showPage;
 
     // ===== Full Issue PO page =====
@@ -3577,6 +3592,8 @@
       if (navPos) navPos.style.display = PO_ROLES.includes(user.role) ? '' : 'none';
       // Hide PO-only dashboard widgets for roles that can't see PO
       document.querySelectorAll('.po-only').forEach(el => { el.style.display = PO_ROLES.includes(user.role) ? '' : 'none'; });
+      // Baseline history entry so Back stays inside the app
+      try { history.replaceState({ page: 'dashboard' }, '', '#dashboard'); } catch { }
       init();
     }
 
