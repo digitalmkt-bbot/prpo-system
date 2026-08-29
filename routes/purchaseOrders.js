@@ -25,6 +25,8 @@ export default function(pool) {
     ADD COLUMN IF NOT EXISTS tags VARCHAR(300),
     ADD COLUMN IF NOT EXISTS is_draft BOOLEAN DEFAULT false`).catch(() => {});
   pool.query("ALTER TABLE po_items ADD COLUMN IF NOT EXISTS account_code VARCHAR(40)").catch(() => {});
+  // PEAK product code captured at issue time (see routes/peak.js)
+  pool.query("ALTER TABLE po_items ADD COLUMN IF NOT EXISTS product_code VARCHAR(60)").catch(() => {});
   // Attachments stored inline (base64) — avoids external object storage
   pool.query(`CREATE TABLE IF NOT EXISTS po_attachments (
     id UUID PRIMARY KEY,
@@ -112,11 +114,18 @@ export default function(pool) {
           cat_department, cat_branch, cat_program, priceType, docDisc, tags, !!is_draft, issue_date || null]);
 
       for (const it of items) {
+        // Resolve the product code once, at issue time. Looking it up later would
+        // let a rename in the Products master change what an old PO maps to.
+        let productCode = it.product_code || null;
+        if (!productCode && it.product_name) {
+          const pc = await client.query('SELECT code FROM products WHERE name = $1 LIMIT 1', [it.product_name]);
+          productCode = pc.rows[0]?.code || null;
+        }
         await client.query(`
-          INSERT INTO po_items (po_id, product_name, description, unit, quantity, unit_price, discount, vat_rate, account_code)
-          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+          INSERT INTO po_items (po_id, product_name, description, unit, quantity, unit_price, discount, vat_rate, account_code, product_code)
+          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
         `, [po_id, it.product_name, it.description || null, it.unit || null,
-            it.quantity || 0, it.unit_price || 0, it.discount || 0, it.vat_rate ?? (pr.has_vat ? 7 : 0), it.account_code || null]);
+            it.quantity || 0, it.unit_price || 0, it.discount || 0, it.vat_rate ?? (pr.has_vat ? 7 : 0), it.account_code || null, productCode]);
       }
 
       // Partial ordering: increment issued_qty per PR line; mark po_no only when fully issued.
@@ -203,12 +212,14 @@ export default function(pool) {
             'unit_price', poi.unit_price,
             'discount', poi.discount,
             'vat_rate', poi.vat_rate,
-            'account_code', poi.account_code
+            'account_code', poi.account_code,
+            'code', COALESCE(poi.product_code, pd.code)
           ) ORDER BY poi.created_at) as items
         FROM purchase_orders po
         LEFT JOIN suppliers s ON po.supplier_id = s.id
         LEFT JOIN purchase_requests pr ON po.pr_id = pr.id
         LEFT JOIN po_items poi ON po.id = poi.po_id
+        LEFT JOIN products pd ON pd.name = poi.product_name
         WHERE po.po_no = $1
         GROUP BY po.id, s.code, s.name, s.address, s.tax_id, s.phone, s.email, pr.pr_no
       `, [req.params.poNo]);
