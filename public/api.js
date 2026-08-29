@@ -247,6 +247,15 @@ class PROPOApi {
     return this.request('POST', '/pos/issue', payload);
   }
 
+  // ========== PEAK ==========
+  async peakPreview(poNo) {
+    return this.request('GET', `/peak/pos/${poNo}/preview`);
+  }
+
+  async peakSyncPO(poNo, force = false) {
+    return this.request('POST', `/peak/pos/${poNo}/sync${force ? '?force=true' : ''}`);
+  }
+
   async updatePOStatus(id, status) {
     return this.request('PUT', `/pos/${id}`, { status });
   }
