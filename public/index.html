@@ -732,6 +732,17 @@
           onblur="document.getElementById('lg-mascot').classList.remove('peek')">
         <button class="btn" type="submit" id="login-btn">เข้าสู่ระบบ</button>
         <div class="login-err" id="login-err"></div>
+        <div style="text-align:center;margin-top:12px">
+          <a href="#" onclick="toggleForgotPw();return false;" style="font-size:12px;color:#2563eb;cursor:pointer;text-decoration:none;font-weight:600">ลืมรหัสผ่าน?</a>
+        </div>
+        <div id="forgot-pw-box" style="display:none;margin-top:12px;padding:13px 15px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:14px;font-size:12px;color:#334155;line-height:1.7;text-align:left">
+          <b style="color:#1e3a8a;font-size:13px">รีเซ็ตรหัสผ่าน</b><br>
+          กรุณาติดต่อผู้ดูแลระบบ (Admin) เพื่อขอตั้งรหัสผ่านใหม่:<br>
+          1. Admin เข้าเมนู <b>Users &amp; Roles</b><br>
+          2. ที่แถวบัญชีของคุณ กดปุ่ม <b>🔑 ตั้งรหัสชั่วคราว</b><br>
+          3. นำรหัสชั่วคราวมาเข้าสู่ระบบ แล้วเปลี่ยนรหัสใหม่ได้ทันที<br>
+          <span style="color:#64748b">ติดต่อผู้ดูแลระบบ: digital.mkt@loveandaman.com</span>
+        </div>
       </form>
     </div>
   </div>
@@ -1560,6 +1571,8 @@
     window.globalSearch = globalSearch;
     function toggleNav() { document.body.classList.toggle('nav-open'); }
     window.toggleNav = toggleNav;
+    function toggleForgotPw() { const b = document.getElementById('forgot-pw-box'); if (b) b.style.display = (b.style.display === 'none' || !b.style.display) ? 'block' : 'none'; }
+    window.toggleForgotPw = toggleForgotPw;
 
     // ===== Report dashboard helpers =====
     function drawDeptDonut(canvasId, legendId, centerId, top) {
