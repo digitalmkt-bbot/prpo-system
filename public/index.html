@@ -697,6 +697,15 @@
       .rp-cards { grid-template-columns:repeat(2,1fr); }
       .memo, .detail-card { font-size:12px; }
     }
+      /* Phase 2: required item detail fields */
+    .spec-grid { display:grid; grid-template-columns:1fr 1fr; gap:4px; margin-top:4px; }
+    .spec-grid input { font-size:12px !important; padding:5px 7px !important; min-width:0; width:100%; }
+    .spec-grid input.spec-wide { grid-column:1/-1; }
+    .spec-miss { border-color:#ef4444 !important; background:#fef2f2 !important; }
+    .done-lbl { display:flex; align-items:center; gap:5px; font-size:11.5px; color:#475569; margin-top:5px; cursor:pointer; font-weight:400; }
+    .done-lbl input { width:auto !important; }
+    .it-files { font-size:11px; color:#2563eb; margin-top:3px; }
+    .spec-line { font-size:11.5px; color:#475569; margin-top:3px; line-height:1.5; }
   </style>
 </head>
 <body>
@@ -1037,8 +1046,8 @@
                 <tr>
                   <th style="width:28px;text-align:center">#</th>
                   <th style="width:110px">รหัส</th>
-                  <th style="width:22%">รายการ</th>
-                  <th style="width:18%">รายละเอียด</th>
+                  <th style="width:17%">รายการ</th>
+                  <th style="width:30%">รายละเอียด / สเปก <span style="color:#ef4444">*</span></th>
                   <th style="width:130px">หมวดหมู่</th>
                   <th style="width:72px;text-align:center">จำนวน</th>
                   <th style="width:100px">หน่วย</th>
@@ -2011,7 +2020,7 @@
             <td style="text-align:center">${idx + 1}</td>
             <td style="color:#64748b">${nz(it.code)}</td>
             <td>${nz(it.product_name)}</td>
-            <td>${nz(it.description)}</td>
+            <td>${nz(it.description)}${specText(it) ? `<div class="spec-line">${specText(it).replace(/</g, '&lt;')}</div>` : ''}${it.already_done ? '<div><span class="tag approved" style="font-size:10px;background:#fef3c7;color:#92400e">ดำเนินการไปแล้ว · มีหลักฐานแนบ</span></div>' : ''}</td>
             <td style="color:#64748b">${nz(it.category)}</td>
             <td style="text-align:center">${it.quantity}</td>
             <td>${nz(it.unit)}</td>
@@ -2086,6 +2095,7 @@
           <div style="text-align:right;margin-top:14px;font-size:16px;font-weight:700">ยอดรวม${canApprove ? ' (เฉพาะที่อนุมัติ)' : ''}: ฿<span id="pr-appr-total">${Number(pr.total_amount || 0).toLocaleString()}</span></div>
           ${canApprove ? '<div style="text-align:right;font-size:12px;color:var(--muted)">ติ๊กออกเพื่อปฏิเสธรายการนั้น — รายการที่ปฏิเสธจะถูกตัดออกจากยอดและไม่ส่งต่อไป PO</div>' : ''}
           ${posHtml}
+          <div id="pr-att-box" data-pr="${pr.pr_no}"></div>
           ${chain}
           <div class="detail-actions" style="margin-top:20px;text-align:right">
             ${canApprove ? `<button class="btn secondary" style="border-color:#e11d48;color:#e11d48" onclick="rejectPR('${pr.pr_no}');closePRDetail()">✕ ปฏิเสธทั้งใบ</button>
@@ -2094,6 +2104,7 @@
             <button class="btn secondary" onclick="closePRDetail()">ปิด</button>
           </div>`;
         document.getElementById('pr-detail-overlay').style.display = 'flex';
+        loadPrAttBox(pr.pr_no, items);
         try { history.pushState({ overlay: 1 }, '', '#' + currentPage()); } catch { }
         if (canApprove) recalcPRApprove();
       } catch (e) {
@@ -2912,13 +2923,66 @@
     }
     window.onPickProductCode = onPickProductCode;
 
+    // ===== Phase 2: required item details =====
+    const SPEC_FIELDS = [['brand', 'ยี่ห้อ'], ['model', 'รุ่น'], ['size', 'ไซส์/ขนาด'], ['spec', 'สเปก'], ['loc', 'ลำเรือ/สถานที่ใช้งาน']];
+    function specGridHtml(pfx, it) {
+      it = it || {};
+      const v = k => String((k === 'loc' ? (it.usage_location ?? it.loc) : it[k]) ?? '').replace(/"/g, '&quot;');
+      return `<div class="spec-grid">${SPEC_FIELDS.map(([k, l]) => `<input class="${pfx}-${k}${k === 'spec' || k === 'loc' ? ' spec-wide' : ''}" value="${v(k)}" placeholder="${l} *" title="${l} (ไม่มีให้ใส่ -)" oninput="this.classList.remove('spec-miss')">`).join('')}</div>`;
+    }
+    window.specGridHtml = specGridHtml;
+    function readSpec(tr, pfx) {
+      const g = k => ((tr.querySelector(`.${pfx}-${k}`) || {}).value || '').trim();
+      return { brand: g('brand'), model: g('model'), size: g('size'), spec: g('spec'), usage_location: g('loc') };
+    }
+    // mark missing spec inputs red; returns list of missing labels
+    function checkSpec(tr, pfx) {
+      const miss = [];
+      SPEC_FIELDS.forEach(([k, l]) => { const el = tr.querySelector(`.${pfx}-${k}`); if (el && !el.value.trim()) { el.classList.add('spec-miss'); miss.push(l); } });
+      return miss;
+    }
+    function specText(it) {
+      if (!it) return '';
+      const parts = [['ยี่ห้อ', it.brand], ['รุ่น', it.model], ['ไซส์', it.size], ['สเปก', it.spec], ['ใช้ที่', it.usage_location]]
+        .filter(([, v]) => v && String(v).trim() && String(v).trim() !== '-').map(([l, v]) => `${l}: ${v}`);
+      return parts.join(' · ');
+    }
+    window.specText = specText;
+    function onPrDoneToggle(cb) {
+      const box = cb.closest('td').querySelector('.it-evid');
+      if (box) box.style.display = cb.checked ? '' : 'none';
+    }
+    window.onPrDoneToggle = onPrDoneToggle;
+    function onPrItemFiles(input) {
+      const tr = input.closest('tr');
+      tr._files = (tr._files || []).concat([...(input.files || [])]);
+      input.value = '';
+      const big = tr._files.find(f => f.size > 20 * 1024 * 1024);
+      if (big) { tr._files = tr._files.filter(f => f !== big); toast('ไฟล์ ' + big.name + ' ใหญ่เกิน 20MB', true); }
+      renderPrItemFiles(tr);
+    }
+    window.onPrItemFiles = onPrItemFiles;
+    function renderPrItemFiles(tr) {
+      const box = tr.querySelector('.it-files');
+      if (!box) return;
+      box.innerHTML = (tr._files || []).map((f, i) => `<div>📄 ${f.name.replace(/</g, '&lt;')} <a href="#" style="color:#dc2626" onclick="removePrItemFile(this,${i});return false;">✕</a></div>`).join('');
+    }
+    function removePrItemFile(a, i) { const tr = a.closest('tr'); (tr._files || []).splice(i, 1); renderPrItemFiles(tr); }
+    window.removePrItemFile = removePrItemFile;
+    function fileToBase64(file) {
+      return new Promise((resolve, reject) => { const r = new FileReader(); r.onload = () => resolve(String(r.result).split(',')[1]); r.onerror = reject; r.readAsDataURL(file); });
+    }
+    window.fileToBase64 = fileToBase64;
+
     function addPrItem() {
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td class="it-no" style="text-align:center;color:#cbd5e1"></td>
         <td><input class="it-code" placeholder="รหัส" list="prodcode-datalist" onchange="onPickProductCode(this)" autocomplete="off"></td>
         <td><input class="it-name" list="prod-datalist" onchange="onPickProduct(this)" placeholder="พิมพ์เพื่อค้นหาสินค้า..." autocomplete="off"></td>
-        <td><input class="it-desc" placeholder="รายละเอียด"></td>
+        <td><input class="it-desc" placeholder="รายละเอียดเพิ่มเติม (ถ้ามี)">${specGridHtml('it')}
+          <label class="done-lbl"><input type="checkbox" class="it-done" onchange="onPrDoneToggle(this)"> ซื้อ/ดำเนินการไปแล้ว — ต้องแนบบิล/หลักฐาน</label>
+          <div class="it-evid" style="display:none"><button type="button" class="btn secondary" style="padding:3px 10px;font-size:11.5px" onclick="this.closest('td').querySelector('.it-file').click()">📎 แนบบิล/หลักฐาน</button><input type="file" class="it-file" multiple style="display:none" onchange="onPrItemFiles(this)"><div class="it-files"></div></div></td>
         <td><input class="it-cat" placeholder="หมวดหมู่" readonly style="background:#f8fafc;color:#64748b"></td>
         <td><input class="it-qty" type="number" min="0" step="1" value="1" style="text-align:center" oninput="recalcPR()"></td>
         <td><select class="it-unit"><option>ชิ้น</option><option>กล่อง</option><option>ชุด</option><option>แพ็ค</option><option>ม้วน</option><option>ลิตร</option><option>กิโลกรัม</option><option>เดือน</option><option>ครั้ง</option></select></td>
@@ -2949,7 +3013,20 @@
       try {
         const department_id = document.getElementById('cr-dept').value;
         if (!department_id) return toast('กรุณาเลือกแผนก', true);
-        const items = [...document.querySelectorAll('#cr-items tr')].map(tr => ({
+        const rowsAll = [...document.querySelectorAll('#cr-items tr')];
+        const rows = rowsAll.filter(tr => tr.querySelector('.it-name').value.trim() && (parseFloat(tr.querySelector('.it-qty').value) || 0) > 0);
+        // Phase 2: required details + evidence for already-done items
+        const problems = [];
+        rows.forEach((tr, i) => {
+          const nm = tr.querySelector('.it-name').value.trim();
+          const miss = checkSpec(tr, 'it');
+          if (miss.length) problems.push(`รายการ ${i + 1} (${nm}): ขาด ${miss.join(', ')}`);
+          if (tr.querySelector('.it-done')?.checked && !(tr._files || []).length) problems.push(`รายการ ${i + 1} (${nm}): ติ๊ก "ดำเนินการไปแล้ว" ต้องแนบบิล/หลักฐาน`);
+        });
+        if (problems.length) { alert('กรุณากรอกข้อมูลให้ครบก่อนส่ง (ไม่มีให้ใส่ "-")\n\n' + problems.join('\n')); return; }
+        const items = rows.map(tr => ({
+          ...readSpec(tr, 'it'),
+          already_done: !!tr.querySelector('.it-done')?.checked,
           product_name: tr.querySelector('.it-name').value.trim(),
           description: tr.querySelector('.it-desc').value.trim(),
           unit: tr.querySelector('.it-unit').value,
@@ -2973,7 +3050,17 @@
           purchase_type: document.getElementById('cr-type').value,
           delivery_location: document.getElementById('cr-delivery').value || null,
           purpose,
+          source_rq_no: __rqSource || null,
         });
+        // upload evidence files (item_seq = index in items[])
+        let upFail = 0;
+        for (let i = 0; i < rows.length; i++) {
+          for (const f of (rows[i]._files || [])) {
+            try { await api.addPrAttachment(res.pr_no, { item_seq: i, kind: 'evidence', filename: f.name, mimetype: f.type || null, data: await fileToBase64(f) }); }
+            catch (_) { upFail++; }
+          }
+        }
+        if (upFail) toast(`สร้าง ${res.pr_no} แล้ว แต่แนบไฟล์ไม่สำเร็จ ${upFail} ไฟล์`, true);
         toast(`สร้าง PR สำเร็จ: ${res.pr_no} (รออนุมัติ ${res.totalSteps} ขั้น)`);
         if (__rqSource) { try { await api.convertRequisition(__rqSource, res.pr_no); } catch (_) {} __rqSource = null; }
         document.querySelector('.nav a[data-page="prs"]').click();
@@ -2988,7 +3075,7 @@
     let __reqs = [];            // list cache
     let __reqAttachTarget = null; // { supplier_seq } for the file picker
 
-    function blankReqItem() { return { code: '', name: '', desc: '', qty: 1, unit: 'ชิ้น' }; }
+    function blankReqItem() { return { code: '', name: '', desc: '', qty: 1, unit: 'ชิ้น', brand: '', model: '', size: '', spec: '', usage_location: '' }; }
 
     function buildSupDatalist() {
       let dl = document.getElementById('sup-datalist');
@@ -3124,6 +3211,7 @@
           desc: (tr.querySelector('.rq-desc') || {}).value || '',
           qty: parseFloat((tr.querySelector('.rq-qty') || {}).value) || 0,
           unit: (tr.querySelector('.rq-unit') || {}).value || 'ชิ้น',
+          ...readSpec(tr, 'rq'),
         });
       });
       _req.items = items.length ? items : [blankReqItem()];
@@ -3187,7 +3275,7 @@
       const sups = _req.suppliers, items = _req.items;
       const attCount = (si) => (_req.attachments || []).filter(a => a.supplier_seq === si).length;
       // header
-      let h = '<tr><th style="width:36px">#</th><th style="width:110px">รหัส</th><th>รายการ</th><th>รายละเอียด</th><th style="width:70px">จำนวน</th><th style="width:90px">หน่วย</th>';
+      let h = '<tr><th style="width:36px">#</th><th style="width:110px">รหัส</th><th>รายการ</th><th>รายละเอียด / สเปก <span style="color:#ef4444">*</span></th><th style="width:70px">จำนวน</th><th style="width:90px">หน่วย</th>';
       sups.forEach((s, si) => {
         const sel = _req.selected === si;
         h += `<th style="min-width:150px;${sel ? 'background:#eff6ff' : ''}">
@@ -3205,7 +3293,7 @@
         let cells = `<td style="text-align:center;color:var(--muted)">${i + 1}</td>
           <td><input class="rq-code" value="${(it.code || '').replace(/"/g, '&quot;')}" list="prodcode-datalist" onchange="onPickReqProductCode(this)" placeholder="รหัส" style="width:100%"></td>
           <td><input class="rq-name" value="${(it.name || it.product_name || '').replace(/"/g, '&quot;')}" list="prod-datalist" onchange="onPickReqProduct(this)" placeholder="ค้นหาสินค้า..." style="width:100%"></td>
-          <td><input class="rq-desc" value="${(it.desc || it.description || '').replace(/"/g, '&quot;')}" placeholder="รายละเอียด" style="width:100%"></td>
+          <td style="min-width:230px"><input class="rq-desc" value="${(it.desc || it.description || '').replace(/"/g, '&quot;')}" placeholder="รายละเอียดเพิ่มเติม" style="width:100%">${specGridHtml('rq', it)}</td>
           <td><input class="rq-qty" type="number" min="0" step="1" value="${it.qty != null ? it.qty : (it.quantity != null ? it.quantity : 1)}" style="width:100%;text-align:center"></td>
           <td><input class="rq-unit" value="${(it.unit || 'ชิ้น').replace(/"/g, '&quot;')}" style="width:100%"></td>`;
         sups.forEach((s, si) => {
@@ -3265,15 +3353,17 @@
           selected_supplier_name: (_req.selected != null && _req.suppliers[_req.selected]) ? (_req.suppliers[_req.selected].name || null) : null,
         };
         if (!payload.items.length) return toast('กรุณาเพิ่มรายการอย่างน้อย 1 รายการ', true);
+        let specMiss = 0;
+        [...document.getElementById('req-matrix-body').children].forEach(tr => { if ((tr.querySelector('.rq-name') || {}).value && checkSpec(tr, 'rq').length) specMiss++; });
         if (_req.rq_no) {
           await api.updateRequisition(_req.rq_no, payload);
-          toast('บันทึกใบคำขอ ' + _req.rq_no + ' แล้ว');
+          toast('บันทึกใบคำขอ ' + _req.rq_no + ' แล้ว' + (specMiss ? ` — ยังขาดรายละเอียด/สเปก ${specMiss} รายการ (ต้องครบก่อนสร้าง PR)` : ''), !!specMiss);
         } else {
           const res = await api.createRequisition(payload);
           _req.rq_no = res.rq_no;
           document.getElementById('req-form-title').textContent = 'ใบคำขอจัดซื้อ ' + res.rq_no;
           document.getElementById('req-docno').textContent = res.rq_no;
-          toast('สร้างใบคำขอสำเร็จ: ' + res.rq_no);
+          toast('สร้างใบคำขอสำเร็จ: ' + res.rq_no + (specMiss ? ` — ยังขาดรายละเอียด/สเปก ${specMiss} รายการ` : ''), !!specMiss);
         }
         updateReqMakePrBtn();
       } catch (e) { toast('บันทึกไม่สำเร็จ: ' + e.message, true); }
@@ -3314,6 +3404,16 @@
       if (!_req || !_req.rq_no) return toast('กรุณาบันทึกใบคำขอก่อน', true);
       if (_req.selected == null) return toast('กรุณาเลือก Supplier ที่ชนะก่อน', true);
       gatherReqFromDOM();
+      {
+        const probs = [];
+        [...document.getElementById('req-matrix-body').children].forEach((tr, i) => {
+          const nm = (tr.querySelector('.rq-name') || {}).value || '';
+          if (!nm.trim()) return;
+          const miss = checkSpec(tr, 'rq');
+          if (miss.length) probs.push(`รายการ ${i + 1} (${nm}): ขาด ${miss.join(', ')}`);
+        });
+        if (probs.length) { alert('กรอกรายละเอียด/สเปกให้ครบก่อนสร้าง PR (ไม่มีให้ใส่ "-")\n\n' + probs.join('\n')); return; }
+      }
       const s = _req.selected;
       // switch to Create PR page then prefill
       goToPage('create', true);
@@ -3333,6 +3433,8 @@
             set('.it-code', it.code || '');
             set('.it-name', it.name || '');
             set('.it-desc', it.desc || '');
+            set('.it-brand', it.brand || ''); set('.it-model', it.model || ''); set('.it-size', it.size || '');
+            set('.it-spec', it.spec || ''); set('.it-loc', it.usage_location || '');
             const unitSel = tr.querySelector('.it-unit');
             if (unitSel && it.unit) { let o = [...unitSel.options].find(x => x.value === it.unit); if (!o) { o = new Option(it.unit, it.unit); unitSel.add(o); } unitSel.value = it.unit; }
             set('.it-qty', it.qty != null ? it.qty : 1);
@@ -3526,6 +3628,29 @@
       } catch (e) { toast('ดาวน์โหลดไม่สำเร็จ: ' + e.message, true); }
     }
     window.downloadPoAtt = downloadPoAtt;
+
+    // ===== PR attachments (evidence) in PR detail =====
+    async function loadPrAttBox(prNo, items) {
+      const box = document.getElementById('pr-att-box');
+      if (!box || box.dataset.pr !== prNo) return;
+      let list = [];
+      try { list = await api.getPrAttachments(prNo); } catch { return; }
+      if (!list.length) { box.innerHTML = ''; return; }
+      const nameOf = seq => { const it = (items || []).find(x => Number(x.item_seq) === Number(seq)); return it ? it.product_name : (seq != null ? 'รายการ ' + (Number(seq) + 1) : 'ทั้งใบ'); };
+      box.innerHTML = `<div style="margin-top:16px"><b>📎 หลักฐาน / ไฟล์แนบ (${list.length})</b><ul style="font-size:13px;margin:8px 0 0 18px;line-height:1.8">${list.map(a =>
+        `<li><a href="#" onclick="downloadPrAtt('${prNo}','${a.id}');return false;" style="color:var(--brand);font-weight:600">${String(a.filename).replace(/</g, '&lt;')}</a> <span style="color:var(--muted)">— ${String(nameOf(a.item_seq) || '').replace(/</g, '&lt;')} · ${Math.max(1, Math.round((a.size || 0) / 1024))} KB${a.uploaded_by ? ' · ' + String(a.uploaded_by).replace(/</g, '&lt;') : ''}</span></li>`).join('')}</ul></div>`;
+    }
+    window.loadPrAttBox = loadPrAttBox;
+    async function downloadPrAtt(prNo, id) {
+      try {
+        const f = await api.downloadPrAttachment(prNo, id);
+        const a = document.createElement('a');
+        a.href = `data:${f.mimetype || 'application/octet-stream'};base64,${f.data}`;
+        a.download = f.filename || 'file';
+        document.body.appendChild(a); a.click(); a.remove();
+      } catch (e) { toast('ดาวน์โหลดไม่สำเร็จ: ' + e.message, true); }
+    }
+    window.downloadPrAtt = downloadPrAtt;
     async function deletePoAtt(poNo, id, elId) {
       if (!confirm('ลบไฟล์แนบนี้?')) return;
       try { await api.deletePoAttachment(poNo, id); loadPoAttachments(poNo, elId); } catch (e) { toast('ลบไม่สำเร็จ: ' + e.message, true); }
@@ -3563,7 +3688,8 @@
       it = it || {};
       const esc = v => (v == null ? '' : String(v).replace(/"/g, '&quot;'));
       // Description auto-filled as "รายการ / หมวดหมู่" when a coded product; else keep existing description
-      const descDefault = it.category ? [it.product_name, it.category].filter(Boolean).join(' / ') : (it.description || '');
+      let descDefault = it.category ? [it.product_name, it.category].filter(Boolean).join(' / ') : (it.description || '');
+      if (specText(it) && !String(descDefault).includes(specText(it))) descDefault = [descDefault, specText(it)].filter(Boolean).join('\n');
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td class="ii-no" style="text-align:center;color:#cbd5e1"></td>

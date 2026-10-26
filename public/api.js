@@ -98,6 +98,12 @@ class PROPOApi {
     return this.request('DELETE', `/prs/${prNo}`);
   }
 
+  // PR attachments (evidence bills / quotes)
+  async getPrAttachments(prNo) { return this.request('GET', `/prs/${prNo}/attachments`); }
+  async addPrAttachment(prNo, att) { return this.request('POST', `/prs/${prNo}/attachments`, att); }
+  async downloadPrAttachment(prNo, id) { return this.request('GET', `/prs/${prNo}/attachments/${id}/download`); }
+  async deletePrAttachment(prNo, id) { return this.request('DELETE', `/prs/${prNo}/attachments/${id}`); }
+
   // ========== REQUISITIONS (ใบคำขอจัดซื้อ + เทียบราคา) ==========
   async getRequisitions() { return this.request('GET', '/requisitions'); }
   async getRequisition(rqNo) { return this.request('GET', `/requisitions/${rqNo}`); }
