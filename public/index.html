@@ -2019,8 +2019,8 @@
           return `<tr${rejected && !canApprove ? ' style="opacity:.5;text-decoration:line-through"' : ''}>
             <td style="text-align:center">${idx + 1}</td>
             <td style="color:#64748b">${nz(it.code)}</td>
-            <td>${nz(it.product_name)}</td>
-            <td>${nz(it.description)}${specText(it) ? `<div class="spec-line">${specText(it).replace(/</g, '&lt;')}</div>` : ''}${it.already_done ? '<div><span class="tag approved" style="font-size:10px;background:#fef3c7;color:#92400e">ดำเนินการไปแล้ว · มีหลักฐานแนบ</span></div>' : ''}</td>
+            <td class="no-i18n">${nz(it.product_name)}</td>
+            <td><span class="no-i18n">${nz(it.description)}</span>${specText(it) ? `<div class="spec-line no-i18n">${specText(it).replace(/</g, '&lt;')}</div>` : ''}${it.already_done ? '<div><span class="tag approved" style="font-size:10px;background:#fef3c7;color:#92400e">ดำเนินการไปแล้ว · มีหลักฐานแนบ</span></div>' : ''}</td>
             <td style="color:#64748b">${nz(it.category)}</td>
             <td style="text-align:center">${it.quantity}</td>
             <td>${nz(it.unit)}</td>
@@ -2095,6 +2095,7 @@
           <div style="text-align:right;margin-top:14px;font-size:16px;font-weight:700">ยอดรวม${canApprove ? ' (เฉพาะที่อนุมัติ)' : ''}: ฿<span id="pr-appr-total">${Number(pr.total_amount || 0).toLocaleString()}</span></div>
           ${canApprove ? '<div style="text-align:right;font-size:12px;color:var(--muted)">ติ๊กออกเพื่อปฏิเสธรายการนั้น — รายการที่ปฏิเสธจะถูกตัดออกจากยอดและไม่ส่งต่อไป PO</div>' : ''}
           ${posHtml}
+          <div id="pr-rq-box" data-pr="${pr.pr_no}"></div>
           <div id="pr-att-box" data-pr="${pr.pr_no}"></div>
           ${chain}
           <div class="detail-actions" style="margin-top:20px;text-align:right">
@@ -2105,6 +2106,7 @@
           </div>`;
         document.getElementById('pr-detail-overlay').style.display = 'flex';
         loadPrAttBox(pr.pr_no, items);
+        if (pr.linked_rq_no) loadPrRqBox(pr.pr_no, pr.linked_rq_no);
         try { history.pushState({ overlay: 1 }, '', '#' + currentPage()); } catch { }
         if (canApprove) recalcPRApprove();
       } catch (e) {
@@ -3638,7 +3640,7 @@
       if (!list.length) { box.innerHTML = ''; return; }
       const nameOf = seq => { const it = (items || []).find(x => Number(x.item_seq) === Number(seq)); return it ? it.product_name : (seq != null ? 'รายการ ' + (Number(seq) + 1) : 'ทั้งใบ'); };
       box.innerHTML = `<div style="margin-top:16px"><b>📎 หลักฐาน / ไฟล์แนบ (${list.length})</b><ul style="font-size:13px;margin:8px 0 0 18px;line-height:1.8">${list.map(a =>
-        `<li><a href="#" onclick="downloadPrAtt('${prNo}','${a.id}');return false;" style="color:var(--brand);font-weight:600">${String(a.filename).replace(/</g, '&lt;')}</a> <span style="color:var(--muted)">— ${String(nameOf(a.item_seq) || '').replace(/</g, '&lt;')} · ${Math.max(1, Math.round((a.size || 0) / 1024))} KB${a.uploaded_by ? ' · ' + String(a.uploaded_by).replace(/</g, '&lt;') : ''}</span></li>`).join('')}</ul></div>`;
+        `<li><a href="#" onclick="downloadPrAtt('${prNo}','${a.id}');return false;" style="color:var(--brand);font-weight:600" class="no-i18n">${String(a.filename).replace(/</g, '&lt;')}</a> <span style="color:var(--muted)">— <span class="no-i18n">${String(nameOf(a.item_seq) || '').replace(/</g, '&lt;')}</span> · ${Math.max(1, Math.round((a.size || 0) / 1024))} KB${a.uploaded_by ? ' · ' + String(a.uploaded_by).replace(/</g, '&lt;') : ''}</span></li>`).join('')}</ul></div>`;
     }
     window.loadPrAttBox = loadPrAttBox;
     async function downloadPrAtt(prNo, id) {
@@ -3651,6 +3653,80 @@
       } catch (e) { toast('ดาวน์โหลดไม่สำเร็จ: ' + e.message, true); }
     }
     window.downloadPrAtt = downloadPrAtt;
+
+    // ===== Phase 3: price comparison (from the source requisition) inside PR detail / approval =====
+    async function loadPrRqBox(prNo, rqNo) {
+      const box = document.getElementById('pr-rq-box');
+      if (!box || box.dataset.pr !== prNo) return;
+      box.innerHTML = `<div style="margin-top:16px;color:var(--muted);font-size:13px">กำลังโหลดตารางเปรียบเทียบราคา ${rqNo}...</div>`;
+      let rq, atts = [];
+      try { rq = await api.getRequisition(rqNo); } catch (e) { box.innerHTML = ''; return; }
+      try { atts = await api.getRqAttachments(rqNo); } catch { }
+      if (box.dataset.pr !== prNo) return;
+      const esc = v => String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+      const items = (Array.isArray(rq.items) ? rq.items : []).filter(it => (it.name || it.product_name || '').trim());
+      const sups = Array.isArray(rq.suppliers) ? rq.suppliers : [];
+      const prices = rq.prices || {};
+      if (!items.length || !sups.length) { box.innerHTML = ''; return; }
+      const allItems = Array.isArray(rq.items) ? rq.items : [];
+      const idxOf = it => allItems.indexOf(it);
+      const selIdx = sups.findIndex(sp => rq.selected_supplier_name && sp.name === rq.selected_supplier_name);
+      const fmt = n => Number(n).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      const totals = sups.map(() => ({ sum: 0, quoted: 0 }));
+      const body = items.map((it, r) => {
+        const i = idxOf(it), qty = Number(it.qty ?? it.quantity ?? 0) || 0;
+        const vals = sups.map((_, si) => { const v = Number(prices[i + '_' + si]); return isFinite(v) && v > 0 ? v : null; });
+        const min = Math.min(...vals.filter(v => v != null));
+        vals.forEach((v, si) => { if (v != null) { totals[si].sum += v * qty; totals[si].quoted++; } });
+        const spec = specText(it);
+        return `<tr><td style="text-align:center">${r + 1}</td>
+          <td class="no-i18n"><b>${esc(it.name || it.product_name)}</b>${spec ? `<div class="spec-line">${esc(spec)}</div>` : ''}</td>
+          <td style="text-align:center">${qty} ${esc(it.unit || '')}</td>
+          ${vals.map((v, si) => {
+            const low = v != null && v === min, sel = si === selIdx;
+            const bg = low ? '#dcfce7' : (sel ? '#eff6ff' : '');
+            return `<td style="text-align:right;${bg ? 'background:' + bg + ';' : ''}${low ? 'color:#166534;font-weight:700' : ''}">${v == null ? '<span style="color:#cbd5e1">—</span>' : fmt(v)}${v != null && qty ? `<div style="font-size:10.5px;color:#64748b;font-weight:400">รวม ${fmt(v * qty)}</div>` : ''}</td>`;
+          }).join('')}</tr>`;
+      }).join('');
+      const fullQuoted = totals.map(t => t.quoted === items.length);
+      const cmpTotals = totals.map((t, si) => fullQuoted[si] ? t.sum : null).filter(v => v != null);
+      const minTotal = cmpTotals.length ? Math.min(...cmpTotals) : null;
+      const maxTotal = cmpTotals.length ? Math.max(...cmpTotals) : null;
+      const head = sups.map((sp, si) => {
+        const sel = si === selIdx;
+        const files = atts.filter(a => Number(a.supplier_seq) === si);
+        return `<th style="min-width:130px;text-align:center;${sel ? 'background:#dbeafe;color:#1e40af' : ''}"><span class="no-i18n">${esc(sp.name || ('Supplier ' + (si + 1)))}</span>${sel ? '<div style="font-size:11px">✓ ผู้ขายที่เลือก</div>' : ''}${files.map(a => `<div style="font-size:11px;font-weight:400"><a href="#" onclick="downloadRqAtt('${rqNo}','${a.id}');return false;" style="color:#2563eb" class="no-i18n">📎 ${esc(a.filename)}</a></div>`).join('')}</th>`;
+      }).join('');
+      const foot = totals.map((t, si) => {
+        const full = fullQuoted[si], best = full && t.sum === minTotal, sel = si === selIdx;
+        return `<td style="text-align:right;font-weight:700;${best ? 'background:#dcfce7;color:#166534;' : (sel ? 'background:#eff6ff;' : '')}">${fmt(t.sum)}${full ? '' : `<div style="font-size:10.5px;color:#b45309;font-weight:400">เสนอ ${t.quoted}/${items.length} รายการ</div>`}</td>`;
+      }).join('');
+      let verdict = '';
+      if (selIdx >= 0) {
+        const selFull = fullQuoted[selIdx], selSum = totals[selIdx].sum;
+        if (selFull && minTotal != null && selSum > minTotal + 0.005)
+          verdict = `<div style="margin-top:8px;padding:8px 12px;border-radius:8px;background:#fef3c7;color:#92400e;font-size:12.5px">⚠️ ผู้ขายที่เลือก (<span class="no-i18n">${esc(sups[selIdx].name)}</span>) แพงกว่าราคาต่ำสุด ฿${fmt(selSum - minTotal)} — โปรดตรวจเหตุผลในวัตถุประสงค์ก่อนอนุมัติ</div>`;
+        else if (selFull && maxTotal != null && cmpTotals.length > 1)
+          verdict = `<div style="margin-top:8px;padding:8px 12px;border-radius:8px;background:#dcfce7;color:#166534;font-size:12.5px">✅ เลือกผู้ขายราคารวมต่ำสุด — ประหยัดกว่าเจ้าที่แพงสุด ฿${fmt(maxTotal - selSum)}</div>`;
+      }
+      box.innerHTML = `<div style="margin-top:18px">
+        <b>📊 ตารางเปรียบเทียบราคา</b> <span style="color:var(--muted);font-size:12.5px">จากใบคำขอจัดซื้อ ${esc(rqNo)} · ${sups.length} ผู้ขาย · ราคา/หน่วย (สีเขียว = ต่ำสุด)</span>
+        <div style="overflow-x:auto;margin-top:8px"><table class="pr-items"><thead><tr><th style="width:30px">#</th><th>รายการ / สเปก</th><th style="width:90px;text-align:center">จำนวน</th>${head}</tr></thead>
+        <tbody>${body}</tbody>
+        <tfoot><tr><td></td><td style="font-weight:700">รวมทั้งสิ้น</td><td></td>${foot}</tr></tfoot></table></div>
+        ${verdict}</div>`;
+    }
+    window.loadPrRqBox = loadPrRqBox;
+    async function downloadRqAtt(rqNo, id) {
+      try {
+        const f = await api.downloadRqAttachment(rqNo, id);
+        const a = document.createElement('a');
+        a.href = `data:${f.mimetype || 'application/octet-stream'};base64,${f.data}`;
+        a.download = f.filename || 'file';
+        document.body.appendChild(a); a.click(); a.remove();
+      } catch (e) { toast('ดาวน์โหลดไม่สำเร็จ: ' + e.message, true); }
+    }
+    window.downloadRqAtt = downloadRqAtt;
     async function deletePoAtt(poNo, id, elId) {
       if (!confirm('ลบไฟล์แนบนี้?')) return;
       try { await api.deletePoAttachment(poNo, id); loadPoAttachments(poNo, elId); } catch (e) { toast('ลบไม่สำเร็จ: ' + e.message, true); }
@@ -4558,6 +4634,7 @@
       const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
       let node;
       while ((node = walker.nextNode())) {
+        if (node.parentElement && node.parentElement.closest('.no-i18n')) continue;
         const raw = node.nodeValue;
         const en = tStr(raw);
         if (en !== null) {
@@ -4638,6 +4715,7 @@
             if (n.nodeType === Node.ELEMENT_NODE) {
               translateTree(n);
             } else if (n.nodeType === Node.TEXT_NODE) {
+              if (n.parentElement && n.parentElement.closest('.no-i18n')) continue;
               const en = tStr(n.nodeValue);
               if (en !== null) {
                 if (n.__thOrig === undefined) { n.__thOrig = n.nodeValue; _tNodes.push(n); }
