@@ -700,11 +700,17 @@
       /* Phase 2: required item detail fields */
     .spec-grid { display:grid; grid-template-columns:1fr 1fr; gap:4px; margin-top:4px; }
     .spec-grid input { font-size:12px !important; padding:5px 7px !important; min-width:0; width:100%; }
-    .spec-grid input.spec-wide { grid-column:1/-1; }
+    .spec-grid .spec-wide { grid-column:1/-1; }
+    .spec-grid label.sg { display:block; margin:0; min-width:0; }
+    .spec-grid label.sg span { display:block; font-size:10px; color:#94a3b8; font-weight:500; margin:0 0 1px 2px; white-space:nowrap; }
+    .spec-grid label.sg span b { color:#ef4444; font-weight:600; }
     .spec-miss { border-color:#ef4444 !important; background:#fef2f2 !important; }
     .done-lbl { display:flex; align-items:center; gap:5px; font-size:11.5px; color:#475569; margin-top:5px; cursor:pointer; font-weight:400; }
     .done-lbl input { width:auto !important; }
     .it-files { font-size:11px; color:#2563eb; margin-top:3px; }
+    .items-scroll { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+    #page-create #cr-items-table { min-width:1200px; }
+    #req-matrix th, #req-matrix td { vertical-align:top; }
     .spec-line { font-size:11.5px; color:#475569; margin-top:3px; line-height:1.5; }
   </style>
 </head>
@@ -1041,7 +1047,7 @@
         <div class="pr-card">
           <div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> รายการสินค้า / บริการ</div></div>
           <div class="pr-card-body">
-            <table class="pr-items">
+            <div class="items-scroll"><table class="pr-items" id="cr-items-table">
               <thead>
                 <tr>
                   <th style="width:28px;text-align:center">#</th>
@@ -1057,7 +1063,7 @@
                 </tr>
               </thead>
               <tbody id="cr-items"></tbody>
-            </table>
+            </table></div>
             <button class="pr-add" onclick="addPrItem()">+ เพิ่มรายการ</button>
             <div class="pr-sum">
               <div class="pr-sum-box">
@@ -2930,7 +2936,7 @@
     function specGridHtml(pfx, it) {
       it = it || {};
       const v = k => String((k === 'loc' ? (it.usage_location ?? it.loc) : it[k]) ?? '').replace(/"/g, '&quot;');
-      return `<div class="spec-grid">${SPEC_FIELDS.map(([k, l]) => `<input class="${pfx}-${k}${k === 'spec' || k === 'loc' ? ' spec-wide' : ''}" value="${v(k)}" placeholder="${l} *" title="${l} (ไม่มีให้ใส่ -)" oninput="this.classList.remove('spec-miss')">`).join('')}</div>`;
+      return `<div class="spec-grid">${SPEC_FIELDS.map(([k, l]) => `<label class="sg${k === 'loc' ? ' spec-wide' : ''}"><span>${l} <b>*</b></span><input class="${pfx}-${k}" value="${v(k)}" placeholder="${k === 'loc' ? 'เช่น สปีดโบ๊ต ลำที่ 3 / ท่าเรือ' : 'ไม่มีใส่ -'}" title="${l} (ไม่มีให้ใส่ -)" oninput="this.classList.remove('spec-miss')"></label>`).join('')}</div>`;
     }
     window.specGridHtml = specGridHtml;
     function readSpec(tr, pfx) {
@@ -3277,10 +3283,11 @@
       const sups = _req.suppliers, items = _req.items;
       const attCount = (si) => (_req.attachments || []).filter(a => a.supplier_seq === si).length;
       // header
-      let h = '<tr><th style="width:36px">#</th><th style="width:110px">รหัส</th><th>รายการ</th><th>รายละเอียด / สเปก <span style="color:#ef4444">*</span></th><th style="width:70px">จำนวน</th><th style="width:90px">หน่วย</th>';
+      document.getElementById('req-matrix').style.minWidth = (820 + 165 * sups.length) + 'px';
+      let h = '<tr><th style="width:32px">#</th><th style="min-width:110px">รหัส</th><th style="min-width:180px">รายการ</th><th style="min-width:250px">รายละเอียด / สเปก <span style="color:#ef4444">*</span></th><th style="min-width:72px">จำนวน</th><th style="min-width:84px">หน่วย</th>';
       sups.forEach((s, si) => {
         const sel = _req.selected === si;
-        h += `<th style="min-width:150px;${sel ? 'background:#eff6ff' : ''}">
+        h += `<th style="min-width:160px;${sel ? 'background:#eff6ff' : ''}">
           <input class="rq-sup-name" value="${(s.name || '').replace(/"/g, '&quot;')}" list="sup-datalist" placeholder="ชื่อผู้ขาย ${si + 1}" style="width:100%;font-size:12px;padding:4px 6px;border:1px solid var(--border);border-radius:6px">
           <div style="display:flex;gap:6px;align-items:center;justify-content:center;margin-top:4px;font-size:11px;font-weight:400">
             <label style="cursor:pointer;color:${sel ? '#2563eb' : 'var(--muted)'}"><input type="radio" name="rq-winner" ${sel ? 'checked' : ''} onclick="selectReqSupplier(${si})"> เลือก</label>
