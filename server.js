@@ -87,6 +87,7 @@ pool.on('error', (err) => {
     app.use('/api/suppliers', requireAuth, (await import('./routes/suppliers.js')).default(pool));
     app.use('/api/products', requireAuth, (await import('./routes/products.js')).default(pool));
     app.use('/api/approval-matrix', requireAuth, (await import('./routes/approvalMatrix.js')).default(pool));
+    app.use('/api/requisitions', requireAuth, (await import('./routes/requisitions.js')).default(pool));
     app.use('/api/prs', requireAuth, (await import('./routes/purchaseRequests.js')).default(pool));
     app.use('/api/pos', requireAuth, (await import('./routes/purchaseOrders.js')).default(pool));
     app.use('/api/approval', requireAuth, (await import('./routes/approval.js')).default(pool));
