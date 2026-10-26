@@ -760,6 +760,7 @@
       <ul class="nav">
         <li class="nav-label">ทั่วไป</li>
         <li><a class="active" data-page="dashboard"><svg class="nav-ic" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>แดชบอร์ด</a></li>
+        <li><a data-page="requisitions"><svg class="nav-ic" viewBox="0 0 24 24"><path d="M9 11H3v10h6V11z"/><path d="M15 3H9v18h6V3z"/><path d="M21 7h-6v14h6V7z"/></svg>ใบคำขอจัดซื้อ</a></li>
         <li><a data-page="create"><svg class="nav-ic" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M12 12v6M9 15h6"/></svg>สร้างใบขอซื้อ</a></li>
         <li><a data-page="prs"><svg class="nav-ic" viewBox="0 0 24 24"><path d="M9 2h6a1 1 0 0 1 1 1v1h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2V3a1 1 0 0 1 1-1z"/><path d="M9 12h6M9 16h4"/></svg>รายการใบขอซื้อ</a></li>
         <li id="nav-pos"><a data-page="pos"><svg class="nav-ic" viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>รายการใบสั่งซื้อ</a></li>
@@ -939,6 +940,55 @@
         <div class="dash-row r-1-1">
           <div class="pr-card"><div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> อันดับสินค้า (จำนวนครั้ง)</div></div><div class="pr-card-body"><div class="dash-chart-box sm"><canvas id="prod-orders"></canvas></div></div></div>
           <div class="pr-card po-only"><div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> จำนวนเอกสารรายวัน (PR vs PO)</div></div><div class="pr-card-body"><div class="dash-chart-box sm"><canvas id="pr-po-bars"></canvas></div></div></div>
+        </div>
+      </div>
+
+      <!-- REQUISITIONS (ใบคำขอจัดซื้อ + เทียบราคา) -->
+      <div class="page pr-form" id="page-requisitions">
+        <div id="req-list-view">
+          <h1>ใบคำขอจัดซื้อ</h1>
+          <p class="subtitle">สร้างคำขอจัดซื้อและเทียบราคาหลาย Supplier ก่อนออกใบขอซื้อ (PR) — รวมศูนย์ไว้ในระบบเดียว</p>
+          <div class="toolbar">
+            <input type="text" id="req-search" placeholder="ค้นหา เลขที่ / ผู้ขอ / วัตถุประสงค์..." oninput="renderReqList()">
+            <button class="btn" onclick="newRequisition()">+ สร้างใบคำขอ</button>
+          </div>
+          <div class="panel">
+            <table><thead><tr><th>เลขที่</th><th>วันที่</th><th>แผนก</th><th style="text-align:center">รายการ</th><th style="text-align:center">เทียบ</th><th>Supplier ที่เลือก</th><th>สถานะ</th><th style="text-align:right">จัดการ</th></tr></thead>
+              <tbody id="req-table"></tbody></table>
+            <div class="empty" id="req-empty" style="display:none">ยังไม่มีใบคำขอจัดซื้อ</div>
+          </div>
+        </div>
+
+        <div id="req-form-view" style="display:none">
+          <div class="po-topbar">
+            <h1 id="req-form-title">สร้างใบคำขอจัดซื้อ</h1>
+            <div class="po-docboxes"><div class="po-docbox"><div class="lbl">เลขที่</div><div class="docno" id="req-docno">ออกอัตโนมัติเมื่อบันทึก</div></div></div>
+          </div>
+          <div class="pr-card">
+            <div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> ข้อมูลทั่วไป</div></div>
+            <div class="pr-card-body"><div class="pr-grid">
+              <div class="pr-field"><label>วันที่</label><input type="date" id="req-date"></div>
+              <div class="pr-field"><label>ผู้ขอซื้อ</label><input type="text" id="req-requester" placeholder="ชื่อ-นามสกุล"></div>
+              <div class="pr-field"><label>เบอร์ติดต่อ</label><input type="text" id="req-phone" placeholder="เบอร์โทร"></div>
+              <div class="pr-field"><label>แผนก / ฝ่าย</label><select id="req-dept"></select></div>
+              <div class="pr-field full"><label>วัตถุประสงค์ / เหตุผลในการขอซื้อ</label><textarea id="req-purpose" placeholder="ระบุเหตุผลและความจำเป็น..."></textarea></div>
+            </div></div>
+          </div>
+          <div class="pr-card">
+            <div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> รายการสินค้า + เปรียบเทียบราคา</div>
+              <button class="btn secondary" style="padding:6px 14px" onclick="addReqSupplier()">+ เพิ่ม Supplier</button></div>
+            <div class="pr-card-body">
+              <div style="overflow-x:auto"><table class="pr-items" id="req-matrix"><thead id="req-matrix-head"></thead><tbody id="req-matrix-body"></tbody></table></div>
+              <button class="pr-add" onclick="addReqItem()">+ เพิ่มรายการ</button>
+              <div id="req-selected-note" style="margin-top:12px;font-size:12.5px;color:var(--muted)">ℹ️ กด "เลือก" บนหัวคอลัมน์ Supplier ที่ต้องการ เพื่อใช้สร้าง PR</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px">
+            <button class="pr-submit" onclick="submitRequisition()">💾 บันทึกใบคำขอ</button>
+            <button class="btn secondary" id="req-makepr-btn" style="display:none;border-color:#2563eb;color:#2563eb" onclick="createPRfromRQ()">➡ สร้าง PR จากใบนี้</button>
+            <button class="btn secondary" onclick="closeReqForm()">ปิด / กลับ</button>
+          </div>
+          <input type="file" id="req-file-input" style="display:none" onchange="onReqFilePicked(this)">
         </div>
       </div>
 
@@ -1413,6 +1463,7 @@
     function runPageLoader(page) {
       try {
         if (page === 'dashboard') loadDashboard();
+        else if (page === 'requisitions') loadRequisitions();
         else if (page === 'create') loadCreateForm();
         else if (page === 'prs') loadPRs();
         else if (page === 'pos') loadPOs();
@@ -2924,12 +2975,379 @@
           purpose,
         });
         toast(`สร้าง PR สำเร็จ: ${res.pr_no} (รออนุมัติ ${res.totalSteps} ขั้น)`);
+        if (__rqSource) { try { await api.convertRequisition(__rqSource, res.pr_no); } catch (_) {} __rqSource = null; }
         document.querySelector('.nav a[data-page="prs"]').click();
       } catch (e) {
         toast('สร้าง PR ไม่สำเร็จ: ' + e.message, true);
       }
     }
     window.submitPR = submitPR;
+
+    // ===== REQUISITIONS (ใบคำขอจัดซื้อ + เทียบราคาหลาย Supplier) =====
+    let _req = null;            // current requisition being edited
+    let __reqs = [];            // list cache
+    let __reqAttachTarget = null; // { supplier_seq } for the file picker
+
+    function blankReqItem() { return { code: '', name: '', desc: '', qty: 1, unit: 'ชิ้น' }; }
+
+    function buildSupDatalist() {
+      let dl = document.getElementById('sup-datalist');
+      if (!dl) { dl = document.createElement('datalist'); dl.id = 'sup-datalist'; document.body.appendChild(dl); }
+      dl.innerHTML = (SUPPLIERS || []).slice(0, 3000).map(s => `<option value="${(s.name || '').replace(/"/g, '&quot;')}">`).join('');
+    }
+
+    async function loadRequisitions() {
+      try {
+        __reqs = await api.getRequisitions();
+      } catch (e) { __reqs = []; toast('โหลดใบคำขอไม่สำเร็จ: ' + e.message, true); }
+      // default to list view
+      document.getElementById('req-list-view').style.display = '';
+      document.getElementById('req-form-view').style.display = 'none';
+      renderReqList();
+    }
+    window.loadRequisitions = loadRequisitions;
+
+    function renderReqList() {
+      const q = (document.getElementById('req-search').value || '').toLowerCase().trim();
+      const rows = __reqs.filter(r => !q ||
+        [r.rq_no, r.requester_name, r.requested_by, r.purpose, r.selected_supplier_name].some(v => String(v || '').toLowerCase().includes(q)));
+      const tb = document.getElementById('req-table');
+      const empty = document.getElementById('req-empty');
+      if (!rows.length) { tb.innerHTML = ''; empty.style.display = ''; return; }
+      empty.style.display = 'none';
+      const badge = (st) => st === 'converted'
+        ? '<span style="background:#dcfce7;color:#166534;padding:2px 8px;border-radius:10px;font-size:12px">สร้าง PR แล้ว</span>'
+        : '<span style="background:#dbeafe;color:#1e40af;padding:2px 8px;border-radius:10px;font-size:12px">กำลังเปิด</span>';
+      tb.innerHTML = rows.map(r => `<tr>
+        <td><a href="#" onclick="openRequisition('${r.rq_no}');return false;" style="color:#2563eb;font-weight:600">${r.rq_no}</a>${r.pr_no ? `<div style="font-size:11px;color:var(--muted)">→ ${r.pr_no}</div>` : ''}</td>
+        <td>${r.date ? new Date(r.date).toLocaleDateString('th-TH') : '-'}</td>
+        <td>${nz(r.department_name)}</td>
+        <td style="text-align:center">${r.item_count || 0}</td>
+        <td style="text-align:center">${r.supplier_count || 0}</td>
+        <td>${nz(r.selected_supplier_name)}</td>
+        <td>${badge(r.status)}</td>
+        <td style="text-align:right">
+          <a href="#" onclick="openRequisition('${r.rq_no}');return false;" style="color:#2563eb">เปิด</a>
+          ${r.status !== 'converted' ? ` · <a href="#" onclick="deleteRequisition('${r.rq_no}');return false;" style="color:#dc2626">ลบ</a>` : ''}
+        </td></tr>`).join('');
+    }
+    window.renderReqList = renderReqList;
+
+    async function populateReqDept(selectedId) {
+      try {
+        const depts = await api.getDepartments();
+        const sel = document.getElementById('req-dept');
+        if (depts.length) {
+          const byDiv = {};
+          depts.forEach(d => { const k = d.division || 'อื่นๆ'; (byDiv[k] = byDiv[k] || []).push(d); });
+          const order = [...DIVISIONS, ...Object.keys(byDiv).filter(k => !DIVISIONS.includes(k))];
+          sel.innerHTML = order.filter(div => byDiv[div]).map(div => {
+            const opts = byDiv[div].sort((a, b) => String(a.code || '').localeCompare(String(b.code || ''), 'en', { numeric: true }))
+              .map(d => `<option value="${d.id}">${d.code} - ${d.name}</option>`).join('');
+            return `<optgroup label="${div}${DIVISION_TH[div] ? ' · ' + DIVISION_TH[div] : ''}">${opts}</optgroup>`;
+          }).join('');
+        } else sel.innerHTML = '<option value="">— ยังไม่มีแผนก —</option>';
+        if (selectedId) sel.value = selectedId;
+      } catch (_) {}
+    }
+
+    async function newRequisition() {
+      _req = { rq_no: null, status: 'open', items: [blankReqItem()], suppliers: [{ name: '' }], prices: {}, selected: null, attachments: [] };
+      document.getElementById('req-form-title').textContent = 'สร้างใบคำขอจัดซื้อ';
+      document.getElementById('req-docno').textContent = 'ออกอัตโนมัติเมื่อบันทึก';
+      document.getElementById('req-date').value = new Date().toISOString().slice(0, 10);
+      document.getElementById('req-requester').value = currentUser ? (currentUser.name || '') : '';
+      document.getElementById('req-phone').value = '';
+      document.getElementById('req-purpose').value = '';
+      document.getElementById('req-makepr-btn').style.display = 'none';
+      await populateReqDept();
+      ensureProducts(); await ensureSuppliers(); buildSupDatalist();
+      document.getElementById('req-list-view').style.display = 'none';
+      document.getElementById('req-form-view').style.display = '';
+      renderReqMatrix();
+      try { history.pushState({ page: 'requisitions' }, '', '#requisitions'); } catch {}
+    }
+    window.newRequisition = newRequisition;
+
+    async function openRequisition(rqNo) {
+      try {
+        const d = await api.getRequisition(rqNo);
+        _req = {
+          rq_no: d.rq_no, status: d.status,
+          items: Array.isArray(d.items) && d.items.length ? d.items : [blankReqItem()],
+          suppliers: Array.isArray(d.suppliers) && d.suppliers.length ? d.suppliers : [{ name: '' }],
+          prices: d.prices || {}, selected: null, attachments: [],
+          department_id: d.department_id, selected_supplier_name: d.selected_supplier_name
+        };
+        // find selected supplier index by name
+        if (d.selected_supplier_name) {
+          const i = _req.suppliers.findIndex(s => s.name === d.selected_supplier_name);
+          if (i >= 0) _req.selected = i;
+        }
+        document.getElementById('req-form-title').textContent = 'ใบคำขอจัดซื้อ ' + d.rq_no;
+        document.getElementById('req-docno').textContent = d.rq_no;
+        document.getElementById('req-date').value = d.date ? String(d.date).slice(0, 10) : '';
+        document.getElementById('req-requester').value = d.requester_name || '';
+        document.getElementById('req-phone').value = d.requester_phone || '';
+        document.getElementById('req-purpose').value = d.purpose || '';
+        await populateReqDept(d.department_id);
+        ensureProducts(); await ensureSuppliers(); buildSupDatalist();
+        try { _req.attachments = await api.getRqAttachments(rqNo); } catch { _req.attachments = []; }
+        document.getElementById('req-list-view').style.display = 'none';
+        document.getElementById('req-form-view').style.display = '';
+        renderReqMatrix();
+        updateReqMakePrBtn();
+        if (d.status === 'converted') toast('ใบนี้สร้าง PR แล้ว (' + (d.pr_no || '') + ') — แก้ไขได้เฉพาะดูข้อมูล');
+        try { history.pushState({ page: 'requisitions' }, '', '#requisitions'); } catch {}
+      } catch (e) { toast('เปิดใบคำขอไม่สำเร็จ: ' + e.message, true); }
+    }
+    window.openRequisition = openRequisition;
+
+    function closeReqForm() {
+      _req = null;
+      document.getElementById('req-form-view').style.display = 'none';
+      document.getElementById('req-list-view').style.display = '';
+      loadRequisitions();
+    }
+    window.closeReqForm = closeReqForm;
+
+    // read current DOM back into _req (preserve edits before a structural re-render)
+    function gatherReqFromDOM() {
+      if (!_req) return;
+      const body = document.getElementById('req-matrix-body');
+      if (!body || !body.children.length) return;
+      const items = [];
+      [...body.children].forEach((tr, i) => {
+        items.push({
+          code: (tr.querySelector('.rq-code') || {}).value || '',
+          name: (tr.querySelector('.rq-name') || {}).value || '',
+          desc: (tr.querySelector('.rq-desc') || {}).value || '',
+          qty: parseFloat((tr.querySelector('.rq-qty') || {}).value) || 0,
+          unit: (tr.querySelector('.rq-unit') || {}).value || 'ชิ้น',
+        });
+      });
+      _req.items = items.length ? items : [blankReqItem()];
+      // supplier names from header
+      const heads = document.querySelectorAll('#req-matrix-head .rq-sup-name');
+      _req.suppliers = [...heads].map(h => ({ name: h.value || '' }));
+      if (!_req.suppliers.length) _req.suppliers = [{ name: '' }];
+      // prices
+      const prices = {};
+      body.querySelectorAll('.rq-price').forEach(inp => {
+        const key = inp.dataset.i + '_' + inp.dataset.s;
+        const v = parseFloat(inp.value);
+        if (!isNaN(v)) prices[key] = v;
+      });
+      _req.prices = prices;
+    }
+
+    function addReqItem() { gatherReqFromDOM(); _req.items.push(blankReqItem()); renderReqMatrix(); }
+    window.addReqItem = addReqItem;
+    function addReqSupplier() {
+      gatherReqFromDOM();
+      if (_req.suppliers.length >= 6) return toast('เปรียบเทียบได้สูงสุด 6 Supplier', true);
+      _req.suppliers.push({ name: '' }); renderReqMatrix();
+    }
+    window.addReqSupplier = addReqSupplier;
+    function removeReqItem(i) { gatherReqFromDOM(); if (_req.items.length <= 1) return; _req.items.splice(i, 1); renderReqMatrix(); }
+    window.removeReqItem = removeReqItem;
+    function removeReqSupplier(s) {
+      gatherReqFromDOM();
+      if (_req.suppliers.length <= 1) return toast('ต้องมีอย่างน้อย 1 Supplier', true);
+      _req.suppliers.splice(s, 1);
+      if (_req.selected === s) _req.selected = null; else if (_req.selected > s) _req.selected--;
+      // shift price keys
+      const np = {};
+      Object.entries(_req.prices).forEach(([k, v]) => { const [i, si] = k.split('_').map(Number); if (si === s) return; np[i + '_' + (si > s ? si - 1 : si)] = v; });
+      _req.prices = np;
+      renderReqMatrix(); updateReqMakePrBtn();
+    }
+    window.removeReqSupplier = removeReqSupplier;
+
+    function selectReqSupplier(s) { gatherReqFromDOM(); _req.selected = s; renderReqMatrix(); updateReqMakePrBtn(); }
+    window.selectReqSupplier = selectReqSupplier;
+
+    function updateReqMakePrBtn() {
+      const note = document.getElementById('req-selected-note');
+      const btn = document.getElementById('req-makepr-btn');
+      if (_req && _req.selected != null && _req.suppliers[_req.selected]) {
+        const nm = _req.suppliers[_req.selected].name || ('Supplier ' + (_req.selected + 1));
+        note.innerHTML = '✅ เลือกผู้ขาย: <b>' + nm + '</b> — บันทึกแล้วกด "สร้าง PR จากใบนี้"';
+        btn.style.display = (_req.rq_no && _req.status !== 'converted') ? '' : (_req.rq_no ? 'none' : '');
+        btn.style.display = (_req.rq_no && _req.status === 'converted') ? 'none' : '';
+      } else {
+        note.innerHTML = 'ℹ️ กด "เลือก" บนหัวคอลัมน์ Supplier ที่ต้องการ เพื่อใช้สร้าง PR';
+        btn.style.display = 'none';
+      }
+    }
+
+    function renderReqMatrix() {
+      const head = document.getElementById('req-matrix-head');
+      const body = document.getElementById('req-matrix-body');
+      const sups = _req.suppliers, items = _req.items;
+      const attCount = (si) => (_req.attachments || []).filter(a => a.supplier_seq === si).length;
+      // header
+      let h = '<tr><th style="width:36px">#</th><th style="width:110px">รหัส</th><th>รายการ</th><th>รายละเอียด</th><th style="width:70px">จำนวน</th><th style="width:90px">หน่วย</th>';
+      sups.forEach((s, si) => {
+        const sel = _req.selected === si;
+        h += `<th style="min-width:150px;${sel ? 'background:#eff6ff' : ''}">
+          <input class="rq-sup-name" value="${(s.name || '').replace(/"/g, '&quot;')}" list="sup-datalist" placeholder="ชื่อผู้ขาย ${si + 1}" style="width:100%;font-size:12px;padding:4px 6px;border:1px solid var(--border);border-radius:6px">
+          <div style="display:flex;gap:6px;align-items:center;justify-content:center;margin-top:4px;font-size:11px;font-weight:400">
+            <label style="cursor:pointer;color:${sel ? '#2563eb' : 'var(--muted)'}"><input type="radio" name="rq-winner" ${sel ? 'checked' : ''} onclick="selectReqSupplier(${si})"> เลือก</label>
+            <a href="#" onclick="pickReqFile(${si});return false;" title="แนบใบเสนอราคา" style="text-decoration:none">📎${attCount(si) ? '(' + attCount(si) + ')' : ''}</a>
+            <a href="#" onclick="removeReqSupplier(${si});return false;" style="color:#dc2626;text-decoration:none">✕</a>
+          </div></th>`;
+      });
+      h += '<th style="width:36px"></th></tr>';
+      head.innerHTML = h;
+      // body
+      body.innerHTML = items.map((it, i) => {
+        let cells = `<td style="text-align:center;color:var(--muted)">${i + 1}</td>
+          <td><input class="rq-code" value="${(it.code || '').replace(/"/g, '&quot;')}" list="prodcode-datalist" onchange="onPickReqProductCode(this)" placeholder="รหัส" style="width:100%"></td>
+          <td><input class="rq-name" value="${(it.name || it.product_name || '').replace(/"/g, '&quot;')}" list="prod-datalist" onchange="onPickReqProduct(this)" placeholder="ค้นหาสินค้า..." style="width:100%"></td>
+          <td><input class="rq-desc" value="${(it.desc || it.description || '').replace(/"/g, '&quot;')}" placeholder="รายละเอียด" style="width:100%"></td>
+          <td><input class="rq-qty" type="number" min="0" step="1" value="${it.qty != null ? it.qty : (it.quantity != null ? it.quantity : 1)}" style="width:100%;text-align:center"></td>
+          <td><input class="rq-unit" value="${(it.unit || 'ชิ้น').replace(/"/g, '&quot;')}" style="width:100%"></td>`;
+        sups.forEach((s, si) => {
+          const key = i + '_' + si;
+          const v = _req.prices[key];
+          const sel = _req.selected === si;
+          cells += `<td style="${sel ? 'background:#eff6ff' : ''}"><input class="rq-price" data-i="${i}" data-s="${si}" type="number" min="0" step="0.01" value="${v != null ? v : ''}" placeholder="0.00" oninput="recalcReqHighlight()" style="width:100%;text-align:right"></td>`;
+        });
+        cells += `<td style="text-align:center"><button onclick="removeReqItem(${i})" style="background:none;border:none;color:#fca5a5;cursor:pointer">🗑</button></td>`;
+        return '<tr>' + cells + '</tr>';
+      }).join('');
+      recalcReqHighlight();
+    }
+
+    function recalcReqHighlight() {
+      const body = document.getElementById('req-matrix-body');
+      if (!body) return;
+      [...body.children].forEach(tr => {
+        const cells = [...tr.querySelectorAll('.rq-price')];
+        const vals = cells.map(c => { const v = parseFloat(c.value); return isNaN(v) || v <= 0 ? Infinity : v; });
+        const min = Math.min(...vals);
+        cells.forEach((c, idx) => {
+          const td = c.parentElement;
+          if (vals[idx] === min && min !== Infinity) { c.style.fontWeight = '700'; c.style.color = '#166534'; td.style.background = '#dcfce7'; }
+          else { c.style.fontWeight = ''; c.style.color = ''; td.style.background = ''; }
+        });
+      });
+    }
+    window.recalcReqHighlight = recalcReqHighlight;
+
+    function onPickReqProduct(inp) { const p = (window.__prodByName || {})[inp.value.trim().toLowerCase()]; if (p) fillReqRow(inp.closest('tr'), p); }
+    window.onPickReqProduct = onPickReqProduct;
+    function onPickReqProductCode(inp) { const p = (window.__prodByCode || {})[inp.value.trim().toLowerCase()]; if (p) fillReqRow(inp.closest('tr'), p); }
+    window.onPickReqProductCode = onPickReqProductCode;
+    function fillReqRow(tr, p) {
+      if (!tr || !p) return;
+      const set = (sel, v) => { const el = tr.querySelector(sel); if (el && v != null && String(v) !== '') el.value = v; };
+      set('.rq-code', p.code); set('.rq-name', p.name);
+      const desc = tr.querySelector('.rq-desc'); if (desc && !desc.value) desc.value = [p.code, p.name].filter(Boolean).join(' - ');
+      if (p.unit) set('.rq-unit', p.unit);
+    }
+
+    async function submitRequisition() {
+      try {
+        gatherReqFromDOM();
+        const department_id = document.getElementById('req-dept').value || null;
+        const payload = {
+          date: document.getElementById('req-date').value || new Date().toISOString().slice(0, 10),
+          department_id,
+          requested_by: currentUser ? currentUser.email : null,
+          requester_name: document.getElementById('req-requester').value.trim(),
+          requester_phone: document.getElementById('req-phone').value.trim() || null,
+          purpose: document.getElementById('req-purpose').value.trim() || null,
+          items: _req.items.filter(it => (it.name || '').trim()),
+          suppliers: _req.suppliers,
+          prices: _req.prices,
+          selected_supplier_name: (_req.selected != null && _req.suppliers[_req.selected]) ? (_req.suppliers[_req.selected].name || null) : null,
+        };
+        if (!payload.items.length) return toast('กรุณาเพิ่มรายการอย่างน้อย 1 รายการ', true);
+        if (_req.rq_no) {
+          await api.updateRequisition(_req.rq_no, payload);
+          toast('บันทึกใบคำขอ ' + _req.rq_no + ' แล้ว');
+        } else {
+          const res = await api.createRequisition(payload);
+          _req.rq_no = res.rq_no;
+          document.getElementById('req-form-title').textContent = 'ใบคำขอจัดซื้อ ' + res.rq_no;
+          document.getElementById('req-docno').textContent = res.rq_no;
+          toast('สร้างใบคำขอสำเร็จ: ' + res.rq_no);
+        }
+        updateReqMakePrBtn();
+      } catch (e) { toast('บันทึกไม่สำเร็จ: ' + e.message, true); }
+    }
+    window.submitRequisition = submitRequisition;
+
+    async function deleteRequisition(rqNo) {
+      if (!confirm('ลบใบคำขอ ' + rqNo + ' ?')) return;
+      try { await api.deleteRequisition(rqNo); toast('ลบแล้ว'); loadRequisitions(); }
+      catch (e) { toast('ลบไม่สำเร็จ: ' + e.message, true); }
+    }
+    window.deleteRequisition = deleteRequisition;
+
+    // ---- attachments ----
+    function pickReqFile(supplier_seq) {
+      if (!_req || !_req.rq_no) return toast('กรุณาบันทึกใบคำขอก่อนแนบไฟล์', true);
+      __reqAttachTarget = { supplier_seq };
+      document.getElementById('req-file-input').click();
+    }
+    window.pickReqFile = pickReqFile;
+    async function onReqFilePicked(input) {
+      const file = input.files && input.files[0]; input.value = '';
+      if (!file || !__reqAttachTarget || !_req || !_req.rq_no) return;
+      if (file.size > 20 * 1024 * 1024) return toast('ไฟล์ใหญ่เกิน 20MB', true);
+      try {
+        const data = await new Promise((resolve, reject) => { const r = new FileReader(); r.onload = () => resolve(String(r.result).split(',')[1]); r.onerror = reject; r.readAsDataURL(file); });
+        await api.addRqAttachment(_req.rq_no, { supplier_seq: __reqAttachTarget.supplier_seq, item_seq: null, filename: file.name, mimetype: file.type || null, data });
+        _req.attachments = await api.getRqAttachments(_req.rq_no);
+        toast('แนบไฟล์แล้ว: ' + file.name);
+        renderReqMatrix();
+      } catch (e) { toast('แนบไฟล์ไม่สำเร็จ: ' + e.message, true); }
+    }
+    window.onReqFilePicked = onReqFilePicked;
+
+    // ---- create PR from this requisition (prefill the Create PR form) ----
+    let __rqSource = null; // rq_no to mark converted after PR submit
+    async function createPRfromRQ() {
+      if (!_req || !_req.rq_no) return toast('กรุณาบันทึกใบคำขอก่อน', true);
+      if (_req.selected == null) return toast('กรุณาเลือก Supplier ที่ชนะก่อน', true);
+      gatherReqFromDOM();
+      const s = _req.selected;
+      // switch to Create PR page then prefill
+      goToPage('create', true);
+      setTimeout(() => {
+        try {
+          const depSel = document.getElementById('cr-dept');
+          if (_req.department_id && depSel) depSel.value = _req.department_id;
+          document.getElementById('cr-requester').value = document.getElementById('req-requester').value;
+          const ph = document.getElementById('cr-phone'); if (ph) ph.value = document.getElementById('req-phone').value;
+          document.getElementById('cr-purpose').value = document.getElementById('req-purpose').value + ' (อ้างอิงใบคำขอ ' + _req.rq_no + ')';
+          const tbody = document.getElementById('cr-items');
+          tbody.innerHTML = '';
+          _req.items.filter(it => (it.name || '').trim()).forEach((it, i) => {
+            addPrItem();
+            const tr = tbody.lastElementChild;
+            const set = (sel, v) => { const el = tr.querySelector(sel); if (el) el.value = v; };
+            set('.it-code', it.code || '');
+            set('.it-name', it.name || '');
+            set('.it-desc', it.desc || '');
+            const unitSel = tr.querySelector('.it-unit');
+            if (unitSel && it.unit) { let o = [...unitSel.options].find(x => x.value === it.unit); if (!o) { o = new Option(it.unit, it.unit); unitSel.add(o); } unitSel.value = it.unit; }
+            set('.it-qty', it.qty != null ? it.qty : 1);
+            const price = _req.prices[(_req.items.indexOf(it)) + '_' + s];
+            set('.it-price', price != null ? price : 0);
+            const p = (window.__prodByCode || {})[String(it.code || '').toLowerCase()] || (window.__prodByName || {})[String(it.name || '').toLowerCase()];
+            if (p) { const cat = tr.querySelector('.it-cat'); if (cat) cat.value = p.category || ''; }
+          });
+          recalcPR();
+          __rqSource = _req.rq_no;
+          toast('เตรียมข้อมูล PR จาก ' + _req.rq_no + ' แล้ว — ตรวจสอบและกดสร้าง PR');
+        } catch (e) { toast('เตรียมข้อมูลไม่สำเร็จ: ' + e.message, true); }
+      }, 150);
+    }
+    window.createPRfromRQ = createPRfromRQ;
 
     // ===== Issue PO (choose supplier here) =====
     function filterIssueSupplier(showAll) {
@@ -4131,4 +4549,3 @@
   </script>
 </body>
 </html>
-<!-- redeploy 2026-10-22T07:39:59.671Z -->

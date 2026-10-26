@@ -98,6 +98,18 @@ class PROPOApi {
     return this.request('DELETE', `/prs/${prNo}`);
   }
 
+  // ========== REQUISITIONS (ใบคำขอจัดซื้อ + เทียบราคา) ==========
+  async getRequisitions() { return this.request('GET', '/requisitions'); }
+  async getRequisition(rqNo) { return this.request('GET', `/requisitions/${rqNo}`); }
+  async createRequisition(rq) { return this.request('POST', '/requisitions', rq); }
+  async updateRequisition(rqNo, rq) { return this.request('PUT', `/requisitions/${rqNo}`, rq); }
+  async deleteRequisition(rqNo) { return this.request('DELETE', `/requisitions/${rqNo}`); }
+  async convertRequisition(rqNo, pr_no) { return this.request('POST', `/requisitions/${rqNo}/convert`, { pr_no }); }
+  async getRqAttachments(rqNo) { return this.request('GET', `/requisitions/${rqNo}/attachments`); }
+  async addRqAttachment(rqNo, att) { return this.request('POST', `/requisitions/${rqNo}/attachments`, att); }
+  async downloadRqAttachment(rqNo, id) { return this.request('GET', `/requisitions/${rqNo}/attachments/${id}/download`); }
+  async deleteRqAttachment(rqNo, id) { return this.request('DELETE', `/requisitions/${rqNo}/attachments/${id}`); }
+
   // ========== APPROVAL WORKFLOW (Phase 3) ==========
   async getApprovalSteps(prNo) {
     return this.request('GET', `/approval/steps/${prNo}`);
