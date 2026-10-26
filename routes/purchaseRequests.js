@@ -20,6 +20,19 @@ export default function(pool) {
   // Requester contact phone + delivery location
   pool.query("ALTER TABLE purchase_requests ADD COLUMN IF NOT EXISTS requester_phone VARCHAR(50)").catch(() => {});
   pool.query("ALTER TABLE purchase_requests ADD COLUMN IF NOT EXISTS delivery_location VARCHAR(150)").catch(() => {});
+  // Phase 2: mandatory item detail fields + "already purchased" flag (needs evidence)
+  for (const col of ['brand VARCHAR(150)', 'model VARCHAR(150)', 'size VARCHAR(150)', 'spec TEXT', 'usage_location VARCHAR(200)', 'already_done BOOLEAN DEFAULT false', 'item_seq INTEGER']) {
+    pool.query(`ALTER TABLE pr_items ADD COLUMN IF NOT EXISTS ${col}`).catch(() => {});
+  }
+  pool.query("ALTER TABLE purchase_requests ADD COLUMN IF NOT EXISTS source_rq_no VARCHAR(50)").catch(() => {});
+  pool.query(`CREATE TABLE IF NOT EXISTS pr_attachments (
+    id UUID PRIMARY KEY, pr_no VARCHAR(50), item_seq INTEGER, kind VARCHAR(30) DEFAULT 'evidence',
+    filename VARCHAR(255), mimetype VARCHAR(120), size INTEGER, data TEXT,
+    uploaded_by VARCHAR(150), created_at TIMESTAMP DEFAULT NOW())`).catch(() => {});
+
+  // Required per-item details (use "-" when not applicable)
+  const REQUIRED = [['brand', 'ยี่ห้อ'], ['model', 'รุ่น'], ['size', 'ไซส์/ขนาด'], ['spec', 'สเปก'], ['usage_location', 'ลำเรือ/สถานที่ใช้งาน']];
+  const missingFields = (it) => REQUIRED.filter(([k]) => !String(it[k] ?? '').trim()).map(([, l]) => l);
 
   // Get all PRs with optional filters
   router.get('/', async (req, res) => {
@@ -45,7 +58,9 @@ export default function(pool) {
             'unit_price', pri.unit_price,
             'total_price', pri.total_price,
             'item_status', pri.item_status,
-            'po_no', pri.po_no
+            'po_no', pri.po_no,
+            'brand', pri.brand, 'model', pri.model, 'size', pri.size, 'spec', pri.spec,
+            'usage_location', pri.usage_location, 'already_done', pri.already_done, 'item_seq', pri.item_seq
           )) as items
         FROM purchase_requests pr
         LEFT JOIN suppliers s ON pr.supplier_id = s.id
@@ -117,7 +132,9 @@ export default function(pool) {
             'unit_price', pri.unit_price,
             'total_price', pri.total_price,
             'item_status', pri.item_status,
-            'po_no', pri.po_no
+            'po_no', pri.po_no,
+            'brand', pri.brand, 'model', pri.model, 'size', pri.size, 'spec', pri.spec,
+            'usage_location', pri.usage_location, 'already_done', pri.already_done, 'item_seq', pri.item_seq
           ) ORDER BY pri.created_at) as items
         FROM purchase_requests pr
         LEFT JOIN suppliers s ON pr.supplier_id = s.id
@@ -162,8 +179,13 @@ export default function(pool) {
         date, supplier_id = null, department_id, items, has_vat,
         requested_by, requester_name = null, needed_date = null,
         purchase_type = null, purpose = null,
-        requester_phone = null, delivery_location = null,
+        requester_phone = null, delivery_location = null, source_rq_no = null,
       } = req.body;
+      if (!Array.isArray(items) || !items.length) { await client.query('ROLLBACK'); return res.status(400).json({ error: 'ต้องมีรายการอย่างน้อย 1 รายการ' }); }
+      for (let i = 0; i < items.length; i++) {
+        const miss = missingFields(items[i]);
+        if (miss.length) { await client.query('ROLLBACK'); return res.status(400).json({ error: `รายการที่ ${i + 1} (${items[i].product_name || '-'}) ยังไม่กรอก: ${miss.join(', ')}` }); }
+      }
       const pr_id = uuid();
 
       // Generate PR Number
@@ -212,22 +234,26 @@ export default function(pool) {
         (id, pr_no, date, supplier_id, department_id, status, total_amount, has_vat,
          requested_by, current_approval_step, total_approval_steps, approval_chain,
          requester_name, needed_date, purchase_type, purpose, first_approver,
-         requester_phone, delivery_location)
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)
+         requester_phone, delivery_location, source_rq_no)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20)
       `, [
         pr_id, pr_no, date, supplier_id, department_id, 'Pending',
         total, has_vat, requested_by, startStep, totalSteps, '[]',
         requester_name, needed_date || null, purchase_type, purpose, firstApprover,
-        requester_phone, delivery_location
+        requester_phone, delivery_location, source_rq_no
       ]);
 
       // Add items (total_price is a generated column — do not insert it)
-      for (const item of items) {
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
         await client.query(`
           INSERT INTO pr_items
-          (pr_id, product_name, description, unit, quantity, unit_price, code, category)
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-        `, [pr_id, item.product_name, item.description || null, item.unit || null, item.quantity, item.unit_price, item.code || null, item.category || null]);
+          (pr_id, product_name, description, unit, quantity, unit_price, code, category,
+           brand, model, size, spec, usage_location, already_done, item_seq)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+        `, [pr_id, item.product_name, item.description || null, item.unit || null, item.quantity, item.unit_price, item.code || null, item.category || null,
+            String(item.brand).trim(), String(item.model).trim(), String(item.size).trim(), String(item.spec).trim(), String(item.usage_location).trim(),
+            !!item.already_done, i]);
       }
 
       await client.query('COMMIT');
@@ -271,6 +297,39 @@ export default function(pool) {
     } catch (err) {
       res.status(500).json({ error: err.message });
     }
+  });
+
+  // ----- PR attachments (evidence bills / quotes) -----
+  router.get('/:prNo/attachments', async (req, res) => {
+    try {
+      const r = await pool.query('SELECT id, item_seq, kind, filename, mimetype, size, uploaded_by, created_at FROM pr_attachments WHERE pr_no = $1 ORDER BY created_at', [req.params.prNo]);
+      res.json(r.rows);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+  router.post('/:prNo/attachments', async (req, res) => {
+    try {
+      const { item_seq = null, kind = 'evidence', filename, mimetype = null, data } = req.body || {};
+      if (!filename || !data) return res.status(400).json({ error: 'ต้องมีชื่อไฟล์และข้อมูล' });
+      const size = Math.round((String(data).length * 3) / 4);
+      if (size > 20 * 1024 * 1024) return res.status(413).json({ error: 'ไฟล์ใหญ่เกิน 20MB' });
+      const id = uuid();
+      await pool.query('INSERT INTO pr_attachments (id, pr_no, item_seq, kind, filename, mimetype, size, data, uploaded_by) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)',
+        [id, req.params.prNo, item_seq, kind, filename, mimetype, size, data, (req.user && (req.user.name || req.user.email)) || null]);
+      res.status(201).json({ id, filename, size });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+  router.get('/:prNo/attachments/:id/download', async (req, res) => {
+    try {
+      const r = await pool.query('SELECT filename, mimetype, data FROM pr_attachments WHERE id = $1 AND pr_no = $2', [req.params.id, req.params.prNo]);
+      if (!r.rows[0]) return res.status(404).json({ error: 'ไม่พบไฟล์' });
+      res.json(r.rows[0]);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+  router.delete('/:prNo/attachments/:id', async (req, res) => {
+    try {
+      await pool.query('DELETE FROM pr_attachments WHERE id = $1 AND pr_no = $2', [req.params.id, req.params.prNo]);
+      res.json({ ok: true });
+    } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
   return router;
