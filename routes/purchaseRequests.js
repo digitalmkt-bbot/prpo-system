@@ -117,6 +117,7 @@ export default function(pool) {
           pr.*,
           s.name as supplier_name, s.address as supplier_address,
           d.name as department_name,
+          COALESCE(pr.source_rq_no, (SELECT rq.rq_no FROM purchase_requisitions rq WHERE rq.pr_no = pr.pr_no ORDER BY rq.updated_at DESC LIMIT 1)) as linked_rq_no,
           (SELECT json_agg(json_build_object('po_no', po.po_no, 'supplier', sup.name, 'total', po.total_amount) ORDER BY po.created_at)
              FROM purchase_orders po LEFT JOIN suppliers sup ON po.supplier_id = sup.id
              WHERE po.pr_id = pr.id) as pos,
