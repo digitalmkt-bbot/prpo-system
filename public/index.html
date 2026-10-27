@@ -797,7 +797,8 @@
           </div>
           <svg class="user-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#9aa5b1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
         </div>
-        <button class="logout-btn" onclick="doLogout()">ออกจากระบบ</button>
+        <button class="logout-btn" onclick="openChangePassword()">🔑 เปลี่ยนรหัสผ่าน</button>
+        <button class="logout-btn" style="margin-top:6px" onclick="doLogout()">ออกจากระบบ</button>
       </div>
     </div>
     <div class="nav-scrim" onclick="toggleNav()"></div>
@@ -818,7 +819,7 @@
           <button class="tb-icon" id="theme-toggle" onclick="toggleTheme()" aria-label="Theme" title="สลับโหมด Dark / Light"><span id="theme-ic">🌙</span><span id="theme-lbl" style="display:none">Dark</span></button>
           <button class="tb-icon" id="tb-bell" onclick="document.querySelector('.nav a[data-page=&quot;approvals&quot;]').click()" aria-label="Notifications" title="รายการรออนุมัติ"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="tb-badge" id="tb-bell-badge" style="display:none">0</span></button>
           <button class="tb-icon" onclick="document.querySelector('.nav a[data-page=&quot;settings&quot;]').click()" aria-label="Settings" title="ตั้งค่า"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
-          <div class="topbar-user"><span class="tu-av" id="topbar-avatar">U</span><div class="tu-meta"><div class="tu-name" id="topbar-username2">User</div><div class="tu-role" id="topbar-role">-</div></div></div>
+          <div class="topbar-user" onclick="openChangePassword()" title="เปลี่ยนรหัสผ่าน" style="cursor:pointer"><span class="tu-av" id="topbar-avatar">U</span><div class="tu-meta"><div class="tu-name" id="topbar-username2">User</div><div class="tu-role" id="topbar-role">-</div></div></div>
         </div>
       </div>
       <!-- DASHBOARD -->
@@ -1458,6 +1459,26 @@
   </div>
 
   <!-- Generic Modal -->
+  <!-- Change password -->
+  <div id="pw-overlay" class="no-i18n" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:3000;align-items:center;justify-content:center;padding:16px">
+    <div class="modal-card" style="max-width:400px;width:100%">
+      <h3 style="margin:0 0 4px">🔑 เปลี่ยนรหัสผ่าน</h3>
+      <p style="margin:0 0 14px;font-size:12.5px;color:var(--muted)" id="pw-who"></p>
+      <form id="pw-form" onsubmit="submitChangePassword(event)" autocomplete="on">
+        <input type="text" name="username" id="pw-username" autocomplete="username" style="display:none">
+        <div class="pr-field" style="margin-bottom:10px"><label>รหัสผ่านปัจจุบัน</label><input type="password" id="pw-current" autocomplete="current-password" required></div>
+        <div class="pr-field" style="margin-bottom:10px"><label>รหัสผ่านใหม่ (อย่างน้อย 8 ตัวอักษร)</label><input type="password" id="pw-new" autocomplete="new-password" minlength="8" required></div>
+        <div class="pr-field" style="margin-bottom:6px"><label>ยืนยันรหัสผ่านใหม่</label><input type="password" id="pw-confirm" autocomplete="new-password" minlength="8" required></div>
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);margin:6px 0 0;cursor:pointer"><input type="checkbox" style="width:auto" onchange="['pw-current','pw-new','pw-confirm'].forEach(id=>document.getElementById(id).type=this.checked?'text':'password')"> แสดงรหัสผ่าน</label>
+        <div id="pw-err" style="color:#dc2626;font-size:12.5px;min-height:18px;margin-top:8px"></div>
+        <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px">
+          <button type="button" class="btn secondary" onclick="closeChangePassword()">ยกเลิก</button>
+          <button type="submit" class="btn" id="pw-submit">บันทึกรหัสผ่านใหม่</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <div class="modal-overlay" id="modal-overlay">
     <div class="modal-card">
       <h3 id="modal-title"></h3>
@@ -1491,7 +1512,7 @@
       } catch (e) { /* loader may be async elsewhere */ }
     }
     function currentPage() { const p = document.querySelector('.page.active'); return p ? p.id.replace('page-', '') : 'dashboard'; }
-    function overlayEls() { return ['pr-detail-overlay', 'po-detail-overlay', 'po-edit-overlay'].map(id => document.getElementById(id)).filter(Boolean).concat([...document.querySelectorAll('.modal-overlay')]); }
+    function overlayEls() { return ['pr-detail-overlay', 'po-detail-overlay', 'po-edit-overlay', 'pw-overlay'].map(id => document.getElementById(id)).filter(Boolean).concat([...document.querySelectorAll('.modal-overlay')]); }
     function anyOverlayVisible() { return overlayEls().some(el => el && getComputedStyle(el).display !== 'none'); }
     function closeAllOverlays() { overlayEls().forEach(el => { if (el) el.style.display = 'none'; }); }
     function goToPage(page, push) {
@@ -4211,6 +4232,7 @@
     window.showLogin = showLogin;
 
     function showApp(user) {
+      const wantPw = location.hash === '#change-password';
       currentUser = user;
       document.getElementById('sidebar-username').textContent = user.name || user.email;
       document.getElementById('sidebar-email').textContent = user.email;
@@ -4237,7 +4259,52 @@
       // Baseline history entry so Back stays inside the app
       try { history.replaceState({ page: 'dashboard' }, '', '#dashboard'); } catch { }
       init();
+      if (wantPw) setTimeout(openChangePassword, 300);
     }
+
+    // ===== Change own password =====
+    function openChangePassword() {
+      const f = document.getElementById('pw-form'); f.reset();
+      ['pw-current', 'pw-new', 'pw-confirm'].forEach(id => document.getElementById(id).type = 'password');
+      document.getElementById('pw-err').textContent = '';
+      const u = currentUser || {};
+      document.getElementById('pw-who').textContent = 'บัญชี: ' + (u.email || '');
+      document.getElementById('pw-username').value = u.email || '';
+      document.getElementById('pw-overlay').style.display = 'flex';
+      document.body.classList.remove('nav-open');
+      try { history.pushState({ page: currentPage(), overlay: 'pw' }, '', '#change-password'); } catch { }
+      setTimeout(() => document.getElementById('pw-current').focus(), 50);
+    }
+    window.openChangePassword = openChangePassword;
+    function closeChangePassword() {
+      document.getElementById('pw-overlay').style.display = 'none';
+      document.getElementById('pw-form').reset();
+      if (location.hash === '#change-password') { try { history.replaceState({ page: currentPage() }, '', '#' + currentPage()); } catch { } }
+    }
+    window.closeChangePassword = closeChangePassword;
+    async function submitChangePassword(e) {
+      e.preventDefault();
+      const cur = document.getElementById('pw-current').value;
+      const nw = document.getElementById('pw-new').value;
+      const cf = document.getElementById('pw-confirm').value;
+      const err = document.getElementById('pw-err');
+      err.textContent = '';
+      if (nw.length < 8) return err.textContent = 'รหัสผ่านใหม่ต้องยาวอย่างน้อย 8 ตัวอักษร';
+      if (nw !== cf) return err.textContent = 'รหัสผ่านใหม่และการยืนยันไม่ตรงกัน';
+      if (nw === cur) return err.textContent = 'รหัสผ่านใหม่ต้องไม่ซ้ำกับรหัสเดิม';
+      const btn = document.getElementById('pw-submit');
+      btn.disabled = true; btn.textContent = 'กำลังบันทึก...';
+      try {
+        await api.changePassword(cur, nw);
+        closeChangePassword();
+        toast('เปลี่ยนรหัสผ่านสำเร็จแล้ว ✓');
+      } catch (ex) {
+        err.textContent = ex.message || 'เปลี่ยนรหัสผ่านไม่สำเร็จ';
+      } finally {
+        btn.disabled = false; btn.textContent = 'บันทึกรหัสผ่านใหม่';
+      }
+    }
+    window.submitChangePassword = submitChangePassword;
 
     function doLogout() {
       api.logout();
