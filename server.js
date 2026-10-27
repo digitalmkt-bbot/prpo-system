@@ -77,22 +77,29 @@ pool.on('error', (err) => {
 
     app.use('/api/auth', (await import('./routes/auth.js')).default(pool));
 
+    // Write guard: anyone logged in may READ master data; only these roles may create/update/delete it.
+    const writeGuard = (roles, label) => (req, res, next) =>
+      (req.method === 'GET' || roles.includes(req.user?.role)) ? next()
+        : res.status(403).json({ error: `ไม่มีสิทธิ์แก้ไข${label} (เฉพาะ ${roles.join(' / ')})` });
+    const MASTER = ['Admin', 'Purchase Manager'];
+    const MASTER_STORE = ['Admin', 'Purchase Manager', 'Admin Store'];
+
     // Protected data routes (require a valid Bearer token)
-    app.use('/api/company', requireAuth, (await import('./routes/company.js')).default(pool));
-    app.use('/api/companies', requireAuth, (await import('./routes/companies.js')).default(pool));
-    app.use('/api/accounts', requireAuth, (await import('./routes/accounts.js')).default(pool));
-    app.use('/api/po-categories', requireAuth, (await import('./routes/poCategories.js')).default(pool));
-    app.use('/api/users', requireAuth, (await import('./routes/users.js')).default(pool));
-    app.use('/api/departments', requireAuth, (await import('./routes/departments.js')).default(pool));
-    app.use('/api/suppliers', requireAuth, (await import('./routes/suppliers.js')).default(pool));
-    app.use('/api/products', requireAuth, (await import('./routes/products.js')).default(pool));
-    app.use('/api/approval-matrix', requireAuth, (await import('./routes/approvalMatrix.js')).default(pool));
+    app.use('/api/company', requireAuth, writeGuard(MASTER, 'ข้อมูลบริษัท'), (await import('./routes/company.js')).default(pool));
+    app.use('/api/companies', requireAuth, writeGuard(MASTER, 'ข้อมูลบริษัท'), (await import('./routes/companies.js')).default(pool));
+    app.use('/api/accounts', requireAuth, writeGuard(MASTER, 'ผังบัญชี'), (await import('./routes/accounts.js')).default(pool));
+    app.use('/api/po-categories', requireAuth, writeGuard(MASTER, 'หมวด PO'), (await import('./routes/poCategories.js')).default(pool));
+    app.use('/api/users', requireAuth, writeGuard(['Admin'], 'ผู้ใช้งาน'), (await import('./routes/users.js')).default(pool));
+    app.use('/api/departments', requireAuth, writeGuard(MASTER, 'แผนก'), (await import('./routes/departments.js')).default(pool));
+    app.use('/api/suppliers', requireAuth, writeGuard(MASTER_STORE, 'ผู้ขาย'), (await import('./routes/suppliers.js')).default(pool));
+    app.use('/api/products', requireAuth, writeGuard(MASTER_STORE, 'สินค้า'), (await import('./routes/products.js')).default(pool));
+    app.use('/api/approval-matrix', requireAuth, writeGuard(MASTER, 'สายอนุมัติ'), (await import('./routes/approvalMatrix.js')).default(pool));
     app.use('/api/requisitions', requireAuth, (await import('./routes/requisitions.js')).default(pool));
     app.use('/api/prs', requireAuth, (await import('./routes/purchaseRequests.js')).default(pool));
     app.use('/api/pos', requireAuth, (await import('./routes/purchaseOrders.js')).default(pool));
     app.use('/api/approval', requireAuth, (await import('./routes/approval.js')).default(pool));
     app.use('/api/stats', requireAuth, (await import('./routes/stats.js')).default(pool));
-    app.use('/api/purchase-types', requireAuth, (await import('./routes/purchaseTypes.js')).default(pool));
+    app.use('/api/purchase-types', requireAuth, writeGuard(MASTER, 'ประเภทการจัดซื้อ'), (await import('./routes/purchaseTypes.js')).default(pool));
 
     // Static files — disable caching for HTML/JS so deploys show immediately (no hard-refresh needed)
     app.use(express.static('public', {
