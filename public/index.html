@@ -711,6 +711,12 @@
     .items-scroll { overflow-x:auto; -webkit-overflow-scrolling:touch; }
     #page-create #cr-items-table { min-width:1200px; }
     #req-matrix th, #req-matrix td { vertical-align:top; }
+    .item-files { margin-top:6px; font-size:11.5px; }
+    .item-files .if-row { display:flex; align-items:center; gap:6px; padding:2px 0; min-width:0; }
+    .item-files .if-row a.fn { color:#2563eb; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:220px; }
+    .item-files .if-row .pend { color:#b45309; font-size:10.5px; }
+    .item-files .if-row .del { color:#dc2626; cursor:pointer; text-decoration:none; }
+    .item-files .if-add { border:1px dashed #93c5fd; background:#eff6ff; color:#1d4ed8; border-radius:8px; padding:3px 10px; font-size:11.5px; cursor:pointer; margin-top:3px; }
     .spec-line { font-size:11.5px; color:#475569; margin-top:3px; line-height:1.5; }
   </style>
 </head>
@@ -1005,6 +1011,7 @@
             <button class="btn secondary" onclick="closeReqForm()">ปิด / กลับ</button>
           </div>
           <input type="file" id="req-file-input" style="display:none" onchange="onReqFilePicked(this)">
+          <input type="file" id="req-item-file-input" multiple style="display:none" onchange="onReqItemFilesPicked(this)">
         </div>
       </div>
 
@@ -2962,7 +2969,7 @@
     function specGridHtml(pfx, it) {
       it = it || {};
       const v = k => String((k === 'loc' ? (it.usage_location ?? it.loc) : it[k]) ?? '').replace(/"/g, '&quot;');
-      return `<div class="spec-grid">${SPEC_FIELDS.map(([k, l]) => `<label class="sg${k === 'loc' ? ' spec-wide' : ''}"><span>${l} <b>*</b></span><input class="${pfx}-${k}" value="${v(k)}" placeholder="${k === 'loc' ? 'เช่น สปีดโบ๊ต ลำที่ 3 / ท่าเรือ' : 'ไม่มีใส่ -'}" title="${l} (ไม่มีให้ใส่ -)" oninput="this.classList.remove('spec-miss')"></label>`).join('')}</div>`;
+      return `<div class="spec-grid no-i18n">${SPEC_FIELDS.map(([k, l]) => `<label class="sg${k === 'loc' ? ' spec-wide' : ''}"><span>${l} <b>*</b></span><input class="${pfx}-${k}" value="${v(k)}" placeholder="${k === 'loc' ? 'เช่น สปีดโบ๊ต ลำที่ 3 / ท่าเรือ' : 'ไม่มีใส่ -'}" title="${l} (ไม่มีให้ใส่ -)" oninput="this.classList.remove('spec-miss')"></label>`).join('')}</div>`;
     }
     window.specGridHtml = specGridHtml;
     function readSpec(tr, pfx) {
@@ -2983,8 +2990,8 @@
     }
     window.specText = specText;
     function onPrDoneToggle(cb) {
-      const box = cb.closest('td').querySelector('.it-evid');
-      if (box) box.style.display = cb.checked ? '' : 'none';
+      const btn = cb.closest('td').querySelector('.it-evid .if-add');
+      if (btn) btn.textContent = cb.checked ? '📎 แนบบิล/หลักฐาน (จำเป็น · เลือกได้หลายไฟล์)' : '📎 แนบไฟล์ (เลือกได้หลายไฟล์)';
     }
     window.onPrDoneToggle = onPrDoneToggle;
     function onPrItemFiles(input) {
@@ -3016,7 +3023,7 @@
         <td><input class="it-name" list="prod-datalist" onchange="onPickProduct(this)" placeholder="พิมพ์เพื่อค้นหาสินค้า..." autocomplete="off"></td>
         <td><input class="it-desc" placeholder="รายละเอียดเพิ่มเติม (ถ้ามี)">${specGridHtml('it')}
           <label class="done-lbl"><input type="checkbox" class="it-done" onchange="onPrDoneToggle(this)"> ซื้อ/ดำเนินการไปแล้ว — ต้องแนบบิล/หลักฐาน</label>
-          <div class="it-evid" style="display:none"><button type="button" class="btn secondary" style="padding:3px 10px;font-size:11.5px" onclick="this.closest('td').querySelector('.it-file').click()">📎 แนบบิล/หลักฐาน</button><input type="file" class="it-file" multiple style="display:none" onchange="onPrItemFiles(this)"><div class="it-files"></div></div></td>
+          <div class="it-evid no-i18n"><div class="it-files"></div><button type="button" class="if-add" onclick="this.closest('td').querySelector('.it-file').click()">📎 แนบไฟล์ (เลือกได้หลายไฟล์)</button><input type="file" class="it-file" multiple style="display:none" onchange="onPrItemFiles(this)"></div></td>
         <td><input class="it-cat" placeholder="หมวดหมู่" readonly style="background:#f8fafc;color:#64748b"></td>
         <td><input class="it-qty" type="number" min="0" step="1" value="1" style="text-align:center" oninput="recalcPR()"></td>
         <td><select class="it-unit"><option>ชิ้น</option><option>กล่อง</option><option>ชุด</option><option>แพ็ค</option><option>ม้วน</option><option>ลิตร</option><option>กิโลกรัม</option><option>เดือน</option><option>ครั้ง</option></select></td>
@@ -3090,7 +3097,7 @@
         let upFail = 0;
         for (let i = 0; i < rows.length; i++) {
           for (const f of (rows[i]._files || [])) {
-            try { await api.addPrAttachment(res.pr_no, { item_seq: i, kind: 'evidence', filename: f.name, mimetype: f.type || null, data: await fileToBase64(f) }); }
+            try { await api.addPrAttachment(res.pr_no, { item_seq: i, kind: rows[i].querySelector('.it-done')?.checked ? 'evidence' : 'item', filename: f.name, mimetype: f.type || null, data: await fileToBase64(f) }); }
             catch (_) { upFail++; }
           }
         }
@@ -3123,7 +3130,8 @@
     let __reqs = [];            // list cache
     let __reqAttachTarget = null; // { supplier_seq } for the file picker
 
-    function blankReqItem() { return { code: '', name: '', desc: '', qty: 1, unit: 'ชิ้น', brand: '', model: '', size: '', spec: '', usage_location: '' }; }
+    const newItemUid = () => 'it' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+    function blankReqItem() { return { uid: newItemUid(), code: '', name: '', desc: '', qty: 1, unit: 'ชิ้น', brand: '', model: '', size: '', spec: '', usage_location: '' }; }
 
     function buildSupDatalist() {
       let dl = document.getElementById('sup-datalist');
@@ -3190,7 +3198,7 @@
     }
 
     async function newRequisition() {
-      _req = { rq_no: null, status: 'open', items: [blankReqItem()], suppliers: canQuoteRQ() ? [{ name: '' }] : [], prices: {}, selected: null, attachments: [] };
+      _req = { rq_no: null, status: 'open', items: [blankReqItem()], suppliers: canQuoteRQ() ? [{ name: '' }] : [], prices: {}, selected: null, attachments: [], pending: {}, requested_by: currentUser && currentUser.email };
       document.getElementById('req-form-title').textContent = 'สร้างใบคำขอจัดซื้อ';
       document.getElementById('req-docno').textContent = 'ออกอัตโนมัติเมื่อบันทึก';
       document.getElementById('req-date').value = new Date().toISOString().slice(0, 10);
@@ -3212,7 +3220,8 @@
         const d = await api.getRequisition(rqNo);
         _req = {
           rq_no: d.rq_no, status: d.status,
-          items: Array.isArray(d.items) && d.items.length ? d.items : [blankReqItem()],
+          items: (Array.isArray(d.items) && d.items.length ? d.items : [blankReqItem()]).map(it => it.uid ? it : { ...it, uid: newItemUid() }),
+          pending: {},
           suppliers: Array.isArray(d.suppliers) && d.suppliers.length ? d.suppliers : (canQuoteRQ() && d.status !== 'converted' ? [{ name: '' }] : []),
           prices: d.prices || {}, selected: null, attachments: [],
           department_id: d.department_id, selected_supplier_name: d.selected_supplier_name,
@@ -3257,6 +3266,7 @@
       const items = [];
       [...body.children].forEach((tr, i) => {
         items.push({
+          uid: tr.dataset.uid || newItemUid(),
           code: (tr.querySelector('.rq-code') || {}).value || '',
           name: (tr.querySelector('.rq-name') || {}).value || '',
           desc: (tr.querySelector('.rq-desc') || {}).value || '',
@@ -3354,7 +3364,7 @@
         let cells = `<td style="text-align:center;color:var(--muted)">${i + 1}</td>
           <td><input class="rq-code" value="${(it.code || '').replace(/"/g, '&quot;')}" list="prodcode-datalist" onchange="onPickReqProductCode(this)" placeholder="รหัส" style="width:100%"></td>
           <td><input class="rq-name" value="${(it.name || it.product_name || '').replace(/"/g, '&quot;')}" list="prod-datalist" onchange="onPickReqProduct(this)" placeholder="ค้นหาสินค้า..." style="width:100%"></td>
-          <td style="min-width:230px"><input class="rq-desc" value="${(it.desc || it.description || '').replace(/"/g, '&quot;')}" placeholder="รายละเอียดเพิ่มเติม" style="width:100%">${specGridHtml('rq', it)}</td>
+          <td style="min-width:230px"><input class="rq-desc" value="${(it.desc || it.description || '').replace(/"/g, '&quot;')}" placeholder="รายละเอียดเพิ่มเติม" style="width:100%">${specGridHtml('rq', it)}${reqItemFilesHtml(it)}</td>
           <td><input class="rq-qty" type="number" min="0" step="1" value="${it.qty != null ? it.qty : (it.quantity != null ? it.quantity : 1)}" style="width:100%;text-align:center"></td>
           <td><input class="rq-unit" value="${(it.unit || 'ชิ้น').replace(/"/g, '&quot;')}" style="width:100%"></td>`;
         sups.forEach((s, si) => {
@@ -3364,10 +3374,75 @@
           cells += `<td style="${sel ? 'background:#eff6ff' : ''}"><input class="rq-price" data-i="${i}" data-s="${si}" type="number" min="0" step="0.01" value="${v != null ? v : ''}" placeholder="${roQ ? '—' : '0.00'}" ${roQ ? 'disabled' : ''} oninput="recalcReqHighlight()" style="width:100%;text-align:right"></td>`;
         });
         cells += `<td style="text-align:center"><button onclick="removeReqItem(${i})" style="background:none;border:none;color:#fca5a5;cursor:pointer">🗑</button></td>`;
-        return '<tr>' + cells + '</tr>';
+        return `<tr data-uid="${it.uid}">` + cells + '</tr>';
       }).join('');
       recalcReqHighlight();
       if (_req.status === 'converted') applyReqMode();
+    }
+
+    // ===== Per-item files (many per item) =====
+    function canAttachReqItem() {
+      if (!_req) return false;
+      if (canQuoteRQ()) return true;
+      const mine = !_req.rq_no || String(_req.requested_by || '').toLowerCase() === String(currentUser && currentUser.email || '').toLowerCase();
+      return mine && _req.status !== 'converted';
+    }
+    function reqItemFilesHtml(it) {
+      const escA = v => String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+      const me = String(currentUser && currentUser.email || '').toLowerCase();
+      const can = canAttachReqItem();
+      const saved = (_req.attachments || []).filter(a => a.item_uid && a.item_uid === it.uid);
+      const pend = (_req.pending && _req.pending[it.uid]) || [];
+      const kb = n => Math.max(1, Math.round((n || 0) / 1024)) + ' KB';
+      const rows = saved.map(a => `<div class="if-row">📄 <a href="#" class="fn" title="${escA(a.filename)}" onclick="downloadRqAtt('${_req.rq_no}','${a.id}');return false;">${escA(a.filename)}</a><span style="color:#94a3b8">${kb(a.size)}</span>${(canQuoteRQ() || (can && String(a.uploaded_email || '').toLowerCase() === me)) ? `<a class="del" title="ลบไฟล์" onclick="deleteReqItemFile('${a.id}')">✕</a>` : ''}</div>`)
+        .concat(pend.map((f, i) => `<div class="if-row">📄 <span class="fn" title="${escA(f.name)}" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px">${escA(f.name)}</span><span class="pend">รออัปโหลดเมื่อบันทึก</span><a class="del" title="เอาออก" onclick="removeReqPending('${it.uid}',${i})">✕</a></div>`));
+      const count = saved.length + pend.length;
+      return `<div class="item-files no-i18n">${rows.join('')}${can ? `<button type="button" class="if-add" onclick="pickReqItemFiles('${it.uid}')">📎 แนบไฟล์${count ? ' เพิ่ม' : ''} (เลือกได้หลายไฟล์)</button>` : (count ? '' : '<span style="color:#cbd5e1">ไม่มีไฟล์แนบ</span>')}</div>`;
+    }
+    let __reqItemTarget = null;
+    function pickReqItemFiles(uid) { gatherReqFromDOM(); __reqItemTarget = uid; document.getElementById('req-item-file-input').click(); }
+    window.pickReqItemFiles = pickReqItemFiles;
+    async function onReqItemFilesPicked(input) {
+      const files = [...(input.files || [])]; input.value = '';
+      const uid = __reqItemTarget; if (!files.length || !uid || !_req) return;
+      gatherReqFromDOM(); // keep anything typed in the rows before re-rendering
+      const ok = files.filter(f => f.size <= 20 * 1024 * 1024);
+      if (ok.length < files.length) toast('มีไฟล์ใหญ่เกิน 20MB ถูกข้าม ' + (files.length - ok.length) + ' ไฟล์', true);
+      if (!_req.rq_no) { // not saved yet → keep until "save"
+        _req.pending = _req.pending || {};
+        _req.pending[uid] = (_req.pending[uid] || []).concat(ok);
+        renderReqMatrix(); return;
+      }
+      let fail = 0;
+      for (const f of ok) {
+        try { await api.addRqAttachment(_req.rq_no, { item_uid: uid, filename: f.name, mimetype: f.type || null, data: await fileToBase64(f) }); }
+        catch (e) { fail++; toast('แนบ ' + f.name + ' ไม่สำเร็จ: ' + e.message, true); }
+      }
+      try { _req.attachments = await api.getRqAttachments(_req.rq_no); } catch { }
+      if (ok.length - fail) toast('แนบไฟล์แล้ว ' + (ok.length - fail) + ' ไฟล์');
+      renderReqMatrix();
+    }
+    window.onReqItemFilesPicked = onReqItemFilesPicked;
+    function removeReqPending(uid, i) { gatherReqFromDOM(); (_req.pending[uid] || []).splice(i, 1); renderReqMatrix(); }
+    window.removeReqPending = removeReqPending;
+    async function deleteReqItemFile(id) {
+      if (!confirm('ลบไฟล์นี้?')) return;
+      gatherReqFromDOM();
+      try { await api.deleteRqAttachment(_req.rq_no, id); _req.attachments = await api.getRqAttachments(_req.rq_no); renderReqMatrix(); toast('ลบไฟล์แล้ว'); }
+      catch (e) { toast('ลบไม่สำเร็จ: ' + e.message, true); }
+    }
+    window.deleteReqItemFile = deleteReqItemFile;
+    async function uploadReqPending() {
+      let n = 0, fail = 0;
+      for (const [uid, list] of Object.entries(_req.pending || {})) {
+        for (const f of list) {
+          try { await api.addRqAttachment(_req.rq_no, { item_uid: uid, filename: f.name, mimetype: f.type || null, data: await fileToBase64(f) }); n++; }
+          catch (e) { fail++; }
+        }
+      }
+      _req.pending = {};
+      if (fail) toast(`แนบไฟล์ไม่สำเร็จ ${fail} ไฟล์ — เปิดใบคำขอแล้วแนบใหม่ได้`, true);
+      return n;
     }
 
     function applyReqMode() {
@@ -3446,9 +3521,13 @@
         } else {
           const res = await api.createRequisition(payload);
           _req.rq_no = res.rq_no;
+          const nUp = await uploadReqPending();
+          try { _req.attachments = await api.getRqAttachments(_req.rq_no); } catch { }
+          if (nUp) toast('แนบไฟล์แล้ว ' + nUp + ' ไฟล์');
           document.getElementById('req-form-title').textContent = 'ใบคำขอจัดซื้อ ' + res.rq_no;
           document.getElementById('req-docno').textContent = res.rq_no;
           if (!canQuoteRQ()) { toast('ส่งใบคำขอ ' + res.rq_no + ' ให้ฝ่ายจัดซื้อแล้ว ✓'); closeReqForm(); return; }
+          renderReqMatrix();
           toast('สร้างใบคำขอสำเร็จ: ' + res.rq_no + (specMiss ? ` — ยังขาดรายละเอียด/สเปก ${specMiss} รายการ` : ''), !!specMiss);
         }
         updateReqMakePrBtn(); applyReqMode();
@@ -3765,7 +3844,7 @@
         vals.forEach((v, si) => { if (v != null) { totals[si].sum += v * qty; totals[si].quoted++; } });
         const spec = specText(it);
         return `<tr><td style="text-align:center">${r + 1}</td>
-          <td class="no-i18n"><b>${esc(it.name || it.product_name)}</b>${spec ? `<div class="spec-line">${esc(spec)}</div>` : ''}</td>
+          <td class="no-i18n"><b>${esc(it.name || it.product_name)}</b>${spec ? `<div class="spec-line">${esc(spec)}</div>` : ''}${atts.filter(a => it.uid && a.item_uid === it.uid).map(a => `<div style="font-size:11px"><a href="#" onclick="downloadRqAtt('${rqNo}','${a.id}');return false;" style="color:#2563eb">📎 ${esc(a.filename)}</a></div>`).join('')}</td>
           <td style="text-align:center">${qty} ${esc(it.unit || '')}</td>
           ${vals.map((v, si) => {
             const low = v != null && v === min, sel = si === selIdx;
@@ -4789,6 +4868,7 @@
       const els = root.querySelectorAll('[placeholder]');
       for (let i = 0; i < els.length; i++) {
         const el = els[i];
+        if (el.closest('.no-i18n')) continue;
         const ph = el.getAttribute('placeholder');
         const en = tStr(ph);
         if (en !== null) {
