@@ -775,18 +775,18 @@
       <ul class="nav">
         <li class="nav-label">ทั่วไป</li>
         <li><a class="active" data-page="dashboard"><svg class="nav-ic" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>แดชบอร์ด</a></li>
-        <li><a data-page="requisitions"><svg class="nav-ic" viewBox="0 0 24 24"><path d="M9 11H3v10h6V11z"/><path d="M15 3H9v18h6V3z"/><path d="M21 7h-6v14h6V7z"/></svg>ใบคำขอจัดซื้อ</a></li>
+        <li><a data-page="requisitions"><svg class="nav-ic" viewBox="0 0 24 24"><path d="M9 11H3v10h6V11z"/><path d="M15 3H9v18h6V3z"/><path d="M21 7h-6v14h6V7z"/></svg>ใบคำขอจัดซื้อ<span id="nav-rq-badge" title="ใบคำขอรอเทียบราคา" style="display:none;margin-left:auto;background:#ef4444;color:#fff;border-radius:999px;font-size:10.5px;font-weight:700;padding:1px 7px;line-height:16px"></span></a></li>
         <li><a data-page="create"><svg class="nav-ic" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M12 12v6M9 15h6"/></svg>สร้างใบขอซื้อ</a></li>
         <li><a data-page="prs"><svg class="nav-ic" viewBox="0 0 24 24"><path d="M9 2h6a1 1 0 0 1 1 1v1h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2V3a1 1 0 0 1 1-1z"/><path d="M9 12h6M9 16h4"/></svg>รายการใบขอซื้อ</a></li>
         <li id="nav-pos"><a data-page="pos"><svg class="nav-ic" viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>รายการใบสั่งซื้อ</a></li>
         <li><a data-page="approvals"><svg class="nav-ic" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>รายการรออนุมัติ</a></li>
         <li class="nav-label">เครื่องมือ</li>
-        <li><a data-page="suppliers"><svg class="nav-ic" viewBox="0 0 24 24"><path d="M1 3h15v13H1z"/><path d="M16 8h4l3 3v5h-7z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>ผู้ขาย</a></li>
-        <li><a data-page="products"><svg class="nav-ic" viewBox="0 0 24 24"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>สินค้า</a></li>
-        <li><a data-page="departments"><svg class="nav-ic" viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 9h.01M9 13h.01M9 17h.01M15 9h.01M15 13h.01M15 17h.01"/></svg>แผนก</a></li>
+        <li id="nav-suppliers"><a data-page="suppliers"><svg class="nav-ic" viewBox="0 0 24 24"><path d="M1 3h15v13H1z"/><path d="M16 8h4l3 3v5h-7z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>ผู้ขาย</a></li>
+        <li id="nav-products"><a data-page="products"><svg class="nav-ic" viewBox="0 0 24 24"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>สินค้า</a></li>
+        <li id="nav-departments"><a data-page="departments"><svg class="nav-ic" viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 9h.01M9 13h.01M9 17h.01M15 9h.01M15 13h.01M15 17h.01"/></svg>แผนก</a></li>
         <li id="nav-companies"><a data-page="companies"><svg class="nav-ic" viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="1"/><path d="M9 22v-4h6v4M8 6h.01M12 6h.01M16 6h.01M8 10h.01M12 10h.01M16 10h.01M8 14h.01M12 14h.01M16 14h.01"/></svg>บริษัท</a></li>
         <li id="nav-users"><a data-page="users"><svg class="nav-ic" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>ผู้ใช้และสิทธิ์</a></li>
-        <li><a data-page="settings"><svg class="nav-ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>ตั้งค่า</a></li>
+        <li id="nav-settings"><a data-page="settings"><svg class="nav-ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>ตั้งค่า</a></li>
       </ul>
       <div class="user-box">
         <div class="user-row">
@@ -963,13 +963,13 @@
       <div class="page pr-form" id="page-requisitions">
         <div id="req-list-view">
           <h1>ใบคำขอจัดซื้อ</h1>
-          <p class="subtitle">สร้างคำขอจัดซื้อและเทียบราคาหลาย Supplier ก่อนออกใบขอซื้อ (PR) — รวมศูนย์ไว้ในระบบเดียว</p>
+          <p class="subtitle" id="req-subtitle">แจ้งสิ่งที่ต้องการซื้อ → ฝ่ายจัดซื้อเทียบราคาหลาย Supplier → ออกใบขอซื้อ (PR) ในนามผู้ขอ</p>
           <div class="toolbar">
             <input type="text" id="req-search" placeholder="ค้นหา เลขที่ / ผู้ขอ / วัตถุประสงค์..." oninput="renderReqList()">
             <button class="btn" onclick="newRequisition()">+ สร้างใบคำขอ</button>
           </div>
           <div class="panel">
-            <table><thead><tr><th>เลขที่</th><th>วันที่</th><th>แผนก</th><th style="text-align:center">รายการ</th><th style="text-align:center">เทียบ</th><th>Supplier ที่เลือก</th><th>สถานะ</th><th style="text-align:right">จัดการ</th></tr></thead>
+            <table><thead><tr><th>เลขที่</th><th>วันที่</th><th>ผู้ขอ</th><th>แผนก</th><th style="text-align:center">รายการ</th><th style="text-align:center">เทียบ</th><th>Supplier ที่เลือก</th><th>สถานะ</th><th style="text-align:right">จัดการ</th></tr></thead>
               <tbody id="req-table"></tbody></table>
             <div class="empty" id="req-empty" style="display:none">ยังไม่มีใบคำขอจัดซื้อ</div>
           </div>
@@ -991,16 +991,16 @@
             </div></div>
           </div>
           <div class="pr-card">
-            <div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> รายการสินค้า + เปรียบเทียบราคา</div>
-              <button class="btn secondary" style="padding:6px 14px" onclick="addReqSupplier()">+ เพิ่ม Supplier</button></div>
+            <div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> <span id="req-items-title">รายการสินค้า + เปรียบเทียบราคา</span></div>
+              <button class="btn secondary" id="req-addsup-btn" style="padding:6px 14px" onclick="addReqSupplier()">+ เพิ่ม Supplier</button></div>
             <div class="pr-card-body">
               <div style="overflow-x:auto"><table class="pr-items" id="req-matrix"><thead id="req-matrix-head"></thead><tbody id="req-matrix-body"></tbody></table></div>
-              <button class="pr-add" onclick="addReqItem()">+ เพิ่มรายการ</button>
+              <button class="pr-add" id="req-additem-btn" onclick="addReqItem()">+ เพิ่มรายการ</button>
               <div id="req-selected-note" style="margin-top:12px;font-size:12.5px;color:var(--muted)">ℹ️ กด "เลือก" บนหัวคอลัมน์ Supplier ที่ต้องการ เพื่อใช้สร้าง PR</div>
             </div>
           </div>
           <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px">
-            <button class="pr-submit" onclick="submitRequisition()">💾 บันทึกใบคำขอ</button>
+            <button class="pr-submit" id="req-save-btn" onclick="submitRequisition()">💾 บันทึกใบคำขอ</button>
             <button class="btn secondary" id="req-makepr-btn" style="display:none;border-color:#2563eb;color:#2563eb" onclick="createPRfromRQ()">➡ สร้าง PR จากใบนี้</button>
             <button class="btn secondary" onclick="closeReqForm()">ปิด / กลับ</button>
           </div>
@@ -1376,13 +1376,14 @@
           </table>
         </div>
         <div class="panel" style="margin-top:16px; background:#f0f4f8;">
-          <b>คำอธิบาย Role (ลำดับอนุมัติ 3 ขั้น)</b>
+          <b>คำอธิบาย Role (ลำดับอนุมัติ 2 ขั้น)</b>
           <div style="margin-top:8px; font-size:13px; color:var(--muted); line-height:1.9;">
-            <b>Manager</b> — อนุมัติ <b>ขั้นที่ 1</b><br>
-            <b>Executive</b> — อนุมัติ <b>ขั้นที่ 2</b><br>
-            <b>Managing Director</b> — อนุมัติ <b>ขั้นที่ 3</b> (ขั้นสุดท้าย — ผ่านขั้นนี้ → ฝ่ายจัดซื้อออก PO ได้ทันที)<br>
-            <b>Purchasing</b> — ฝ่ายจัดซื้อ สร้าง PR / ออก PO (อนุมัติไม่ได้)<br>
-            <b>Admin</b> — เข้าถึงทุกส่วน + อนุมัติแทนได้ทุกขั้น · <b>Approver/Viewer</b> — ดู/ใช้งานทั่วไป
+            <b>Staff</b> — ส่งใบคำขอจัดซื้อ (รายการ + สเปก) · เห็นเฉพาะของตัวเอง<br>
+            <b>Manager</b> — อนุมัติ <b>ขั้นที่ 1</b> (เฉพาะแผนกตัวเอง หรือผู้ที่ถูกระบุเป็นผู้อนุมัติขั้นแรก)<br>
+            <b>Executive</b> หรือ <b>Managing Director</b> — อนุมัติ <b>ขั้นที่ 2 (ขั้นสุดท้าย)</b> คนใดคนหนึ่งอนุมัติก็ครบ → ออก PO ได้<br>
+            <b>Purchase Manager</b> — ผู้ดูแลระบบหลัก: เห็นทุกบริษัท/ทุกแผนก · เทียบราคา + ออก PR จากใบคำขอในนามผู้ขอ · ออก/แก้ PO · จัดการข้อมูลหลัก (สินค้า ผู้ขาย แผนก บริษัท ตั้งค่า) · <u>ไม่อยู่ในสายอนุมัติ</u><br>
+            <b>Admin Store</b> — ออก/แก้ PO · ดูแลข้อมูลสินค้า/ผู้ขาย · <b>Owner</b> — ดูทุกใบและรายงาน<br>
+            <b>Admin</b> — เข้าถึงทุกส่วน + จัดการผู้ใช้ + อนุมัติแทนได้ทุกขั้น
           </div>
         </div>
       </div>
@@ -1998,7 +1999,7 @@
           const tagClass = p.status === 'Pending' ? 'pending' : p.status === 'Approved' ? 'approved' : 'rejected';
           let action = '-';
           const unissued = Number(p.unissued_count || 0);
-          const poReady = p.status !== 'Rejected' && Number(p.current_approval_step || 1) > PO_AFTER_STEP; // ผ่านขั้น 3 แล้ว
+          const poReady = p.status === 'Approved' || (p.status !== 'Rejected' && Number(p.current_approval_step || 1) > PO_AFTER_STEP);
           const parts = [];
           if (poReady && canSeePO()) { const _lbl = unissued > 0 ? (p.po_no ? 'ออก PO (รายการที่เหลือ)' : 'ออก PO') : 'ออก PO เพิ่ม'; parts.push(`<button class="btn-issue" onclick="event.stopPropagation();showIssuePO('${p.pr_no}')">${_lbl}</button>`); }
           if (p.po_no) parts.push(`<span style="color:var(--green);font-weight:600">${p.po_no}</span>`);
@@ -2027,8 +2028,8 @@
         try { co = (await api.getCompanyInfo()) || {}; } catch {}
         const items = (pr.items || []).filter(i => i && i.product_name);
         const tagClass = pr.status === 'Pending' ? 'pending' : pr.status === 'Approved' ? 'approved' : 'rejected';
-        const stepRole = APPROVAL_CHAIN[(pr.current_approval_step || 1) - 1];
-        const canApprove = pr.status === 'Pending' && (currentUser.role === 'Admin' || currentUser.role === stepRole);
+        const stepRole = APPROVAL_CHAIN.label(pr.current_approval_step);
+        const canApprove = pr.status === 'Pending' && (currentUser.role === 'Admin' || stepRoles(pr.current_approval_step).includes(currentUser.role));
         const rows = items.map((it, idx) => {
           const lineTotal = Number(it.total_price || (it.quantity * it.unit_price) || 0);
           const rejected = it.item_status === 'rejected';
@@ -2066,7 +2067,11 @@
           const cols = [
             { label: 'ผู้ขอซื้อ / Requester', nm: escn(pr.requester_name || ''), d: fmtD(pr.date) },
             { label: 'ผู้จัดการแผนก / Manager', nm: apprNm(1), d: apprDt(1) },
-            { label: 'กรรมการผู้จัดการ / MD', nm: apprNm(3), d: apprDt(3) },
+            (() => { // final approver: whoever (Executive or MD) signed the final step
+              const fin = (Array.isArray(pr.approval_chain) ? pr.approval_chain : []).filter(c => c && Number(c.step) >= 2).pop();
+              const roleTh = fin && fin.role === 'Executive' ? 'ผู้บริหาร / Executive' : fin && fin.role === 'Managing Director' ? 'กรรมการผู้จัดการ / MD' : 'ผู้บริหาร หรือ กรรมการผู้จัดการ';
+              return { label: roleTh, nm: fin ? escn(fin.approverName || fin.approver || '') : '', d: fin ? fmtD(fin.approveTime || fin.approvedAt || fin.time) : '' };
+            })(),
           ];
           chain = `<div style="margin-top:22px"><b>ลายมือชื่อผู้อนุมัติ</b>
             <div class="memo-signs" style="margin-top:36px">
@@ -2112,7 +2117,7 @@
             <div><div class="k">แผนก</div>${nz(pr.department_name)}</div>
             <div><div class="k">สถานที่จัดส่งของ</div>${nz(pr.delivery_location)}</div>
             <div><div class="k">ประเภทการจัดซื้อ</div>${nz(pr.purchase_type)}</div>
-            <div><div class="k">ขั้นอนุมัติ</div>${pr.status === 'Approved' ? `อนุมัติครบ ✓ (${pr.total_approval_steps || 4}/${pr.total_approval_steps || 4})` : `${Math.min(pr.current_approval_step || 1, pr.total_approval_steps || 1)}/${pr.total_approval_steps || 1}${pr.status === 'Pending' && stepRole ? ` · รอ <b style="color:var(--brand-dark)">${stepRole}</b>` : ''}`}${pr.status !== 'Rejected' && (pr.current_approval_step || 1) > 3 && pr.status !== 'Approved' ? ' <span class="tag approved" style="font-size:10px">ออก PO ได้แล้ว</span>' : ''}</div>
+            <div><div class="k">ขั้นอนุมัติ</div>${pr.status === 'Approved' ? `อนุมัติครบ ✓` : `${Math.min(pr.current_approval_step || 1, pr.total_approval_steps || 1)}/${pr.total_approval_steps || 1}${pr.status === 'Pending' && stepRole ? ` · รอ <b style="color:var(--brand-dark)">${stepRole}</b>` : ''}`}${pr.status !== 'Rejected' && (pr.current_approval_step || 1) > 3 && pr.status !== 'Approved' ? ' <span class="tag approved" style="font-size:10px">ออก PO ได้แล้ว</span>' : ''}</div>
             <div style="grid-column:1/-1"><div class="k">วัตถุประสงค์</div>${nz(pr.purpose)}</div>
           </div>
           <table class="pr-items">
@@ -3100,6 +3105,20 @@
     window.submitPR = submitPR;
 
     // ===== REQUISITIONS (ใบคำขอจัดซื้อ + เทียบราคาหลาย Supplier) =====
+    // Purchasing (Purchase Manager / Admin) enters quotes, picks the supplier and issues the PR for the requester
+    const RQ_QUOTE_ROLES = ['Admin', 'Purchase Manager'];
+    const canQuoteRQ = () => !!(currentUser && RQ_QUOTE_ROLES.includes(currentUser.role));
+    window.canQuoteRQ = canQuoteRQ;
+    const rqHasQuotes = r => (r.supplier_count || 0) > 0 && !!r.selected_supplier_name;
+    async function refreshRqBadge(list) {
+      const b = document.getElementById('nav-rq-badge');
+      if (!b) return;
+      if (!canQuoteRQ()) { b.style.display = 'none'; return; }
+      try { list = list || await api.getRequisitions(); } catch { return; }
+      const n = (list || []).filter(r => r.status !== 'converted').length;
+      b.textContent = n; b.style.display = n ? '' : 'none';
+    }
+    window.refreshRqBadge = refreshRqBadge;
     let _req = null;            // current requisition being edited
     let __reqs = [];            // list cache
     let __reqAttachTarget = null; // { supplier_seq } for the file picker
@@ -3120,6 +3139,7 @@
       document.getElementById('req-list-view').style.display = '';
       document.getElementById('req-form-view').style.display = 'none';
       renderReqList();
+      refreshRqBadge(__reqs);
     }
     window.loadRequisitions = loadRequisitions;
 
@@ -3131,19 +3151,21 @@
       const empty = document.getElementById('req-empty');
       if (!rows.length) { tb.innerHTML = ''; empty.style.display = ''; return; }
       empty.style.display = 'none';
-      const badge = (st) => st === 'converted'
-        ? '<span style="background:#dcfce7;color:#166534;padding:2px 8px;border-radius:10px;font-size:12px">สร้าง PR แล้ว</span>'
-        : '<span style="background:#dbeafe;color:#1e40af;padding:2px 8px;border-radius:10px;font-size:12px">กำลังเปิด</span>';
+      const pill = (bg, fg, t) => `<span style="background:${bg};color:${fg};padding:2px 8px;border-radius:10px;font-size:12px;white-space:nowrap">${t}</span>`;
+      const badge = (r) => r.status === 'converted' ? pill('#dcfce7', '#166534', 'ออก PR แล้ว')
+        : rqHasQuotes(r) ? pill('#dbeafe', '#1e40af', 'เทียบราคาแล้ว · รอออก PR')
+        : pill('#fef3c7', '#92400e', 'รอจัดซื้อเทียบราคา');
       tb.innerHTML = rows.map(r => `<tr>
         <td><a href="#" onclick="openRequisition('${r.rq_no}');return false;" style="color:#2563eb;font-weight:600">${r.rq_no}</a>${r.pr_no ? `<div style="font-size:11px;color:var(--muted)">→ ${r.pr_no}</div>` : ''}</td>
         <td>${r.date ? new Date(r.date).toLocaleDateString('th-TH') : '-'}</td>
+        <td class="no-i18n">${nz(r.requester_name || r.requested_by)}</td>
         <td>${nz(r.department_name)}</td>
         <td style="text-align:center">${r.item_count || 0}</td>
         <td style="text-align:center">${r.supplier_count || 0}</td>
-        <td>${nz(r.selected_supplier_name)}</td>
-        <td>${badge(r.status)}</td>
+        <td class="no-i18n">${nz(r.selected_supplier_name)}</td>
+        <td>${badge(r)}</td>
         <td style="text-align:right">
-          <a href="#" onclick="openRequisition('${r.rq_no}');return false;" style="color:#2563eb">เปิด</a>
+          <a href="#" onclick="openRequisition('${r.rq_no}');return false;" style="color:#2563eb">${canQuoteRQ() && r.status !== 'converted' ? 'เทียบราคา' : 'เปิด'}</a>
           ${r.status !== 'converted' ? ` · <a href="#" onclick="deleteRequisition('${r.rq_no}');return false;" style="color:#dc2626">ลบ</a>` : ''}
         </td></tr>`).join('');
     }
@@ -3168,7 +3190,7 @@
     }
 
     async function newRequisition() {
-      _req = { rq_no: null, status: 'open', items: [blankReqItem()], suppliers: [{ name: '' }], prices: {}, selected: null, attachments: [] };
+      _req = { rq_no: null, status: 'open', items: [blankReqItem()], suppliers: canQuoteRQ() ? [{ name: '' }] : [], prices: {}, selected: null, attachments: [] };
       document.getElementById('req-form-title').textContent = 'สร้างใบคำขอจัดซื้อ';
       document.getElementById('req-docno').textContent = 'ออกอัตโนมัติเมื่อบันทึก';
       document.getElementById('req-date').value = new Date().toISOString().slice(0, 10);
@@ -3180,7 +3202,7 @@
       ensureProducts(); await ensureSuppliers(); buildSupDatalist();
       document.getElementById('req-list-view').style.display = 'none';
       document.getElementById('req-form-view').style.display = '';
-      renderReqMatrix();
+      renderReqMatrix(); applyReqMode();
       try { history.pushState({ page: 'requisitions' }, '', '#requisitions'); } catch {}
     }
     window.newRequisition = newRequisition;
@@ -3191,9 +3213,10 @@
         _req = {
           rq_no: d.rq_no, status: d.status,
           items: Array.isArray(d.items) && d.items.length ? d.items : [blankReqItem()],
-          suppliers: Array.isArray(d.suppliers) && d.suppliers.length ? d.suppliers : [{ name: '' }],
+          suppliers: Array.isArray(d.suppliers) && d.suppliers.length ? d.suppliers : (canQuoteRQ() && d.status !== 'converted' ? [{ name: '' }] : []),
           prices: d.prices || {}, selected: null, attachments: [],
-          department_id: d.department_id, selected_supplier_name: d.selected_supplier_name
+          department_id: d.department_id, selected_supplier_name: d.selected_supplier_name,
+          pr_no: d.pr_no, requested_by: d.requested_by
         };
         // find selected supplier index by name
         if (d.selected_supplier_name) {
@@ -3212,8 +3235,7 @@
         document.getElementById('req-list-view').style.display = 'none';
         document.getElementById('req-form-view').style.display = '';
         renderReqMatrix();
-        updateReqMakePrBtn();
-        if (d.status === 'converted') toast('ใบนี้สร้าง PR แล้ว (' + (d.pr_no || '') + ') — แก้ไขได้เฉพาะดูข้อมูล');
+        updateReqMakePrBtn(); applyReqMode();
         try { history.pushState({ page: 'requisitions' }, '', '#requisitions'); } catch {}
       } catch (e) { toast('เปิดใบคำขอไม่สำเร็จ: ' + e.message, true); }
     }
@@ -3244,10 +3266,10 @@
         });
       });
       _req.items = items.length ? items : [blankReqItem()];
+      if (!canQuoteRQ()) return; // quotes belong to purchasing — keep as loaded
       // supplier names from header
       const heads = document.querySelectorAll('#req-matrix-head .rq-sup-name');
       _req.suppliers = [...heads].map(h => ({ name: h.value || '' }));
-      if (!_req.suppliers.length) _req.suppliers = [{ name: '' }];
       // prices
       const prices = {};
       body.querySelectorAll('.rq-price').forEach(inp => {
@@ -3287,6 +3309,7 @@
     function updateReqMakePrBtn() {
       const note = document.getElementById('req-selected-note');
       const btn = document.getElementById('req-makepr-btn');
+      if (!canQuoteRQ()) { btn.style.display = 'none'; return; }
       if (_req && _req.selected != null && _req.suppliers[_req.selected]) {
         const nm = _req.suppliers[_req.selected].name || ('Supplier ' + (_req.selected + 1));
         note.innerHTML = '✅ เลือกผู้ขาย: <b>' + nm + '</b> — บันทึกแล้วกด "สร้าง PR จากใบนี้"';
@@ -3301,13 +3324,21 @@
     function renderReqMatrix() {
       const head = document.getElementById('req-matrix-head');
       const body = document.getElementById('req-matrix-body');
-      const sups = _req.suppliers, items = _req.items;
+      const items = _req.items;
+      const roQ = !canQuoteRQ() || _req.status === 'converted';   // quotes read-only
+      const sups = _req.suppliers || [];   // keep original order: price keys are "<item>_<supplierIndex>"
       const attCount = (si) => (_req.attachments || []).filter(a => a.supplier_seq === si).length;
+      const escA = v => String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
       // header
       document.getElementById('req-matrix').style.minWidth = (820 + 165 * sups.length) + 'px';
       let h = '<tr><th style="width:32px">#</th><th style="min-width:110px">รหัส</th><th style="min-width:180px">รายการ</th><th style="min-width:250px">รายละเอียด / สเปก <span style="color:#ef4444">*</span></th><th style="min-width:72px">จำนวน</th><th style="min-width:84px">หน่วย</th>';
       sups.forEach((s, si) => {
         const sel = _req.selected === si;
+        if (roQ) {
+          const files = (_req.attachments || []).filter(a => a.supplier_seq === si);
+          h += `<th style="min-width:150px;text-align:center;${sel ? 'background:#dbeafe;color:#1e40af' : ''}"><span class="no-i18n">${escA(s.name)}</span>${sel ? '<div style="font-size:11px">✓ ผู้ขายที่เลือก</div>' : ''}${files.map(a => `<div style="font-size:11px;font-weight:400"><a href="#" class="no-i18n" onclick="downloadRqAtt('${_req.rq_no}','${a.id}');return false;" style="color:#2563eb">📎 ${escA(a.filename)}</a></div>`).join('')}</th>`;
+          return;
+        }
         h += `<th style="min-width:160px;${sel ? 'background:#eff6ff' : ''}">
           <input class="rq-sup-name" value="${(s.name || '').replace(/"/g, '&quot;')}" list="sup-datalist" placeholder="ชื่อผู้ขาย ${si + 1}" style="width:100%;font-size:12px;padding:4px 6px;border:1px solid var(--border);border-radius:6px">
           <div style="display:flex;gap:6px;align-items:center;justify-content:center;margin-top:4px;font-size:11px;font-weight:400">
@@ -3330,13 +3361,35 @@
           const key = i + '_' + si;
           const v = _req.prices[key];
           const sel = _req.selected === si;
-          cells += `<td style="${sel ? 'background:#eff6ff' : ''}"><input class="rq-price" data-i="${i}" data-s="${si}" type="number" min="0" step="0.01" value="${v != null ? v : ''}" placeholder="0.00" oninput="recalcReqHighlight()" style="width:100%;text-align:right"></td>`;
+          cells += `<td style="${sel ? 'background:#eff6ff' : ''}"><input class="rq-price" data-i="${i}" data-s="${si}" type="number" min="0" step="0.01" value="${v != null ? v : ''}" placeholder="${roQ ? '—' : '0.00'}" ${roQ ? 'disabled' : ''} oninput="recalcReqHighlight()" style="width:100%;text-align:right"></td>`;
         });
         cells += `<td style="text-align:center"><button onclick="removeReqItem(${i})" style="background:none;border:none;color:#fca5a5;cursor:pointer">🗑</button></td>`;
         return '<tr>' + cells + '</tr>';
       }).join('');
       recalcReqHighlight();
+      if (_req.status === 'converted') applyReqMode();
     }
+
+    function applyReqMode() {
+      if (!_req) return;
+      const q = canQuoteRQ(), conv = _req.status === 'converted';
+      const isNew = !_req.rq_no;
+      const $ = id => document.getElementById(id);
+      $('req-items-title').textContent = q ? 'รายการสินค้า + เปรียบเทียบราคา' : 'รายการที่ต้องการซื้อ';
+      $('req-addsup-btn').style.display = (q && !conv) ? '' : 'none';
+      $('req-additem-btn').style.display = conv ? 'none' : '';
+      $('req-save-btn').style.display = conv ? 'none' : '';
+      $('req-save-btn').textContent = q ? '💾 บันทึกใบคำขอ / ราคา' : (isNew ? '📨 ส่งคำขอให้ฝ่ายจัดซื้อ' : '💾 บันทึกการแก้ไข');
+      const note = $('req-selected-note');
+      if (conv) note.innerHTML = `✅ ใบคำขอนี้ออกใบขอซื้อแล้ว: <a href="#" onclick="showPRDetail('${_req.pr_no || ''}');return false;" style="color:#2563eb;font-weight:600">${_req.pr_no || '-'}</a>`;
+      else if (!q) note.innerHTML = (_req.suppliers || []).some(sp => (sp.name || '').trim())
+        ? 'ℹ️ ฝ่ายจัดซื้อเทียบราคาแล้ว — รอฝ่ายจัดซื้อออกใบขอซื้อ (PR) ในนามของคุณ'
+        : 'ℹ️ กรอกรายการและสเปกให้ครบ แล้วกด "ส่งคำขอให้ฝ่ายจัดซื้อ" — Purchase Manager จะหาใบเสนอราคาเปรียบเทียบและออก PR ให้';
+      // converted → everything read-only
+      document.querySelectorAll('#req-form-view input, #req-form-view textarea, #req-form-view select').forEach(el => { if (el.id !== 'req-file-input') el.disabled = conv || el.disabled && el.classList.contains('rq-price'); });
+      document.querySelectorAll('#req-matrix-body button').forEach(b => b.style.display = conv ? 'none' : '');
+    }
+    window.applyReqMode = applyReqMode;
 
     function recalcReqHighlight() {
       const body = document.getElementById('req-matrix-body');
@@ -3383,8 +3436,10 @@
           selected_supplier_name: (_req.selected != null && _req.suppliers[_req.selected]) ? (_req.suppliers[_req.selected].name || null) : null,
         };
         if (!payload.items.length) return toast('กรุณาเพิ่มรายการอย่างน้อย 1 รายการ', true);
-        let specMiss = 0;
-        [...document.getElementById('req-matrix-body').children].forEach(tr => { if ((tr.querySelector('.rq-name') || {}).value && checkSpec(tr, 'rq').length) specMiss++; });
+        let specMiss = 0; const specProbs = [];
+        [...document.getElementById('req-matrix-body').children].forEach((tr, i) => { const nm = (tr.querySelector('.rq-name') || {}).value; if (!nm) return; const m = checkSpec(tr, 'rq'); if (m.length) { specMiss++; specProbs.push(`รายการ ${i + 1} (${nm}): ขาด ${m.join(', ')}`); } });
+        if (!canQuoteRQ() && specMiss) { alert('กรุณากรอกรายละเอียด/สเปกให้ครบก่อนส่งให้ฝ่ายจัดซื้อ (ไม่มีให้ใส่ "-")\n\n' + specProbs.join('\n')); return; }
+        if (!canQuoteRQ()) { delete payload.suppliers; delete payload.prices; delete payload.selected_supplier_name; }
         if (_req.rq_no) {
           await api.updateRequisition(_req.rq_no, payload);
           toast('บันทึกใบคำขอ ' + _req.rq_no + ' แล้ว' + (specMiss ? ` — ยังขาดรายละเอียด/สเปก ${specMiss} รายการ (ต้องครบก่อนสร้าง PR)` : ''), !!specMiss);
@@ -3393,9 +3448,10 @@
           _req.rq_no = res.rq_no;
           document.getElementById('req-form-title').textContent = 'ใบคำขอจัดซื้อ ' + res.rq_no;
           document.getElementById('req-docno').textContent = res.rq_no;
+          if (!canQuoteRQ()) { toast('ส่งใบคำขอ ' + res.rq_no + ' ให้ฝ่ายจัดซื้อแล้ว ✓'); closeReqForm(); return; }
           toast('สร้างใบคำขอสำเร็จ: ' + res.rq_no + (specMiss ? ` — ยังขาดรายละเอียด/สเปก ${specMiss} รายการ` : ''), !!specMiss);
         }
-        updateReqMakePrBtn();
+        updateReqMakePrBtn(); applyReqMode();
       } catch (e) { toast('บันทึกไม่สำเร็จ: ' + e.message, true); }
     }
     window.submitRequisition = submitRequisition;
@@ -3452,6 +3508,7 @@
           const depSel = document.getElementById('cr-dept');
           if (_req.department_id && depSel) depSel.value = _req.department_id;
           document.getElementById('cr-requester').value = document.getElementById('req-requester').value;
+          toast('PR นี้จะออกในนามผู้ขอ (' + (_req.requested_by || '-') + ') และส่งอนุมัติตามสายของผู้ขอ');
           const ph = document.getElementById('cr-phone'); if (ph) ph.value = document.getElementById('req-phone').value;
           document.getElementById('cr-purpose').value = document.getElementById('req-purpose').value + ' (อ้างอิงใบคำขอ ' + _req.rq_no + ')';
           const tbody = document.getElementById('cr-items');
@@ -4102,8 +4159,11 @@
     const PR_SEE_ALL = ['Admin', 'Manager', 'Executive', 'Managing Director', 'Owner', 'Purchase Manager', 'Admin Store']; // see PRs across all departments
     const canSeePO = () => PO_ROLES.includes(currentUser && currentUser.role);
     const APPROVER_ROLES = ['Admin', 'Manager', 'Executive', 'Managing Director'];
-    const APPROVAL_CHAIN = ['Manager', 'Executive', 'Managing Director']; // role required at step 1..3
-    const PO_AFTER_STEP = 3; // PO issuable once step 3 (MD, final) passed
+    // 2-step approval: step 1 = department Manager → step 2 (final) = Executive OR Managing Director
+    const FINAL_APPROVER_ROLES = ['Executive', 'Managing Director'];
+    const stepRoles = step => (Number(step || 1) <= 1 ? ['Manager'] : FINAL_APPROVER_ROLES);
+    const APPROVAL_CHAIN = { label: step => (Number(step || 1) <= 1 ? 'Manager' : 'Executive / Managing Director') };
+    const PO_AFTER_STEP = 3; // legacy: PRs past old step 3 are PO-ready; new PRs are PO-ready once Approved
 
     async function loadUsers() {
       try {
@@ -4186,7 +4246,7 @@
       const u = id ? users.find(x => x.id === id) : null;
       const sel = (cond) => cond ? 'selected' : '';
       const roleOpts = ROLES.map(r => `<option value="${r}" ${sel(u ? u.role === r : r === 'Staff')}>${r}</option>`).join('');
-      const compOpts = '<option value="">— Select —</option>' + companies.map(c => `<option value="${c.name}" ${sel(u && u.company === c.name)}>${c.name}</option>`).join('');
+      const compOpts = '<option value="">— Select —</option>' + `<option value="ALL" ${sel(u && u.company === 'ALL')}>ALL — ทุกบริษัท</option>` + companies.map(c => `<option value="${c.name}" ${sel(u && u.company === c.name)}>${c.name}</option>`).join('');
       const deptOpts = '<option value="">—</option>' + depts.map(d => `<option value="${d.id}" ${sel(u && u.department_id === d.id)}>${d.code ? d.code + ' · ' : ''}${d.name}</option>`).join('');
       const managers = users.filter(x => x.role === 'Manager');
       const faOpts = '<option value="">— Auto (same-dept manager) —</option>' + managers.map(m => `<option value="${m.email}" ${sel(u && u.first_approver === m.email)}>${m.name}${m.department_name ? ' · ' + m.department_name : ''}</option>`).join('');
@@ -4256,6 +4316,13 @@
       if (navPos) navPos.style.display = PO_ROLES.includes(user.role) ? '' : 'none';
       // Hide PO-only dashboard widgets for roles that can't see PO
       document.querySelectorAll('.po-only').forEach(el => { el.style.display = PO_ROLES.includes(user.role) ? '' : 'none'; });
+      // Master data: Purchase Manager runs the system (Admin Store also maintains suppliers/products)
+      const MASTER_ROLES = ['Admin', 'Purchase Manager'], MASTER_STORE = ['Admin', 'Purchase Manager', 'Admin Store'];
+      [['nav-suppliers', MASTER_STORE], ['nav-products', MASTER_STORE], ['nav-departments', MASTER_ROLES], ['nav-settings', MASTER_ROLES]].forEach(([id, roles]) => {
+        const el = document.getElementById(id); if (el) el.style.display = roles.includes(user.role) ? '' : 'none';
+      });
+      if (navCo) navCo.style.display = MASTER_ROLES.includes(user.role) ? '' : 'none';
+      setTimeout(() => refreshRqBadge(), 800);
       // Baseline history entry so Back stays inside the app
       try { history.replaceState({ page: 'dashboard' }, '', '#dashboard'); } catch { }
       init();
@@ -4485,7 +4552,7 @@
       "เฉพาะ Manager ขึ้นไปอนุมัติ PR ได้": "Only Manager and above can approve PRs",
       "เพิ่มผู้ใช้": "Add user",
       "ชื่อ": "Name",
-      "คำอธิบาย Role (ลำดับอนุมัติ 3 ขั้น)": "Role description (3-step approval sequence)",
+      "คำอธิบาย Role (ลำดับอนุมัติ 2 ขั้น)": "Role description (2-step approval sequence)",
       "ขั้นสุดท้าย": "final step",
       "ขั้นที่ 1": "Step 1",
       "ขั้นที่ 2": "Step 2",
