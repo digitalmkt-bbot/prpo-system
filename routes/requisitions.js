@@ -39,7 +39,10 @@ export default function (pool) {
     data TEXT,
     uploaded_by VARCHAR(150),
     created_at TIMESTAMP DEFAULT NOW()
-  )`).catch(() => {});
+  )`).catch(() => {})
+    // per-item files (many per item, keyed by a stable item uid) + who uploaded them — after the table exists
+    .then(() => pool.query('ALTER TABLE rq_attachments ADD COLUMN IF NOT EXISTS item_uid VARCHAR(40)')).catch(() => {})
+    .then(() => pool.query('ALTER TABLE rq_attachments ADD COLUMN IF NOT EXISTS uploaded_email VARCHAR(150)')).catch(() => {});
 
   pool.query("INSERT INTO running_numbers (document_type, prefix, last_number, format_pattern) VALUES ('RQ','RQ',0,'RQ-YYYYMM-000') ON CONFLICT (document_type) DO NOTHING").catch(() => {});
 
@@ -162,20 +165,28 @@ export default function (pool) {
   // ----- Attachments (quote files per item × supplier) -----
   router.get('/:rqNo/attachments', async (req, res) => {
     try {
-      const r = await pool.query('SELECT id, item_seq, supplier_seq, filename, mimetype, size, uploaded_by, created_at FROM rq_attachments WHERE rq_no = $1 ORDER BY created_at', [req.params.rqNo]);
+      const r = await pool.query('SELECT id, item_seq, item_uid, supplier_seq, filename, mimetype, size, uploaded_by, uploaded_email, created_at FROM rq_attachments WHERE rq_no = $1 ORDER BY created_at', [req.params.rqNo]);
       res.json(r.rows);
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
   router.post('/:rqNo/attachments', async (req, res) => {
     try {
-      if (!canQuote(req)) return res.status(403).json({ error: 'เฉพาะฝ่ายจัดซื้อแนบใบเสนอราคาได้' });
-      const { item_seq = null, supplier_seq = null, filename, mimetype = null, data } = req.body || {};
+      const { item_seq = null, item_uid = null, supplier_seq = null, filename, mimetype = null, data } = req.body || {};
       if (!filename || !data) return res.status(400).json({ error: 'ต้องมีชื่อไฟล์และข้อมูล' });
+      const rq = (await pool.query('SELECT status, requested_by FROM purchase_requisitions WHERE rq_no = $1', [req.params.rqNo])).rows[0];
+      if (!rq) return res.status(404).json({ error: 'ไม่พบใบคำขอจัดซื้อ' });
+      const isOwner = String(rq.requested_by || '').toLowerCase() === String(req.user?.email || '').toLowerCase();
+      if (supplier_seq != null) {
+        if (!canQuote(req)) return res.status(403).json({ error: 'เฉพาะฝ่ายจัดซื้อแนบใบเสนอราคาได้' });
+      } else {
+        if (!item_uid) return res.status(400).json({ error: 'ไม่ระบุรายการที่จะแนบไฟล์' });
+        if (!canQuote(req) && !(isOwner && rq.status !== 'converted')) return res.status(403).json({ error: 'แนบไฟล์ได้เฉพาะผู้ขอ (ก่อนออก PR) หรือฝ่ายจัดซื้อ' });
+      }
       const size = Math.round((String(data).length * 3) / 4);
       if (size > 20 * 1024 * 1024) return res.status(413).json({ error: 'ไฟล์ใหญ่เกิน 20MB' });
       const id = uuid();
-      await pool.query('INSERT INTO rq_attachments (id, rq_no, item_seq, supplier_seq, filename, mimetype, size, data, uploaded_by) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)',
-        [id, req.params.rqNo, item_seq, supplier_seq, filename, mimetype || null, size, data, (req.user && (req.user.name || req.user.email)) || null]);
+      await pool.query('INSERT INTO rq_attachments (id, rq_no, item_seq, item_uid, supplier_seq, filename, mimetype, size, data, uploaded_by, uploaded_email) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)',
+        [id, req.params.rqNo, item_seq, item_uid, supplier_seq, filename, mimetype || null, size, data, (req.user && (req.user.name || req.user.email)) || null, req.user?.email || null]);
       res.status(201).json({ id, filename, mimetype, size });
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
@@ -188,7 +199,11 @@ export default function (pool) {
   });
   router.delete('/:rqNo/attachments/:id', async (req, res) => {
     try {
-      if (!canQuote(req)) return res.status(403).json({ error: 'เฉพาะฝ่ายจัดซื้อลบไฟล์ได้' });
+      if (!canQuote(req)) {
+        const a = (await pool.query('SELECT a.uploaded_email, rq.status FROM rq_attachments a JOIN purchase_requisitions rq ON rq.rq_no = a.rq_no WHERE a.id = $1 AND a.rq_no = $2', [req.params.id, req.params.rqNo])).rows[0];
+        const mine = a && String(a.uploaded_email || '').toLowerCase() === String(req.user?.email || '').toLowerCase();
+        if (!mine || a.status === 'converted') return res.status(403).json({ error: 'ลบได้เฉพาะไฟล์ของตัวเอง (ก่อนออก PR) หรือฝ่ายจัดซื้อ' });
+      }
       await pool.query('DELETE FROM rq_attachments WHERE id = $1 AND rq_no = $2', [req.params.id, req.params.rqNo]);
       res.json({ ok: true });
     } catch (e) { res.status(500).json({ error: e.message }); }
