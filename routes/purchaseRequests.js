@@ -176,7 +176,7 @@ export default function(pool) {
     try {
       await client.query('BEGIN');
 
-      const {
+      let {
         date, supplier_id = null, department_id, items, has_vat,
         requested_by, requester_name = null, needed_date = null,
         purchase_type = null, purpose = null,
@@ -186,6 +186,26 @@ export default function(pool) {
       for (let i = 0; i < items.length; i++) {
         const miss = missingFields(items[i]);
         if (miss.length) { await client.query('ROLLBACK'); return res.status(400).json({ error: `รายการที่ ${i + 1} (${items[i].product_name || '-'}) ยังไม่กรอก: ${miss.join(', ')}` }); }
+      }
+      // Who is the requester? Always the logged-in user — except when purchasing issues a PR from a requisition,
+      // in which case the PR belongs to the original requester (so visibility + approval routing follow them).
+      let requesterEmail = req.user?.email || null;
+      let requesterUserId = req.user?.id || null;
+      let rqRow = null;
+      if (source_rq_no) {
+        if (!['Admin', 'Purchase Manager'].includes(req.user?.role)) { await client.query('ROLLBACK'); return res.status(403).json({ error: 'เฉพาะฝ่ายจัดซื้อ (Purchase Manager) ออก PR จากใบคำขอได้' }); }
+        const rq = await client.query('SELECT * FROM purchase_requisitions WHERE rq_no = $1 FOR UPDATE', [source_rq_no]);
+        rqRow = rq.rows[0];
+        if (!rqRow) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'ไม่พบใบคำขอ ' + source_rq_no }); }
+        if (rqRow.status === 'converted') { await client.query('ROLLBACK'); return res.status(400).json({ error: `ใบคำขอ ${source_rq_no} ออก PR ไปแล้ว (${rqRow.pr_no || '-'})` }); }
+        if (rqRow.department_id) department_id = rqRow.department_id;
+        if (!requester_name && rqRow.requester_name) requester_name = rqRow.requester_name;
+        if (!requester_phone && rqRow.requester_phone) requester_phone = rqRow.requester_phone;
+        if (rqRow.requested_by) {
+          requesterEmail = rqRow.requested_by;
+          const ru = await client.query('SELECT id FROM users WHERE lower(email) = lower($1)', [rqRow.requested_by]);
+          requesterUserId = ru.rows[0]?.id || null;
+        }
       }
       const pr_id = uuid();
 
@@ -213,21 +233,21 @@ export default function(pool) {
         total += (parseFloat(item.quantity) * parseFloat(item.unit_price));
       });
 
-      // Fixed 3-step approval chain (Manager → Executive → Managing Director); PO issuable after step 3 (MD)
-      const totalSteps = 3;
+      // 2-step approval chain: Manager → (Executive OR Managing Director, final); PO issuable once Approved
+      const totalSteps = 2; // Manager → Executive / Managing Director (final)
 
       // Resolve the creator's designated first approver (null = auto / same-dept manager)
       let firstApprover = null;
       let creatorRole = req.user?.role || '';
       try {
-        const ur = await client.query('SELECT first_approver, role FROM users WHERE id = $1', [req.user?.id]);
+        const ur = await client.query('SELECT first_approver, role FROM users WHERE id = $1', [requesterUserId]);
         firstApprover = ur.rows[0]?.first_approver || null;
-        if (ur.rows[0]?.role) creatorRole = ur.rows[0].role;
+        creatorRole = ur.rows[0]?.role || (rqRow ? 'Staff' : creatorRole);
       } catch { /* ignore */ }
 
-      // If a Manager creates the PR, skip the Manager step and go straight to MD (step 3).
+      // If a Manager creates the PR, skip the Manager step and go straight to the final step (Executive / MD).
       let startStep = 1;
-      if (creatorRole === 'Manager') startStep = 3;
+      if (creatorRole === 'Manager') startStep = 2; // Manager's own PR goes straight to the final step (Executive / MD)
 
       // Create PR (supplier chosen later at the PO stage)
       await client.query(`
@@ -239,7 +259,7 @@ export default function(pool) {
         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20)
       `, [
         pr_id, pr_no, date, supplier_id, department_id, 'Pending',
-        total, has_vat, requested_by, startStep, totalSteps, '[]',
+        total, has_vat, requesterEmail, startStep, totalSteps, '[]',
         requester_name, needed_date || null, purchase_type, purpose, firstApprover,
         requester_phone, delivery_location, source_rq_no
       ]);
@@ -257,6 +277,7 @@ export default function(pool) {
             !!item.already_done, i]);
       }
 
+      if (rqRow) await client.query("UPDATE purchase_requisitions SET status = 'converted', pr_no = $1, updated_at = NOW() WHERE rq_no = $2", [pr_no, source_rq_no]);
       await client.query('COMMIT');
       res.status(201).json({ pr_no, total, totalSteps });
     } catch (err) {

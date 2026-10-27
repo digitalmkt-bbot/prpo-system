@@ -58,10 +58,10 @@ export default function(pool) {
       const prR = await client.query('SELECT * FROM purchase_requests WHERE pr_no = $1 FOR UPDATE', [pr_no]);
       const pr = prR.rows[0];
       if (!pr) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'ไม่พบ PR' }); }
-      // PO can be issued once step 3 (Managing Director) is passed — even while Owner (step 4) is still pending
-      const PO_AFTER_STEP = 3;
+      // PO can be issued once the PR is fully approved (final step = Executive or Managing Director).
+      // Legacy PRs that already passed the old step 3 are also allowed.
       if (pr.status === 'Rejected') { await client.query('ROLLBACK'); return res.status(400).json({ error: 'PR ถูกปฏิเสธ' }); }
-      if (pr.current_approval_step <= PO_AFTER_STEP) { await client.query('ROLLBACK'); return res.status(400).json({ error: 'ต้องผ่านอนุมัติขั้นที่ 3 (Managing Director) ก่อนจึงออก PO ได้' }); }
+      if (pr.status !== 'Approved' && !(Number(pr.current_approval_step) > 3)) { await client.query('ROLLBACK'); return res.status(400).json({ error: 'PR ต้องอนุมัติครบ (ผู้จัดการแผนก → ผู้บริหาร/กรรมการผู้จัดการ) ก่อนจึงออก PO ได้' }); }
 
       // Items: use edited items from the form, else fall back to copying PR items
       let items = Array.isArray(bodyItems) && bodyItems.length ? bodyItems

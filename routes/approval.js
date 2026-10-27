@@ -4,12 +4,13 @@ import { v4 as uuid } from 'uuid';
 
 export default function(pool) {
   const router = Router();
-  // 3-step approval chain (role required at each step). PO can be issued once step 3 (MD) is passed.
-  const APPROVAL_CHAIN = ['Manager', 'Executive', 'Managing Director'];
-  const PO_AFTER_STEP = 3; // after Managing Director (step 3, final), PO can be issued
+  // 2-step approval: (1) department Manager (or the named first approver) → (2) FINAL: Executive OR Managing Director
+  // (whichever acts first). Older PRs created under the 3-step chain also finish at step 2+ with either of them.
+  const FINAL_ROLES = ['Executive', 'Managing Director'];
   const APPROVER_ROLES = ['Admin', 'Manager', 'Executive', 'Managing Director'];
-  // Required role for a given 1-based step (Admin can act on any step)
-  const roleForStep = (step) => APPROVAL_CHAIN[step - 1] || null;
+  const rolesForStep = (step) => (Number(step) <= 1 ? ['Manager'] : FINAL_ROLES);
+  const roleForStep = (step) => rolesForStep(step).join(' / ');
+  const isFinalStep = (step) => Number(step) >= 2;
 
   // Get approval steps for a PR
   router.get('/steps/:prNo', async (req, res) => {
@@ -115,7 +116,7 @@ export default function(pool) {
             return String(r.first_approver).toLowerCase() === myEmail;
           }
           // Otherwise role-based; Manager (auto step 1) scoped to their own department
-          if (roleForStep(r.current_approval_step) !== req.user.role) return false;
+          if (!rolesForStep(r.current_approval_step).includes(req.user.role)) return false;
           if (req.user.role === 'Manager') return String(r.department_id) === String(req.user.department_id);
           return true;
         })
@@ -173,7 +174,7 @@ export default function(pool) {
           }
         } else {
           // Standard role-based gate
-          if (req.user.role !== requiredRole) {
+          if (!rolesForStep(pr.current_approval_step).includes(req.user.role)) {
             await client.query('ROLLBACK');
             return res.status(403).json({ error: `ขั้นที่ ${pr.current_approval_step} ต้องอนุมัติโดย ${requiredRole}` });
           }
@@ -202,7 +203,8 @@ export default function(pool) {
       const approvalChain = pr.approval_chain || [];
       approvalChain.push({
         step: pr.current_approval_step,
-        role: requiredRole,
+        role: req.user.role === 'Admin' ? requiredRole : req.user.role,
+        final: isFinalStep(pr.current_approval_step),
         approver: approverEmail,
         approverName: approverName || approverEmail,
         approveTime: new Date().toISOString(),
@@ -212,7 +214,7 @@ export default function(pool) {
       const nextStep = pr.current_approval_step + 1;
 
       // Check if final approval
-      const isFinalApproval = nextStep > pr.total_approval_steps;
+      const isFinalApproval = isFinalStep(pr.current_approval_step) || nextStep > pr.total_approval_steps;
 
       if (isFinalApproval) {
         // Mark approved. PO is issued separately by Purchasing (supplier chosen at that step).
@@ -257,8 +259,8 @@ export default function(pool) {
         await client.query('COMMIT');
         res.json({
           ok: true,
-          message: `อนุมัติขั้นที่ ${pr.current_approval_step} แล้ว — ส่งต่อขั้นที่ ${nextStep}/${pr.total_approval_steps}`,
-          po_ready: nextStep > PO_AFTER_STEP
+          message: `อนุมัติขั้นที่ ${pr.current_approval_step} แล้ว — ส่งต่อผู้บริหาร / กรรมการผู้จัดการ`,
+          po_ready: false
         });
       }
     } catch (err) {
@@ -309,7 +311,7 @@ export default function(pool) {
             return res.status(403).json({ error: 'ขั้นแรกของใบนี้จัดการได้โดยผู้อนุมัติที่ถูกกำหนดไว้เท่านั้น' });
           }
         } else {
-          if (req.user.role !== rejectRole) {
+          if (!rolesForStep(pr.current_approval_step).includes(req.user.role)) {
             await client.query('ROLLBACK');
             return res.status(403).json({ error: `ขั้นที่ ${pr.current_approval_step} ปฏิเสธได้โดย ${rejectRole} เท่านั้น` });
           }
