@@ -198,6 +198,7 @@ export default function(pool) {
         rqRow = rq.rows[0];
         if (!rqRow) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'ไม่พบใบคำขอ ' + source_rq_no }); }
         if (rqRow.status === 'converted') { await client.query('ROLLBACK'); return res.status(400).json({ error: `ใบคำขอ ${source_rq_no} ออก PR ไปแล้ว (${rqRow.pr_no || '-'})` }); }
+        if (rqRow.status !== 'approved') { await client.query('ROLLBACK'); return res.status(400).json({ error: `ใบคำขอ ${source_rq_no} ยังไม่ได้รับการอนุมัติจาก Purchase Manager` }); }
         if (rqRow.department_id) department_id = rqRow.department_id;
         if (!requester_name && rqRow.requester_name) requester_name = rqRow.requester_name;
         if (!requester_phone && rqRow.requester_phone) requester_phone = rqRow.requester_phone;
