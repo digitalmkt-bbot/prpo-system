@@ -792,7 +792,7 @@
       <ul class="nav">
         <li class="nav-label">ทั่วไป</li>
         <li><a class="active" data-page="dashboard"><svg class="nav-ic" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>แดชบอร์ด</a></li>
-        <li><a data-page="requisitions"><svg class="nav-ic" viewBox="0 0 24 24"><path d="M9 11H3v10h6V11z"/><path d="M15 3H9v18h6V3z"/><path d="M21 7h-6v14h6V7z"/></svg>ใบเสนอราคา<span id="nav-rq-badge" title="ใบเสนอราคารอเทียบราคา" style="display:none;margin-left:auto;background:#ef4444;color:#fff;border-radius:999px;font-size:10.5px;font-weight:700;padding:1px 7px;line-height:16px"></span></a></li>
+        <li><a data-page="requisitions"><svg class="nav-ic" viewBox="0 0 24 24"><path d="M9 11H3v10h6V11z"/><path d="M15 3H9v18h6V3z"/><path d="M21 7h-6v14h6V7z"/></svg>ขอใบเสนอราคา<span id="nav-rq-badge" title="ขอใบเสนอราคารอเทียบราคา" style="display:none;margin-left:auto;background:#ef4444;color:#fff;border-radius:999px;font-size:10.5px;font-weight:700;padding:1px 7px;line-height:16px"></span></a></li>
         <li><a data-page="create"><svg class="nav-ic" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M12 12v6M9 15h6"/></svg>สร้างใบขอซื้อ</a></li>
         <li><a data-page="prs"><svg class="nav-ic" viewBox="0 0 24 24"><path d="M9 2h6a1 1 0 0 1 1 1v1h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2V3a1 1 0 0 1 1-1z"/><path d="M9 12h6M9 16h4"/></svg>รายการใบขอซื้อ</a></li>
         <li id="nav-pos"><a data-page="pos"><svg class="nav-ic" viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>รายการใบสั่งซื้อ</a></li>
@@ -976,25 +976,25 @@
         </div>
       </div>
 
-      <!-- REQUISITIONS (ใบเสนอราคา + เทียบราคา) -->
+      <!-- REQUISITIONS (ขอใบเสนอราคา + เทียบราคา) -->
       <div class="page pr-form" id="page-requisitions">
         <div id="req-list-view">
-          <h1>ใบเสนอราคา</h1>
+          <h1>ขอใบเสนอราคา</h1>
           <p class="subtitle" id="req-subtitle">แจ้งสิ่งที่ต้องการซื้อ → ฝ่ายจัดซื้อเทียบราคาหลาย Supplier → ออกใบขอซื้อ (PR) ในนามผู้ขอ</p>
           <div class="toolbar">
             <input type="text" id="req-search" placeholder="ค้นหา เลขที่ / ผู้ขอ / วัตถุประสงค์..." oninput="renderReqList()">
-            <button class="btn" onclick="newRequisition()">+ สร้างใบเสนอราคา</button>
+            <button class="btn" onclick="newRequisition()">+ ขอใบเสนอราคาใหม่</button>
           </div>
           <div class="panel">
             <table><thead><tr><th>เลขที่</th><th>วันที่</th><th>ผู้ขอ</th><th>แผนก</th><th style="text-align:center">รายการ</th><th style="text-align:center">เทียบ</th><th>Supplier ที่เลือก</th><th>สถานะ</th><th style="text-align:right">จัดการ</th></tr></thead>
               <tbody id="req-table"></tbody></table>
-            <div class="empty" id="req-empty" style="display:none">ยังไม่มีใบเสนอราคา</div>
+            <div class="empty" id="req-empty" style="display:none">ยังไม่มีขอใบเสนอราคา</div>
           </div>
         </div>
 
         <div id="req-form-view" style="display:none">
           <div class="po-topbar">
-            <h1 id="req-form-title">สร้างใบเสนอราคา</h1>
+            <h1 id="req-form-title">ขอใบเสนอราคาใหม่</h1>
             <div class="po-docboxes"><div class="po-docbox"><div class="lbl">เลขที่</div><div class="docno" id="req-docno">ออกอัตโนมัติเมื่อบันทึก</div></div></div>
           </div>
           <div id="req-review-box"></div>
@@ -1019,7 +1019,7 @@
             </div>
           </div>
           <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px">
-            <button class="pr-submit" id="req-save-btn" onclick="submitRequisition()">💾 บันทึกใบเสนอราคา</button>
+            <button class="pr-submit" id="req-save-btn" onclick="submitRequisition()">💾 บันทึกขอใบเสนอราคา</button>
             <button class="btn secondary" id="req-makepr-btn" style="display:none;border-color:#2563eb;color:#2563eb" onclick="createPRfromRQ()">➡ สร้าง PR จากใบนี้</button>
             <button class="btn secondary" onclick="closeReqForm()">ปิด / กลับ</button>
           </div>
@@ -1398,10 +1398,10 @@
         <div class="panel" style="margin-top:16px; background:#f0f4f8;">
           <b>คำอธิบาย Role (ลำดับอนุมัติ 2 ขั้น)</b>
           <div style="margin-top:8px; font-size:13px; color:var(--muted); line-height:1.9;">
-            <b>Staff</b> — ส่งใบเสนอราคา (รายการ + สเปก) · เห็นเฉพาะของตัวเอง<br>
+            <b>Staff</b> — ส่งขอใบเสนอราคา (รายการ + สเปก) · เห็นเฉพาะของตัวเอง<br>
             <b>Manager</b> — อนุมัติ <b>ขั้นที่ 1</b> (เฉพาะแผนกตัวเอง หรือผู้ที่ถูกระบุเป็นผู้อนุมัติขั้นแรก)<br>
             <b>Executive</b> หรือ <b>Managing Director</b> — อนุมัติ <b>ขั้นที่ 2 (ขั้นสุดท้าย)</b> คนใดคนหนึ่งอนุมัติก็ครบ → ออก PO ได้<br>
-            <b>Purchase Manager</b> — ผู้ดูแลระบบหลัก: เห็นทุกบริษัท/ทุกแผนก · เทียบราคา + ออก PR จากใบเสนอราคาในนามผู้ขอ · ออก/แก้ PO · จัดการข้อมูลหลัก (สินค้า ผู้ขาย แผนก บริษัท ตั้งค่า) · <u>ไม่อยู่ในสายอนุมัติ</u><br>
+            <b>Purchase Manager</b> — ผู้ดูแลระบบหลัก: เห็นทุกบริษัท/ทุกแผนก · เทียบราคา + ออก PR จากขอใบเสนอราคาในนามผู้ขอ · ออก/แก้ PO · จัดการข้อมูลหลัก (สินค้า ผู้ขาย แผนก บริษัท ตั้งค่า) · <u>ไม่อยู่ในสายอนุมัติ</u><br>
             <b>Admin Store</b> — ออก/แก้ PO · ดูแลข้อมูลสินค้า/ผู้ขาย · <b>Owner</b> — ดูทุกใบและรายงาน<br>
             <b>Admin</b> — เข้าถึงทุกส่วน + จัดการผู้ใช้ + อนุมัติแทนได้ทุกขั้น
           </div>
@@ -3127,7 +3127,7 @@
     }
     window.submitPR = submitPR;
 
-    // ===== REQUISITIONS (ใบเสนอราคา + เทียบราคาหลาย Supplier) =====
+    // ===== REQUISITIONS (ขอใบเสนอราคา + เทียบราคาหลาย Supplier) =====
     // Purchasing (Purchase Manager / Admin) enters quotes, picks the supplier and issues the PR for the requester
     const RQ_QUOTE_ROLES = ['Admin', 'Purchase Manager'];
     const canQuoteRQ = () => !!(currentUser && RQ_QUOTE_ROLES.includes(currentUser.role));
@@ -3141,7 +3141,7 @@
       // PM: waiting review + approved waiting PR · requester: own requests sent back for fixing
       const n = canQuoteRQ() ? (list || []).filter(r => ['open', 'approved'].includes(r.status)).length
         : (list || []).filter(r => r.status === 'returned' && String(r.requested_by || '').toLowerCase() === me).length;
-      b.title = canQuoteRQ() ? 'ใบเสนอราคาที่รอตรวจ / รอออก PR' : 'ใบเสนอราคาที่ถูกตีกลับให้แก้ไข';
+      b.title = canQuoteRQ() ? 'ขอใบเสนอราคาที่รอตรวจ / รอออก PR' : 'ขอใบเสนอราคาที่ถูกตีกลับให้แก้ไข';
       b.textContent = n; b.style.display = n ? '' : 'none';
     }
     window.refreshRqBadge = refreshRqBadge;
@@ -3161,7 +3161,7 @@
     async function loadRequisitions() {
       try {
         __reqs = await api.getRequisitions();
-      } catch (e) { __reqs = []; toast('โหลดใบเสนอราคาไม่สำเร็จ: ' + e.message, true); }
+      } catch (e) { __reqs = []; toast('โหลดขอใบเสนอราคาไม่สำเร็จ: ' + e.message, true); }
       // default to list view
       document.getElementById('req-list-view').style.display = '';
       document.getElementById('req-form-view').style.display = 'none';
@@ -3220,7 +3220,7 @@
 
     async function newRequisition() {
       _req = { rq_no: null, status: 'open', items: [blankReqItem()], suppliers: canQuoteRQ() ? [{ name: '' }] : [], prices: {}, selected: null, attachments: [], pending: {}, requested_by: currentUser && currentUser.email };
-      document.getElementById('req-form-title').textContent = 'สร้างใบเสนอราคา';
+      document.getElementById('req-form-title').textContent = 'ขอใบเสนอราคาใหม่';
       document.getElementById('req-docno').textContent = 'ออกอัตโนมัติเมื่อบันทึก';
       document.getElementById('req-date').value = new Date().toISOString().slice(0, 10);
       document.getElementById('req-requester').value = currentUser ? (currentUser.name || '') : '';
@@ -3254,7 +3254,7 @@
           const i = _req.suppliers.findIndex(s => s.name === d.selected_supplier_name);
           if (i >= 0) _req.selected = i;
         }
-        document.getElementById('req-form-title').textContent = 'ใบเสนอราคา ' + d.rq_no;
+        document.getElementById('req-form-title').textContent = 'ขอใบเสนอราคา ' + d.rq_no;
         document.getElementById('req-docno').textContent = d.rq_no;
         document.getElementById('req-date').value = d.date ? String(d.date).slice(0, 10) : '';
         document.getElementById('req-requester').value = d.requester_name || '';
@@ -3268,7 +3268,7 @@
         renderReqMatrix();
         updateReqMakePrBtn(); applyReqMode();
         try { history.pushState({ page: 'requisitions' }, '', '#requisitions'); } catch {}
-      } catch (e) { toast('เปิดใบเสนอราคาไม่สำเร็จ: ' + e.message, true); }
+      } catch (e) { toast('เปิดขอใบเสนอราคาไม่สำเร็จ: ' + e.message, true); }
     }
     window.openRequisition = openRequisition;
 
@@ -3347,7 +3347,7 @@
         const nm = (hd && hd.value.trim()) || _req.suppliers[_req.selected].name || ('ผู้ขาย ' + (_req.selected + 1));
         note.innerHTML = '✅ เลือกผู้ขาย: <b class="no-i18n">' + String(nm).replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</b> — บันทึกแล้วกด "สร้าง PR จากใบนี้"';
         btn.style.display = (_req.rq_no && _req.status === 'approved') ? '' : 'none';
-        if (_req.status !== 'approved' && _req.status !== 'converted') note.innerHTML += ' <span style="color:#b45309">· ต้องกด "อนุมัติ" ใบเสนอราคาก่อน จึงสร้าง PR ได้</span>';
+        if (_req.status !== 'approved' && _req.status !== 'converted') note.innerHTML += ' <span style="color:#b45309">· ต้องกด "อนุมัติ" ขอใบเสนอราคาก่อน จึงสร้าง PR ได้</span>';
       } else {
         note.innerHTML = 'ℹ️ กด "เลือก" บนหัวคอลัมน์ Supplier ที่ต้องการ เพื่อใช้สร้าง PR';
         btn.style.display = 'none';
@@ -3376,7 +3376,7 @@
           <input class="rq-sup-name" value="${(s.name || '').replace(/"/g, '&quot;')}" list="sup-datalist" placeholder="ชื่อผู้ขาย ${si + 1}" oninput="recalcReqHighlight();updateReqMakePrBtn()" style="width:100%;font-size:12px;padding:4px 6px;border:1px solid var(--border);border-radius:6px">
           <div style="display:flex;gap:6px;align-items:center;justify-content:center;margin-top:4px;font-size:11px;font-weight:400">
             <label style="cursor:pointer;color:${sel ? '#2563eb' : 'var(--muted)'}"><input type="radio" name="rq-winner" ${sel ? 'checked' : ''} onclick="selectReqSupplier(${si})"> เลือก</label>
-            <a href="#" onclick="pickReqFile(${si});return false;" title="แนบใบเสนอราคา" style="text-decoration:none">📎${attCount(si) ? '(' + attCount(si) + ')' : ''}</a>
+            <a href="#" onclick="pickReqFile(${si});return false;" title="แนบใบเสนอราคาของผู้ขายรายนี้" style="text-decoration:none">📎${attCount(si) ? '(' + attCount(si) + ')' : ''}</a>
             <a href="#" onclick="removeReqSupplier(${si});return false;" style="color:#dc2626;text-decoration:none">✕</a>
           </div></th>`;
       });
@@ -3467,7 +3467,7 @@
         }
       }
       _req.pending = {};
-      if (fail) toast(`แนบไฟล์ไม่สำเร็จ ${fail} ไฟล์ — เปิดใบเสนอราคาแล้วแนบใหม่ได้`, true);
+      if (fail) toast(`แนบไฟล์ไม่สำเร็จ ${fail} ไฟล์ — เปิดขอใบเสนอราคาแล้วแนบใหม่ได้`, true);
       return n;
     }
 
@@ -3481,12 +3481,12 @@
       const st = _req.status || 'open', q = canQuoteRQ();
       const S = {
         open: ['#fffbeb', '#f59e0b', '#92400e', '⏳ รอ Purchase Manager ตรวจและอนุมัติ'],
-        approved: ['#eff6ff', '#3b82f6', '#1e3a8a', '✅ Purchase Manager อนุมัติใบเสนอราคาแล้ว'],
+        approved: ['#eff6ff', '#3b82f6', '#1e3a8a', '✅ Purchase Manager อนุมัติขอใบเสนอราคาแล้ว'],
         returned: ['#fff7ed', '#f97316', '#9a3412', '↩️ ตีกลับให้ผู้ขอแก้ไข'],
         rejected: ['#fef2f2', '#ef4444', '#991b1b', '❌ ไม่อนุมัติ'],
         converted: ['#f0fdf4', '#22c55e', '#166534', '✅ ออกใบขอซื้อ (PR) แล้ว'],
       }[st] || ['#f8fafc', '#cbd5e1', '#334155', st];
-      const ACT = { submit: '📨 ส่งใบเสนอราคา', resubmit: '📨 แก้ไขแล้วส่งกลับ', approve: '✅ อนุมัติ', return: '↩️ ตีกลับ', reject: '❌ ไม่อนุมัติ' };
+      const ACT = { submit: '📨 ส่งขอใบเสนอราคา', resubmit: '📨 แก้ไขแล้วส่งกลับ', approve: '✅ อนุมัติ', return: '↩️ ตีกลับ', reject: '❌ ไม่อนุมัติ' };
       const hist = (_req.history || []).slice().reverse();
       const reason = (st === 'returned' || st === 'rejected') && _req.review_note
         ? `<div style="margin-top:6px;padding:8px 12px;background:#fff;border-radius:8px;border:1px dashed ${S[1]}"><b>เหตุผล:</b> <span class="no-i18n">${esc(_req.review_note)}</span>${_req.reviewed_by ? `<div style="font-size:11.5px;color:#64748b;margin-top:2px">โดย <span class="no-i18n">${esc(_req.reviewed_by)}</span>${_req.reviewed_at ? ' · ' + fmtT(_req.reviewed_at) : ''}</div>` : ''}</div>` : '';
@@ -3512,11 +3512,11 @@
       const reason = ((document.getElementById('rv-reason') || {}).value || '').trim();
       if (action !== 'approve' && !reason) { toast(action === 'return' ? 'กรุณาระบุเหตุผลที่ตีกลับ' : 'กรุณาระบุเหตุผลที่ไม่อนุมัติ', true); const r = document.getElementById('rv-reason'); if (r) r.focus(); return; }
       const label = { approve: 'อนุมัติ', return: 'ตีกลับให้ผู้ขอแก้ไข', reject: 'ไม่อนุมัติ (ปิดใบนี้)' }[action];
-      if (!confirm(`ยืนยัน "${label}" ใบเสนอราคา ${_req.rq_no}?`)) return;
+      if (!confirm(`ยืนยัน "${label}" ขอใบเสนอราคา ${_req.rq_no}?`)) return;
       try {
         if (action === 'approve') { gatherReqFromDOM(); } // keep any edits PM made before approving
         await api.reviewRequisition(_req.rq_no, action, reason);
-        toast({ approve: '✅ อนุมัติใบเสนอราคาแล้ว — ใส่ราคาเปรียบเทียบแล้วสร้าง PR ได้', return: '↩️ ตีกลับให้ผู้ขอแก้ไขแล้ว', reject: '❌ ไม่อนุมัติใบเสนอราคาแล้ว' }[action]);
+        toast({ approve: '✅ อนุมัติขอใบเสนอราคาแล้ว — ใส่ราคาเปรียบเทียบแล้วสร้าง PR ได้', return: '↩️ ตีกลับให้ผู้ขอแก้ไขแล้ว', reject: '❌ ไม่อนุมัติขอใบเสนอราคาแล้ว' }[action]);
         await openRequisition(_req.rq_no);
         refreshRqBadge();
       } catch (e) { toast('ดำเนินการไม่สำเร็จ: ' + e.message, true); }
@@ -3535,15 +3535,15 @@
       $('req-addsup-btn').style.display = (q && !conv) ? '' : 'none';
       $('req-additem-btn').style.display = conv ? 'none' : '';
       $('req-save-btn').style.display = conv ? 'none' : '';
-      $('req-save-btn').textContent = q ? '💾 บันทึกใบเสนอราคา / ราคา' : (isNew ? '📨 ส่งใบเสนอราคาให้ฝ่ายจัดซื้อ' : st === 'returned' ? '📨 แก้ไขแล้ว ส่งกลับให้ฝ่ายจัดซื้อ' : '💾 บันทึกการแก้ไข');
+      $('req-save-btn').textContent = q ? '💾 บันทึกขอใบเสนอราคา / ราคา' : (isNew ? '📨 ส่งขอใบเสนอราคาให้ฝ่ายจัดซื้อ' : st === 'returned' ? '📨 แก้ไขแล้ว ส่งกลับให้ฝ่ายจัดซื้อ' : '💾 บันทึกการแก้ไข');
       const note = $('req-selected-note');
-      if (st === 'rejected') note.innerHTML = '❌ ใบเสนอราคานี้ไม่ได้รับการอนุมัติ (ปิดแล้ว)';
+      if (st === 'rejected') note.innerHTML = '❌ ขอใบเสนอราคานี้ไม่ได้รับการอนุมัติ (ปิดแล้ว)';
       else if (!q && st === 'approved') note.innerHTML = (_req.suppliers || []).some(sp => (sp.name || '').trim()) ? '✅ Purchase Manager อนุมัติแล้ว และเทียบราคาแล้ว — รอออกใบขอซื้อ (PR) ในนามของคุณ' : '✅ Purchase Manager อนุมัติแล้ว — กำลังหาใบเสนอราคาเปรียบเทียบ';
-      else if (!q && st === 'returned') note.innerHTML = '↩️ ใบเสนอราคาถูกตีกลับ — แก้ไขตามเหตุผลด้านบน แล้วกด "แก้ไขแล้ว ส่งกลับให้ฝ่ายจัดซื้อ"';
-      else if (st === 'converted') note.innerHTML = `✅ ใบเสนอราคานี้ออกใบขอซื้อแล้ว: <a href="#" onclick="showPRDetail('${_req.pr_no || ''}');return false;" style="color:#2563eb;font-weight:600">${_req.pr_no || '-'}</a>`;
+      else if (!q && st === 'returned') note.innerHTML = '↩️ ขอใบเสนอราคาถูกตีกลับ — แก้ไขตามเหตุผลด้านบน แล้วกด "แก้ไขแล้ว ส่งกลับให้ฝ่ายจัดซื้อ"';
+      else if (st === 'converted') note.innerHTML = `✅ ขอใบเสนอราคานี้ออกใบขอซื้อแล้ว: <a href="#" onclick="showPRDetail('${_req.pr_no || ''}');return false;" style="color:#2563eb;font-weight:600">${_req.pr_no || '-'}</a>`;
       else if (!q) note.innerHTML = isNew
-        ? 'ℹ️ กรอกรายการและสเปกให้ครบ แล้วกด "ส่งใบเสนอราคาให้ฝ่ายจัดซื้อ" — Purchase Manager จะตรวจ/อนุมัติ เทียบราคา และออก PR ให้'
-        : '⏳ รอ Purchase Manager ตรวจใบเสนอราคา — ระหว่างนี้ยังแก้ไขได้';
+        ? 'ℹ️ กรอกรายการและสเปกให้ครบ แล้วกด "ส่งขอใบเสนอราคาให้ฝ่ายจัดซื้อ" — Purchase Manager จะตรวจ/อนุมัติ เทียบราคา และออก PR ให้'
+        : '⏳ รอ Purchase Manager ตรวจขอใบเสนอราคา — ระหว่างนี้ยังแก้ไขได้';
       // converted → everything read-only
       document.querySelectorAll('#req-form-view input, #req-form-view textarea, #req-form-view select').forEach(el => { if (el.id !== 'req-file-input') el.disabled = conv || el.disabled && el.classList.contains('rq-price'); });
       document.querySelectorAll('#req-matrix-body button').forEach(b => b.style.display = conv ? 'none' : '');
@@ -3662,19 +3662,19 @@
         if (!canQuoteRQ()) { delete payload.suppliers; delete payload.prices; delete payload.selected_supplier_name; }
         if (_req.rq_no) {
           const up = await api.updateRequisition(_req.rq_no, payload);
-          if (!canQuoteRQ() && _req.status === 'returned' && up && up.status === 'open') { toast('📨 ส่งใบเสนอราคา ' + _req.rq_no + ' กลับให้ฝ่ายจัดซื้อตรวจอีกครั้งแล้ว'); closeReqForm(); return; }
-          toast('บันทึกใบเสนอราคา ' + _req.rq_no + ' แล้ว' + (specMiss ? ` — ยังขาดรายละเอียด/สเปก ${specMiss} รายการ (ต้องครบก่อนสร้าง PR)` : ''), !!specMiss);
+          if (!canQuoteRQ() && _req.status === 'returned' && up && up.status === 'open') { toast('📨 ส่งขอใบเสนอราคา ' + _req.rq_no + ' กลับให้ฝ่ายจัดซื้อตรวจอีกครั้งแล้ว'); closeReqForm(); return; }
+          toast('บันทึกขอใบเสนอราคา ' + _req.rq_no + ' แล้ว' + (specMiss ? ` — ยังขาดรายละเอียด/สเปก ${specMiss} รายการ (ต้องครบก่อนสร้าง PR)` : ''), !!specMiss);
         } else {
           const res = await api.createRequisition(payload);
           _req.rq_no = res.rq_no;
           const nUp = await uploadReqPending();
           try { _req.attachments = await api.getRqAttachments(_req.rq_no); } catch { }
           if (nUp) toast('แนบไฟล์แล้ว ' + nUp + ' ไฟล์');
-          document.getElementById('req-form-title').textContent = 'ใบเสนอราคา ' + res.rq_no;
+          document.getElementById('req-form-title').textContent = 'ขอใบเสนอราคา ' + res.rq_no;
           document.getElementById('req-docno').textContent = res.rq_no;
-          if (!canQuoteRQ()) { toast('ส่งใบเสนอราคา ' + res.rq_no + ' ให้ฝ่ายจัดซื้อแล้ว ✓'); closeReqForm(); return; }
+          if (!canQuoteRQ()) { toast('ส่งขอใบเสนอราคา ' + res.rq_no + ' ให้ฝ่ายจัดซื้อแล้ว ✓'); closeReqForm(); return; }
           renderReqMatrix();
-          toast('สร้างใบเสนอราคาสำเร็จ: ' + res.rq_no + (specMiss ? ` — ยังขาดรายละเอียด/สเปก ${specMiss} รายการ` : ''), !!specMiss);
+          toast('ขอใบเสนอราคาใหม่สำเร็จ: ' + res.rq_no + (specMiss ? ` — ยังขาดรายละเอียด/สเปก ${specMiss} รายการ` : ''), !!specMiss);
         }
         updateReqMakePrBtn(); applyReqMode();
       } catch (e) { toast('บันทึกไม่สำเร็จ: ' + e.message, true); }
@@ -3682,7 +3682,7 @@
     window.submitRequisition = submitRequisition;
 
     async function deleteRequisition(rqNo) {
-      if (!confirm('ลบใบเสนอราคา ' + rqNo + ' ?')) return;
+      if (!confirm('ลบขอใบเสนอราคา ' + rqNo + ' ?')) return;
       try { await api.deleteRequisition(rqNo); toast('ลบแล้ว'); loadRequisitions(); }
       catch (e) { toast('ลบไม่สำเร็จ: ' + e.message, true); }
     }
@@ -3690,7 +3690,7 @@
 
     // ---- attachments ----
     function pickReqFile(supplier_seq) {
-      if (!_req || !_req.rq_no) return toast('กรุณาบันทึกใบเสนอราคาก่อนแนบไฟล์', true);
+      if (!_req || !_req.rq_no) return toast('กรุณาบันทึกขอใบเสนอราคาก่อนแนบไฟล์', true);
       __reqAttachTarget = { supplier_seq };
       document.getElementById('req-file-input').click();
     }
@@ -3712,8 +3712,8 @@
     // ---- create PR from this requisition (prefill the Create PR form) ----
     let __rqSource = null; // rq_no to mark converted after PR submit
     async function createPRfromRQ() {
-      if (!_req || !_req.rq_no) return toast('กรุณาบันทึกใบเสนอราคาก่อน', true);
-      if (_req.status !== 'approved') return toast('ต้องอนุมัติใบเสนอราคาก่อน จึงสร้าง PR ได้', true);
+      if (!_req || !_req.rq_no) return toast('กรุณาบันทึกขอใบเสนอราคาก่อน', true);
+      if (_req.status !== 'approved') return toast('ต้องอนุมัติขอใบเสนอราคาก่อน จึงสร้าง PR ได้', true);
       if (_req.selected == null) return toast('กรุณาเลือก Supplier ที่ชนะก่อน', true);
       gatherReqFromDOM();
       {
@@ -3741,7 +3741,7 @@
           document.getElementById('cr-requester').value = hdr.requester;
           toast('PR นี้จะออกในนามผู้ขอ (' + (R.requested_by || '-') + ') และส่งอนุมัติตามสายของผู้ขอ');
           const ph = document.getElementById('cr-phone'); if (ph) ph.value = hdr.phone;
-          document.getElementById('cr-purpose').value = hdr.purpose + ' (อ้างอิงใบเสนอราคา ' + R.rq_no + ')';
+          document.getElementById('cr-purpose').value = hdr.purpose + ' (อ้างอิงขอใบเสนอราคา ' + R.rq_no + ')';
           const tbody = document.getElementById('cr-items');
           tbody.innerHTML = '';
           R.items.filter(it => (it.name || '').trim()).forEach((it, i) => {
@@ -4026,7 +4026,7 @@
           verdict = `<div style="margin-top:8px;padding:8px 12px;border-radius:8px;background:#dcfce7;color:#166534;font-size:12.5px">✅ เลือกผู้ขายราคารวมต่ำสุด — ประหยัดกว่าเจ้าที่แพงสุด ฿${fmt(maxTotal - selSum)}</div>`;
       }
       box.innerHTML = `<div style="margin-top:18px">
-        <b>📊 ตารางเปรียบเทียบราคา</b> <span style="color:var(--muted);font-size:12.5px">จากใบเสนอราคา ${esc(rqNo)} · ${sups.length} ผู้ขาย · ราคา/หน่วย (สีเขียว = ต่ำสุด)</span>
+        <b>📊 ตารางเปรียบเทียบราคา</b> <span style="color:var(--muted);font-size:12.5px">จากขอใบเสนอราคา ${esc(rqNo)} · ${sups.length} ผู้ขาย · ราคา/หน่วย (สีเขียว = ต่ำสุด)</span>
         <div style="overflow-x:auto;margin-top:8px"><table class="pr-items"><thead><tr><th style="width:30px">#</th><th>รายการ / สเปก</th><th style="width:90px;text-align:center">จำนวน</th>${head}</tr></thead>
         <tbody>${body}</tbody>
         <tfoot><tr><td></td><td style="font-weight:700">รวมทั้งสิ้น</td><td></td>${foot}</tr>
@@ -4652,7 +4652,8 @@
   <script>
   (function(){
     const I18N_TH2EN = {
-      "ใบเสนอราคา": "Quotation (RQ)",
+      "ขอใบเสนอราคา": "Request for Quotation (RQ)",
+      "ใบเสนอราคา": "Quotation",
       "ทั่วไป": "General", "เครื่องมือ": "Tools",
       "แดชบอร์ด": "Dashboard", "สร้างใบขอซื้อ": "Create PR", "รายการใบขอซื้อ": "PR List",
       "รายการใบสั่งซื้อ": "PO List", "รายการรออนุมัติ": "My Approvals",
