@@ -1,4 +1,4 @@
-// routes/requisitions.js — ใบคำขอจัดซื้อ (Purchase Requisition) + เปรียบเทียบราคา (RFQ)
+// routes/requisitions.js — ใบเสนอราคา (Purchase Requisition) + เปรียบเทียบราคา (RFQ)
 // Pre-PR stage: compare prices across multiple suppliers, pick a winner, then generate a PR.
 import { Router } from 'express';
 import { v4 as uuid } from 'uuid';
@@ -87,7 +87,7 @@ export default function (pool) {
       const r = await pool.query(
         'SELECT rq.*, d.name AS department_name FROM purchase_requisitions rq LEFT JOIN departments d ON rq.department_id = d.id WHERE rq.rq_no = $1',
         [req.params.rqNo]);
-      if (!r.rows[0]) return res.status(404).json({ error: 'ไม่พบใบคำขอจัดซื้อ' });
+      if (!r.rows[0]) return res.status(404).json({ error: 'ไม่พบใบเสนอราคา' });
       res.json(r.rows[0]);
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
@@ -124,10 +124,10 @@ export default function (pool) {
   router.put('/:rqNo', async (req, res) => {
     try {
       const cur = await pool.query('SELECT status, requested_by, suppliers, prices, selected_supplier_id, selected_supplier_name FROM purchase_requisitions WHERE rq_no = $1', [req.params.rqNo]);
-      if (!cur.rows[0]) return res.status(404).json({ error: 'ไม่พบใบคำขอจัดซื้อ' });
+      if (!cur.rows[0]) return res.status(404).json({ error: 'ไม่พบใบเสนอราคา' });
       const st = cur.rows[0].status;
       if (st === 'converted') return res.status(400).json({ error: 'ใบนี้ออก PR แล้ว แก้ไขไม่ได้' });
-      if (st === 'rejected') return res.status(400).json({ error: 'ใบนี้ไม่ได้รับการอนุมัติ (ปิดแล้ว) แก้ไขไม่ได้ — สร้างใบคำขอใหม่' });
+      if (st === 'rejected') return res.status(400).json({ error: 'ใบนี้ไม่ได้รับการอนุมัติ (ปิดแล้ว) แก้ไขไม่ได้ — สร้างใบเสนอราคาใหม่' });
       const isOwner = String(cur.rows[0].requested_by || '').toLowerCase() === String(req.user?.email || '').toLowerCase();
       if (!canQuote(req) && !isOwner) return res.status(403).json({ error: 'แก้ไขได้เฉพาะผู้ขอหรือฝ่ายจัดซื้อ' });
       if (!canQuote(req) && !OWNER_EDITABLE.includes(st)) return res.status(403).json({ error: 'ฝ่ายจัดซื้ออนุมัติใบนี้แล้ว — แก้ไขไม่ได้ หากต้องการเปลี่ยนแปลงโปรดติดต่อ Purchase Manager' });
@@ -148,7 +148,7 @@ export default function (pool) {
         [date, department_id, requester_name, requester_phone, purpose,
           items ? JSON.stringify(items) : null, suppliers ? JSON.stringify(suppliers) : null, prices ? JSON.stringify(prices) : null,
           selected_supplier_id, selected_supplier_name, status, req.params.rqNo, histEntry(req, 'resubmit')]);
-      if (!r.rows[0]) return res.status(404).json({ error: 'ไม่พบใบคำขอจัดซื้อ' });
+      if (!r.rows[0]) return res.status(404).json({ error: 'ไม่พบใบเสนอราคา' });
       res.json({ ok: true, status: status || st });
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
@@ -156,13 +156,13 @@ export default function (pool) {
   // ----- Purchase Manager review: approve / return (fix & resubmit) / reject -----
   router.post('/:rqNo/review', async (req, res) => {
     try {
-      if (!canQuote(req)) return res.status(403).json({ error: 'เฉพาะ Purchase Manager อนุมัติใบคำขอจัดซื้อได้' });
+      if (!canQuote(req)) return res.status(403).json({ error: 'เฉพาะ Purchase Manager อนุมัติใบเสนอราคาได้' });
       const { action, reason = '' } = req.body || {};
       const MAP = { approve: 'approved', return: 'returned', reject: 'rejected' };
       if (!MAP[action]) return res.status(400).json({ error: 'action ต้องเป็น approve / return / reject' });
       if (action !== 'approve' && !String(reason).trim()) return res.status(400).json({ error: action === 'return' ? 'กรุณาระบุเหตุผลที่ตีกลับ' : 'กรุณาระบุเหตุผลที่ไม่อนุมัติ' });
       const cur = (await pool.query('SELECT status FROM purchase_requisitions WHERE rq_no = $1', [req.params.rqNo])).rows[0];
-      if (!cur) return res.status(404).json({ error: 'ไม่พบใบคำขอจัดซื้อ' });
+      if (!cur) return res.status(404).json({ error: 'ไม่พบใบเสนอราคา' });
       if (cur.status === 'converted') return res.status(400).json({ error: 'ใบนี้ออก PR แล้ว' });
       if (cur.status === 'rejected') return res.status(400).json({ error: 'ใบนี้ไม่อนุมัติไปแล้ว' });
       if (action === 'approve' && cur.status === 'returned') return res.status(400).json({ error: 'ใบนี้ถูกตีกลับ — รอผู้ขอแก้ไขและส่งกลับก่อน' });
@@ -176,10 +176,10 @@ export default function (pool) {
   // ----- Mark converted (called after a PR is created from this RQ) -----
   router.post('/:rqNo/convert', async (req, res) => {
     try {
-      if (!canQuote(req)) return res.status(403).json({ error: 'เฉพาะฝ่ายจัดซื้อ (Purchase Manager) ออก PR จากใบคำขอได้' });
+      if (!canQuote(req)) return res.status(403).json({ error: 'เฉพาะฝ่ายจัดซื้อ (Purchase Manager) ออก PR จากใบเสนอราคาได้' });
       const { pr_no } = req.body || {};
       const cs = (await pool.query('SELECT status FROM purchase_requisitions WHERE rq_no = $1', [req.params.rqNo])).rows[0];
-      if (cs && !['approved', 'converted'].includes(cs.status)) return res.status(400).json({ error: 'ใบคำขอยังไม่ได้รับการอนุมัติ' });
+      if (cs && !['approved', 'converted'].includes(cs.status)) return res.status(400).json({ error: 'ใบเสนอราคายังไม่ได้รับการอนุมัติ' });
       await pool.query("UPDATE purchase_requisitions SET status = 'converted', pr_no = $1, updated_at = NOW() WHERE rq_no = $2", [pr_no || null, req.params.rqNo]);
       res.json({ ok: true });
     } catch (e) { res.status(500).json({ error: e.message }); }
@@ -189,10 +189,10 @@ export default function (pool) {
   router.delete('/:rqNo', async (req, res) => {
     try {
       const chk = await pool.query('SELECT status, requested_by FROM purchase_requisitions WHERE rq_no = $1', [req.params.rqNo]);
-      if (!chk.rows[0]) return res.status(404).json({ error: 'ไม่พบใบคำขอจัดซื้อ' });
+      if (!chk.rows[0]) return res.status(404).json({ error: 'ไม่พบใบเสนอราคา' });
       if (chk.rows[0].status === 'converted') return res.status(400).json({ error: 'ใบที่สร้าง PR แล้วลบไม่ได้' });
       const isOwner = String(chk.rows[0].requested_by || '').toLowerCase() === String(req.user?.email || '').toLowerCase();
-      if (!DEL_ROLES.includes(req.user?.role) && !isOwner) return res.status(403).json({ error: 'ไม่มีสิทธิ์ลบใบคำขอนี้' });
+      if (!DEL_ROLES.includes(req.user?.role) && !isOwner) return res.status(403).json({ error: 'ไม่มีสิทธิ์ลบใบเสนอราคานี้' });
       await pool.query('DELETE FROM purchase_requisitions WHERE rq_no = $1', [req.params.rqNo]);
       await pool.query('DELETE FROM rq_attachments WHERE rq_no = $1', [req.params.rqNo]);
       res.json({ ok: true });
@@ -211,7 +211,7 @@ export default function (pool) {
       const { item_seq = null, item_uid = null, supplier_seq = null, filename, mimetype = null, data } = req.body || {};
       if (!filename || !data) return res.status(400).json({ error: 'ต้องมีชื่อไฟล์และข้อมูล' });
       const rq = (await pool.query('SELECT status, requested_by FROM purchase_requisitions WHERE rq_no = $1', [req.params.rqNo])).rows[0];
-      if (!rq) return res.status(404).json({ error: 'ไม่พบใบคำขอจัดซื้อ' });
+      if (!rq) return res.status(404).json({ error: 'ไม่พบใบเสนอราคา' });
       const isOwner = String(rq.requested_by || '').toLowerCase() === String(req.user?.email || '').toLowerCase();
       if (supplier_seq != null) {
         if (!canQuote(req)) return res.status(403).json({ error: 'เฉพาะฝ่ายจัดซื้อแนบใบเสนอราคาได้' });
