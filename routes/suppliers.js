@@ -13,6 +13,7 @@ export default function(pool) {
       ADD COLUMN IF NOT EXISTS branch VARCHAR(50),
       ADD COLUMN IF NOT EXISTS entity_type VARCHAR(50),
       ADD COLUMN IF NOT EXISTS business_type VARCHAR(100)`);
+    await db.query('ALTER TABLE suppliers ALTER COLUMN phone TYPE VARCHAR(100)').catch(() => {});
   }
 
   router.get('/', async (req, res) => {
@@ -37,7 +38,15 @@ export default function(pool) {
   router.post('/', async (req, res) => {
     try {
       await ensureCols(pool);
-      const { code, name, phone, email, address, tax_id, contact_type, branch, entity_type, business_type } = req.body;
+      let { code, name, phone, email, address, tax_id, contact_type, branch, entity_type, business_type } = req.body || {};
+      name = String(name || '').trim();
+      if (!name) return res.status(400).json({ error: 'กรุณากรอกชื่อผู้ขาย' });
+      code = String(code || '').trim();
+      if (!code) { // auto code for suppliers added on the fly (e.g. from the Issue-PO form)
+        const d = new Date(), ymd = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
+        const n = (await pool.query("SELECT COUNT(*)::int AS n FROM suppliers WHERE code LIKE $1", [`NEW-${ymd}-%`])).rows[0].n + 1;
+        code = `NEW-${ymd}-${String(n).padStart(3, '0')}`;
+      }
       const id = uuid();
       await pool.query(
         `INSERT INTO suppliers (id, code, name, phone, email, address, tax_id, contact_type, branch, entity_type, business_type)
@@ -46,6 +55,8 @@ export default function(pool) {
       );
       res.status(201).json({ id, code, name });
     } catch (err) {
+      if (err.code === '23505') return res.status(409).json({ error: 'รหัสผู้ขายนี้มีอยู่แล้วในระบบ — ใช้รหัสอื่น หรือเว้นว่างให้ระบบสร้างให้' });
+      if (err.code === '22001') return res.status(400).json({ error: 'ข้อมูลบางช่องยาวเกินกำหนด' });
       res.status(500).json({ error: err.message });
     }
   });
