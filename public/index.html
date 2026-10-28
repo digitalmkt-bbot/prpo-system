@@ -1521,7 +1521,7 @@
       try {
         if (page === 'dashboard') loadDashboard();
         else if (page === 'requisitions') loadRequisitions();
-        else if (page === 'create') loadCreateForm();
+        else if (page === 'create') window.__createFormLoading = loadCreateForm();
         else if (page === 'prs') loadPRs();
         else if (page === 'pos') loadPOs();
         else if (page === 'approvals') loadApprovals();
@@ -2783,6 +2783,7 @@
 
     // ===== Create PR =====
     async function loadCreateForm() {
+      try { __rqSource = null; } catch { }
       try {
         const depts = await api.getDepartments();
         if (depts.length) {
@@ -3725,20 +3726,25 @@
         });
         if (probs.length) { alert('กรอกรายละเอียด/สเปกให้ครบก่อนสร้าง PR (ไม่มีให้ใส่ "-")\n\n' + probs.join('\n')); return; }
       }
-      const s = _req.selected;
+      const R = _req; // snapshot — the request we are converting
+      const s = R.selected;
+      const hdr = { requester: document.getElementById('req-requester').value, phone: document.getElementById('req-phone').value, purpose: document.getElementById('req-purpose').value };
       // switch to Create PR page then prefill
       goToPage('create', true);
-      setTimeout(() => {
+      // wait until the Create PR form has finished loading (it resets its fields) — then fill it from the request
+      try { await window.__createFormLoading; } catch { }
+      await ensureProducts();
+      {
         try {
           const depSel = document.getElementById('cr-dept');
-          if (_req.department_id && depSel) depSel.value = _req.department_id;
-          document.getElementById('cr-requester').value = document.getElementById('req-requester').value;
-          toast('PR นี้จะออกในนามผู้ขอ (' + (_req.requested_by || '-') + ') และส่งอนุมัติตามสายของผู้ขอ');
-          const ph = document.getElementById('cr-phone'); if (ph) ph.value = document.getElementById('req-phone').value;
-          document.getElementById('cr-purpose').value = document.getElementById('req-purpose').value + ' (อ้างอิงใบคำขอ ' + _req.rq_no + ')';
+          if (R.department_id && depSel) depSel.value = R.department_id;
+          document.getElementById('cr-requester').value = hdr.requester;
+          toast('PR นี้จะออกในนามผู้ขอ (' + (R.requested_by || '-') + ') และส่งอนุมัติตามสายของผู้ขอ');
+          const ph = document.getElementById('cr-phone'); if (ph) ph.value = hdr.phone;
+          document.getElementById('cr-purpose').value = hdr.purpose + ' (อ้างอิงใบคำขอ ' + R.rq_no + ')';
           const tbody = document.getElementById('cr-items');
           tbody.innerHTML = '';
-          _req.items.filter(it => (it.name || '').trim()).forEach((it, i) => {
+          R.items.filter(it => (it.name || '').trim()).forEach((it, i) => {
             addPrItem();
             const tr = tbody.lastElementChild;
             const set = (sel, v) => { const el = tr.querySelector(sel); if (el) el.value = v; };
@@ -3750,16 +3756,16 @@
             const unitSel = tr.querySelector('.it-unit');
             if (unitSel && it.unit) { let o = [...unitSel.options].find(x => x.value === it.unit); if (!o) { o = new Option(it.unit, it.unit); unitSel.add(o); } unitSel.value = it.unit; }
             set('.it-qty', it.qty != null ? it.qty : 1);
-            const price = _req.prices[(_req.items.indexOf(it)) + '_' + s];
+            const price = R.prices[(R.items.indexOf(it)) + '_' + s];
             set('.it-price', price != null ? price : 0);
             const p = (window.__prodByCode || {})[String(it.code || '').toLowerCase()] || (window.__prodByName || {})[String(it.name || '').toLowerCase()];
             if (p) { const cat = tr.querySelector('.it-cat'); if (cat) cat.value = p.category || ''; }
           });
           recalcPR();
-          __rqSource = _req.rq_no;
-          toast('เตรียมข้อมูล PR จาก ' + _req.rq_no + ' แล้ว — ตรวจสอบและกดสร้าง PR');
+          __rqSource = R.rq_no;
+          toast('เตรียมข้อมูล PR จาก ' + R.rq_no + ' แล้ว — ตรวจสอบและกดสร้าง PR');
         } catch (e) { toast('เตรียมข้อมูลไม่สำเร็จ: ' + e.message, true); }
-      }, 150);
+      }
     }
     window.createPRfromRQ = createPRfromRQ;
 
