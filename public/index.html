@@ -717,6 +717,11 @@
     .item-files .if-row .pend { color:#b45309; font-size:10.5px; }
     .item-files .if-row .del { color:#dc2626; cursor:pointer; text-decoration:none; }
     .item-files .if-add { border:1px dashed #93c5fd; background:#eff6ff; color:#1d4ed8; border-radius:8px; padding:3px 10px; font-size:11.5px; cursor:pointer; margin-top:3px; }
+    #req-matrix tfoot td { border-top:2px solid #e2e8f0; padding:8px 6px; vertical-align:top; }
+    #req-matrix .rq-line { font-size:10.5px; color:#64748b; text-align:right; margin-top:2px; }
+    .cmp-best { display:inline-block; background:#16a34a; color:#fff; border-radius:999px; padding:1px 8px; font-size:11px; font-weight:700; }
+    .cmp-diff { color:#b91c1c; font-weight:700; }
+    .cmp-box { border-radius:10px; padding:10px 14px; font-size:13px; line-height:1.7; }
     .spec-line { font-size:11.5px; color:#475569; margin-top:3px; line-height:1.5; }
   </style>
 </head>
@@ -1000,7 +1005,8 @@
             <div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> <span id="req-items-title">รายการสินค้า + เปรียบเทียบราคา</span></div>
               <button class="btn secondary" id="req-addsup-btn" style="padding:6px 14px" onclick="addReqSupplier()">+ เพิ่ม Supplier</button></div>
             <div class="pr-card-body">
-              <div style="overflow-x:auto"><table class="pr-items" id="req-matrix"><thead id="req-matrix-head"></thead><tbody id="req-matrix-body"></tbody></table></div>
+              <div style="overflow-x:auto"><table class="pr-items" id="req-matrix"><thead id="req-matrix-head"></thead><tbody id="req-matrix-body"></tbody><tfoot id="req-matrix-foot"></tfoot></table></div>
+              <div id="req-cmp-summary" class="no-i18n" style="margin-top:10px"></div>
               <button class="pr-add" id="req-additem-btn" onclick="addReqItem()">+ เพิ่มรายการ</button>
               <div id="req-selected-note" style="margin-top:12px;font-size:12.5px;color:var(--muted)">ℹ️ กด "เลือก" บนหัวคอลัมน์ Supplier ที่ต้องการ เพื่อใช้สร้าง PR</div>
             </div>
@@ -3323,8 +3329,9 @@
       const btn = document.getElementById('req-makepr-btn');
       if (!canQuoteRQ()) { btn.style.display = 'none'; return; }
       if (_req && _req.selected != null && _req.suppliers[_req.selected]) {
-        const nm = _req.suppliers[_req.selected].name || ('Supplier ' + (_req.selected + 1));
-        note.innerHTML = '✅ เลือกผู้ขาย: <b>' + nm + '</b> — บันทึกแล้วกด "สร้าง PR จากใบนี้"';
+        const hd = document.querySelectorAll('#req-matrix-head .rq-sup-name')[_req.selected];
+        const nm = (hd && hd.value.trim()) || _req.suppliers[_req.selected].name || ('ผู้ขาย ' + (_req.selected + 1));
+        note.innerHTML = '✅ เลือกผู้ขาย: <b class="no-i18n">' + String(nm).replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</b> — บันทึกแล้วกด "สร้าง PR จากใบนี้"';
         btn.style.display = (_req.rq_no && _req.status !== 'converted') ? '' : (_req.rq_no ? 'none' : '');
         btn.style.display = (_req.rq_no && _req.status === 'converted') ? 'none' : '';
       } else {
@@ -3352,7 +3359,7 @@
           return;
         }
         h += `<th style="min-width:160px;${sel ? 'background:#eff6ff' : ''}">
-          <input class="rq-sup-name" value="${(s.name || '').replace(/"/g, '&quot;')}" list="sup-datalist" placeholder="ชื่อผู้ขาย ${si + 1}" style="width:100%;font-size:12px;padding:4px 6px;border:1px solid var(--border);border-radius:6px">
+          <input class="rq-sup-name" value="${(s.name || '').replace(/"/g, '&quot;')}" list="sup-datalist" placeholder="ชื่อผู้ขาย ${si + 1}" oninput="recalcReqHighlight();updateReqMakePrBtn()" style="width:100%;font-size:12px;padding:4px 6px;border:1px solid var(--border);border-radius:6px">
           <div style="display:flex;gap:6px;align-items:center;justify-content:center;margin-top:4px;font-size:11px;font-weight:400">
             <label style="cursor:pointer;color:${sel ? '#2563eb' : 'var(--muted)'}"><input type="radio" name="rq-winner" ${sel ? 'checked' : ''} onclick="selectReqSupplier(${si})"> เลือก</label>
             <a href="#" onclick="pickReqFile(${si});return false;" title="แนบใบเสนอราคา" style="text-decoration:none">📎${attCount(si) ? '(' + attCount(si) + ')' : ''}</a>
@@ -3367,17 +3374,20 @@
           <td><input class="rq-code" value="${(it.code || '').replace(/"/g, '&quot;')}" list="prodcode-datalist" onchange="onPickReqProductCode(this)" placeholder="รหัส" style="width:100%"></td>
           <td><input class="rq-name" value="${(it.name || it.product_name || '').replace(/"/g, '&quot;')}" list="prod-datalist" onchange="onPickReqProduct(this)" placeholder="ค้นหาสินค้า..." style="width:100%"></td>
           <td style="min-width:230px"><input class="rq-desc" value="${(it.desc || it.description || '').replace(/"/g, '&quot;')}" placeholder="รายละเอียดเพิ่มเติม" style="width:100%">${specGridHtml('rq', it)}${reqItemFilesHtml(it)}</td>
-          <td><input class="rq-qty" type="number" min="0" step="1" value="${it.qty != null ? it.qty : (it.quantity != null ? it.quantity : 1)}" style="width:100%;text-align:center"></td>
+          <td><input class="rq-qty" type="number" min="0" step="1" value="${it.qty != null ? it.qty : (it.quantity != null ? it.quantity : 1)}" oninput="recalcReqHighlight()" style="width:100%;text-align:center"></td>
           <td><input class="rq-unit" value="${(it.unit || 'ชิ้น').replace(/"/g, '&quot;')}" style="width:100%"></td>`;
         sups.forEach((s, si) => {
           const key = i + '_' + si;
           const v = _req.prices[key];
           const sel = _req.selected === si;
-          cells += `<td style="${sel ? 'background:#eff6ff' : ''}"><input class="rq-price" data-i="${i}" data-s="${si}" type="number" min="0" step="0.01" value="${v != null ? v : ''}" placeholder="${roQ ? '—' : '0.00'}" ${roQ ? 'disabled' : ''} oninput="recalcReqHighlight()" style="width:100%;text-align:right"></td>`;
+          cells += `<td style="${sel ? 'background:#eff6ff' : ''}"><input class="rq-price" data-i="${i}" data-s="${si}" type="number" min="0" step="0.01" value="${v != null ? v : ''}" placeholder="${roQ ? '—' : '0.00'}" ${roQ ? 'disabled' : ''} oninput="recalcReqHighlight()" style="width:100%;text-align:right"><div class="rq-line"></div></td>`;
         });
         cells += `<td style="text-align:center"><button onclick="removeReqItem(${i})" style="background:none;border:none;color:#fca5a5;cursor:pointer">🗑</button></td>`;
         return `<tr data-uid="${it.uid}">` + cells + '</tr>';
       }).join('');
+      const foot = document.getElementById('req-matrix-foot');
+      foot.innerHTML = sups.length ? `<tr><td colspan="6" style="text-align:right;font-weight:700">รวมทั้งสิ้น <span style="font-weight:400;color:var(--muted);font-size:11px">(จำนวน × ราคา/หน่วย)</span></td>${sups.map((_, si) => `<td class="rq-tot" data-s="${si}" style="text-align:right;font-weight:700"></td>`).join('')}<td></td></tr>
+        <tr><td colspan="6" style="text-align:right;font-weight:600;color:#475569">เทียบกับราคารวมต่ำสุด</td>${sups.map((_, si) => `<td class="rq-diff" data-s="${si}" style="text-align:right"></td>`).join('')}<td></td></tr>` : '';
       recalcReqHighlight();
       if (_req.status === 'converted') applyReqMode();
     }
@@ -3481,8 +3491,69 @@
           else { c.style.fontWeight = ''; c.style.color = ''; td.style.background = ''; }
         });
       });
+      updateReqTotals();
     }
     window.recalcReqHighlight = recalcReqHighlight;
+
+    // Per-supplier grand totals, difference vs the cheapest, and a summary for the chosen supplier
+    function updateReqTotals() {
+      const body = document.getElementById('req-matrix-body');
+      const sumBox = document.getElementById('req-cmp-summary');
+      if (!body || !sumBox || !_req) return;
+      const fmt = n => Number(n).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      const esc = v => String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+      const heads = [...document.querySelectorAll('#req-matrix-head .rq-sup-name')];
+      const nSup = (_req.suppliers || []).length;
+      const supName = si => (heads[si] ? heads[si].value.trim() : ((_req.suppliers[si] || {}).name || '').trim()) || ('ผู้ขาย ' + (si + 1));
+      const rows = [...body.children].filter(tr => ((tr.querySelector('.rq-name') || {}).value || '').trim());
+      const tot = Array.from({ length: nSup }, () => ({ sum: 0, quoted: 0 }));
+      [...body.children].forEach(tr => {
+        const named = ((tr.querySelector('.rq-name') || {}).value || '').trim();
+        const qty = parseFloat((tr.querySelector('.rq-qty') || {}).value) || 0;
+        tr.querySelectorAll('.rq-price').forEach(inp => {
+          const si = Number(inp.dataset.s), v = parseFloat(inp.value);
+          const line = inp.parentElement.querySelector('.rq-line');
+          const ok = isFinite(v) && v > 0;
+          if (line) line.textContent = ok && qty ? 'รวม ' + fmt(v * qty) : '';
+          if (named && ok && tot[si]) { tot[si].sum += v * qty; tot[si].quoted++; }
+        });
+      });
+      const n = rows.length;
+      const complete = tot.map(t => n > 0 && t.quoted === n);
+      const ranked = tot.map((t, si) => ({ si, sum: t.sum })).filter(x => complete[x.si] && x.sum > 0).sort((a, b) => a.sum - b.sum);
+      const best = ranked[0], worst = ranked[ranked.length - 1];
+      document.querySelectorAll('#req-matrix-foot .rq-tot').forEach(td => {
+        const si = Number(td.dataset.s), t = tot[si];
+        const isBest = best && best.si === si && ranked.length > 0;
+        td.style.background = isBest ? '#dcfce7' : '';
+        td.style.color = isBest ? '#166534' : '';
+        td.innerHTML = t.quoted ? `฿${fmt(t.sum)}${complete[si] ? '' : `<div style="font-size:10.5px;color:#b45309;font-weight:400">เสนอ ${t.quoted}/${n} รายการ</div>`}` : '<span style="color:#cbd5e1;font-weight:400">—</span>';
+      });
+      document.querySelectorAll('#req-matrix-foot .rq-diff').forEach(td => {
+        const si = Number(td.dataset.s);
+        if (!best || !complete[si]) { td.innerHTML = tot[si].quoted ? '<span style="font-size:11px;color:#94a3b8">เสนอไม่ครบ — ไม่นำมาจัดอันดับ</span>' : ''; return; }
+        if (si === best.si) { td.innerHTML = '<span class="cmp-best">🏆 ถูกที่สุด</span>'; return; }
+        const d = tot[si].sum - best.sum, pct = best.sum ? (d / best.sum * 100) : 0;
+        const rank = ranked.findIndex(x => x.si === si) + 1;
+        td.innerHTML = `<span class="cmp-diff">แพงกว่า ฿${fmt(d)}</span><div style="font-size:10.5px;color:#64748b">+${pct.toFixed(1)}% · อันดับ ${rank}/${ranked.length}</div>`;
+      });
+      // summary box
+      if (!nSup || !n) { sumBox.innerHTML = ''; return; }
+      const parts = [];
+      if (ranked.length) {
+        parts.push(`<b>อันดับราคารวม:</b> ` + ranked.map((x, i) => `${i + 1}. ${esc(supName(x.si))} ฿${fmt(x.sum)}${i ? ` <span class="cmp-diff">(+฿${fmt(x.sum - best.sum)})</span>` : ' 🏆'}`).join(' &nbsp;·&nbsp; '));
+        if (ranked.length > 1) parts.push(`ส่วนต่างระหว่างราคาสูงสุดกับต่ำสุด: <b>฿${fmt(worst.sum - best.sum)}</b> (${(best.sum ? (worst.sum - best.sum) / best.sum * 100 : 0).toFixed(1)}%)`);
+      } else parts.push('ยังจัดอันดับไม่ได้ — ต้องมีผู้ขายที่เสนอราคาครบทุกรายการอย่างน้อย 1 ราย');
+      const sel = _req.selected;
+      let tone = '#eff6ff', fg = '#1e3a8a';
+      if (sel != null && tot[sel]) {
+        if (!complete[sel]) { parts.push(`⚠️ ผู้ขายที่เลือก (<b>${esc(supName(sel))}</b>) ยังเสนอราคาไม่ครบทุกรายการ`); tone = '#fef3c7'; fg = '#92400e'; }
+        else if (best && sel === best.si) { parts.push(`✅ เลือก <b>${esc(supName(sel))}</b> ซึ่งราคารวมต่ำสุด ฿${fmt(tot[sel].sum)}${ranked.length > 1 ? ` — ประหยัดกว่าเจ้าที่แพงที่สุด ฿${fmt(worst.sum - tot[sel].sum)}` : ''}`); tone = '#dcfce7'; fg = '#166534'; }
+        else if (best) { parts.push(`⚠️ เลือก <b>${esc(supName(sel))}</b> ฿${fmt(tot[sel].sum)} — <b>แพงกว่าราคาต่ำสุด (${esc(supName(best.si))}) ฿${fmt(tot[sel].sum - best.sum)}</b> โปรดระบุเหตุผลในช่องวัตถุประสงค์`); tone = '#fef3c7'; fg = '#92400e'; }
+      }
+      sumBox.innerHTML = `<div class="cmp-box" style="background:${tone};color:${fg}">${parts.join('<br>')}</div>`;
+    }
+    window.updateReqTotals = updateReqTotals;
 
     function onPickReqProduct(inp) { const p = (window.__prodByName || {})[inp.value.trim().toLowerCase()]; if (p) fillReqRow(inp.closest('tr'), p); }
     window.onPickReqProduct = onPickReqProduct;
@@ -3879,7 +3950,12 @@
         <b>📊 ตารางเปรียบเทียบราคา</b> <span style="color:var(--muted);font-size:12.5px">จากใบคำขอจัดซื้อ ${esc(rqNo)} · ${sups.length} ผู้ขาย · ราคา/หน่วย (สีเขียว = ต่ำสุด)</span>
         <div style="overflow-x:auto;margin-top:8px"><table class="pr-items"><thead><tr><th style="width:30px">#</th><th>รายการ / สเปก</th><th style="width:90px;text-align:center">จำนวน</th>${head}</tr></thead>
         <tbody>${body}</tbody>
-        <tfoot><tr><td></td><td style="font-weight:700">รวมทั้งสิ้น</td><td></td>${foot}</tr></tfoot></table></div>
+        <tfoot><tr><td></td><td style="font-weight:700">รวมทั้งสิ้น</td><td></td>${foot}</tr>
+        <tr><td></td><td style="font-weight:600;color:#475569">เทียบกับราคารวมต่ำสุด</td><td></td>${totals.map((t, si) => {
+          if (!fullQuoted[si] || minTotal == null) return '<td style="text-align:right;font-size:11px;color:#94a3b8">เสนอไม่ครบ</td>';
+          if (t.sum === minTotal) return '<td style="text-align:right"><span class="cmp-best">🏆 ถูกที่สุด</span></td>';
+          return `<td style="text-align:right"><span class="cmp-diff">แพงกว่า ฿${fmt(t.sum - minTotal)}</span><div style="font-size:10.5px;color:#64748b">+${(t.sum / minTotal * 100 - 100).toFixed(1)}%</div></td>`;
+        }).join('')}</tr></tfoot></table></div>
         ${verdict}</div>`;
     }
     window.loadPrRqBox = loadPrRqBox;
