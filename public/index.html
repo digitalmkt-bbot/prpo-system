@@ -1136,6 +1136,23 @@
                 <span onclick="openIssueSupplier(true)" style="position:absolute;right:12px;top:34px;cursor:pointer;color:#9ca3af;font-size:12px">▼</span>
                 <input type="hidden" id="issue-supplier">
                 <div class="typeahead-results" id="issue-supplier-results"></div>
+                <div style="margin-top:6px;font-size:12.5px"><a href="#" id="iss-newsup-link" onclick="startNewIssueSupplier();return false;" style="color:#2563eb;font-weight:600">➕ ผู้ขายใหม่ (ยังไม่มีในระบบ) — กรอกเอง</a></div>
+                <div id="iss-newsup" class="no-i18n" style="display:none;margin-top:10px;border:1.5px dashed #93c5fd;background:#eff6ff;border-radius:12px;padding:12px 14px">
+                  <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px">
+                    <b style="color:#1e3a8a">➕ ผู้ขายใหม่</b>
+                    <a href="#" onclick="cancelNewIssueSupplier();return false;" style="font-size:12px;color:#64748b">เลือกจากรายชื่อเดิมแทน</a>
+                  </div>
+                  <div class="pr-grid">
+                    <div class="pr-field full"><label>ชื่อผู้ขาย / บริษัท *</label><input id="ns-name" oninput="syncNewIssueSupplier()" placeholder="เช่น บริษัท ตัวอย่าง จำกัด"></div>
+                    <div class="pr-field full"><label>ที่อยู่</label><input id="ns-address" oninput="syncNewIssueSupplier()" placeholder="ที่อยู่สำหรับออกเอกสาร"></div>
+                    <div class="pr-field"><label>เลขผู้เสียภาษี</label><input id="ns-tax" oninput="syncNewIssueSupplier()" placeholder="13 หลัก"></div>
+                    <div class="pr-field"><label>สาขา</label><input id="ns-branch" placeholder="เช่น สำนักงานใหญ่ / 00001"></div>
+                    <div class="pr-field"><label>เบอร์โทร</label><input id="ns-phone" oninput="syncNewIssueSupplier()"></div>
+                    <div class="pr-field"><label>อีเมล</label><input id="ns-email" oninput="syncNewIssueSupplier()"></div>
+                    <div class="pr-field"><label>รหัสผู้ขาย <span style="color:#94a3b8;font-weight:400">(เว้นว่าง = ระบบสร้างให้)</span></label><input id="ns-code" placeholder="อัตโนมัติ"></div>
+                  </div>
+                  <div style="font-size:11.5px;color:#475569;margin-top:6px">ℹ️ เมื่อกดออก PO ระบบจะเพิ่มผู้ขายรายนี้เข้า "ทะเบียนผู้ขาย" ให้อัตโนมัติ ครั้งหน้าค้นหาเลือกได้เลย</div>
+                </div>
                 <div class="po-magic" onclick="loadLastItemsForSupplier()"><svg viewBox="0 0 24 24" style="width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M5 3v4M3 5h4M6 17v4M4 19h4M13 3l3 6 6 3-6 3-3 6-3-6-6-3 6-3z"/></svg> เลือกรายการล่าสุดของผู้ติดต่อนี้</div>
                 <div class="po-vendor-meta">
                   <div><span class="k">ที่อยู่</span><span class="v" id="iss-vendor-addr">-</span></div>
@@ -3784,12 +3801,69 @@
       const m = (q
         ? list.filter(s => (s.name || '').toLowerCase().includes(q) || (s.code || '').toLowerCase().includes(q))
         : list).slice(0, 100);
-      box.innerHTML = m.length
+      const rawQ = showAll ? '' : document.getElementById('issue-supplier-search').value.trim();
+      const exact = rawQ && list.some(s => String(s.name || '').trim().toLowerCase() === rawQ.toLowerCase());
+      const addRow = rawQ && !exact ? `<div onclick="startNewIssueSupplier()" style="background:#eff6ff;color:#1d4ed8;font-weight:600">➕ เพิ่มผู้ขายใหม่: “${rawQ.replace(/</g, '&lt;')}”<div class="code" style="font-weight:400">ยังไม่มีในระบบ — กรอกรายละเอียดเอง</div></div>` : '';
+      box.innerHTML = addRow + (m.length
         ? m.map(s => `<div onclick="pickIssueSupplier('${s.id}', this)" data-label="${(s.name || '').replace(/"/g, '&quot;')}"><div>${nz(s.name)}</div><div class="code">${nz(s.code)}</div></div>`).join('')
-        : '<div style="color:var(--muted);padding:6px 10px">ไม่พบผู้ขาย</div>';
+        : (addRow ? '' : '<div style="color:var(--muted);padding:6px 10px">ไม่พบผู้ขาย</div>'));
       box.style.display = 'block';
     }
     window.filterIssueSupplier = filterIssueSupplier;
+
+    // ---- New supplier typed in on the Issue-PO form (saved to the supplier master when the PO is issued) ----
+    function startNewIssueSupplier() {
+      const q = document.getElementById('issue-supplier-search').value.trim();
+      document.getElementById('issue-supplier').value = 'NEW';
+      document.getElementById('issue-supplier-results').style.display = 'none';
+      document.getElementById('iss-newsup').style.display = '';
+      document.getElementById('iss-newsup-link').style.display = 'none';
+      const nm = document.getElementById('ns-name');
+      if (!nm.value && q) nm.value = q;
+      ['iss-taxno', 'iss-contact-name', 'iss-contact-phone', 'iss-contact-email'].forEach(id => { const f = document.getElementById(id); if (f) f.value = ''; });
+      syncNewIssueSupplier();
+      setTimeout(() => (nm.value ? document.getElementById('ns-address') : nm).focus(), 30);
+    }
+    window.startNewIssueSupplier = startNewIssueSupplier;
+    function cancelNewIssueSupplier() {
+      ['ns-name', 'ns-address', 'ns-tax', 'ns-branch', 'ns-phone', 'ns-email', 'ns-code'].forEach(id => { const f = document.getElementById(id); if (f) f.value = ''; });
+      document.getElementById('iss-newsup').style.display = 'none';
+      document.getElementById('iss-newsup-link').style.display = '';
+      document.getElementById('issue-supplier').value = '';
+      document.getElementById('issue-supplier-search').value = '';
+      ['iss-vendor-addr', 'iss-vendor-phone', 'iss-vendor-tax'].forEach(id => { const f = document.getElementById(id); if (f) f.textContent = '-'; });
+      openIssueSupplier(true);
+    }
+    window.cancelNewIssueSupplier = cancelNewIssueSupplier;
+    function syncNewIssueSupplier() {
+      const v = id => (document.getElementById(id) || {}).value || '';
+      document.getElementById('issue-supplier-search').value = v('ns-name');
+      const meta = (fid, val) => { const f = document.getElementById(fid); if (f) f.textContent = val.trim() ? val : '-'; };
+      meta('iss-vendor-addr', v('ns-address')); meta('iss-vendor-phone', v('ns-phone')); meta('iss-vendor-tax', v('ns-tax'));
+      const set = (fid, val) => { const f = document.getElementById(fid); if (f) f.value = val; };
+      set('iss-taxno', v('ns-tax')); set('iss-contact-name', v('ns-name')); set('iss-contact-phone', v('ns-phone')); set('iss-contact-email', v('ns-email'));
+    }
+    window.syncNewIssueSupplier = syncNewIssueSupplier;
+    // create (or reuse by exact name) the typed supplier and return its id
+    async function resolveNewIssueSupplier() {
+      const v = id => ((document.getElementById(id) || {}).value || '').trim();
+      const name = v('ns-name');
+      if (!name) { toast('กรุณากรอกชื่อผู้ขายใหม่', true); document.getElementById('ns-name').focus(); return null; }
+      await ensureSuppliers(true);
+      const same = (SUPPLIERS || []).find(s => String(s.name || '').trim().toLowerCase() === name.toLowerCase());
+      if (same) {
+        const fill = (fid, val) => { const f = document.getElementById(fid); if (f && !f.value.trim() && val) f.value = val; };
+        const cn = document.getElementById('iss-contact-name'); if (cn) cn.value = same.name;
+        fill('iss-taxno', same.tax_id); fill('iss-contact-phone', same.phone); fill('iss-contact-email', same.email);
+        document.getElementById('issue-supplier-search').value = same.name;
+        toast('พบชื่อนี้ในทะเบียนผู้ขายอยู่แล้ว — ใช้ข้อมูลเดิม (' + (same.code || '') + ')');
+        return same.id;
+      }
+      const res = await api.saveSupplier({ code: v('ns-code') || null, name, address: v('ns-address') || null, tax_id: v('ns-tax') || null, branch: v('ns-branch') || null, phone: v('ns-phone') || null, email: v('ns-email') || null });
+      await ensureSuppliers(true);
+      toast('เพิ่ม "' + name + '" เข้าทะเบียนผู้ขายแล้ว (รหัส ' + (res.code || '-') + ')');
+      return res.id;
+    }
     function openIssueSupplier(clear) {
       const s = document.getElementById('issue-supplier-search');
       if (clear) { s.value = ''; s.focus(); }
@@ -3797,6 +3871,8 @@
     }
     window.openIssueSupplier = openIssueSupplier;
     function pickIssueSupplier(id, el) {
+      const nsp = document.getElementById('iss-newsup'); if (nsp) nsp.style.display = 'none';
+      const nsl = document.getElementById('iss-newsup-link'); if (nsl) nsl.style.display = '';
       document.getElementById('issue-supplier').value = id;
       document.getElementById('issue-supplier-search').value = el.getAttribute('data-label');
       document.getElementById('issue-supplier-results').style.display = 'none';
@@ -3875,6 +3951,8 @@
         document.getElementById('iss-pr-ref').textContent = pr.pr_no + ' — ' + nz(pr.department_name);
         document.getElementById('issue-supplier-search').value = '';
         document.getElementById('issue-supplier').value = '';
+        ['ns-name', 'ns-address', 'ns-tax', 'ns-branch', 'ns-phone', 'ns-email', 'ns-code'].forEach(id => { const f = document.getElementById(id); if (f) f.value = ''; });
+        { const a = document.getElementById('iss-newsup'); if (a) a.style.display = 'none'; const b = document.getElementById('iss-newsup-link'); if (b) b.style.display = ''; }
         document.getElementById('issue-supplier-results').style.display = 'none';
         ['iss-contact-name', 'iss-contact-phone', 'iss-contact-email', 'iss-note', 'iss-quotation', 'iss-invoice', 'iss-taxno', 'iss-payment'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
         ['iss-vendor-addr', 'iss-vendor-phone', 'iss-vendor-tax'].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = '-'; });
@@ -4185,6 +4263,7 @@
     async function loadLastItemsForSupplier() {
       const sid = document.getElementById('issue-supplier').value;
       if (!sid) return toast('กรุณาเลือกผู้ขายก่อน', true);
+      if (sid === 'NEW') return toast('ผู้ขายใหม่ยังไม่มีใบสั่งซื้อก่อนหน้า', true);
       try {
         const pos = await api.getPOs();
         const mine = (pos || []).filter(p => String(p.supplier_id) === String(sid))
@@ -4213,8 +4292,9 @@
 
     async function submitIssuePO(draft) {
       try {
-        const supplier_id = document.getElementById('issue-supplier').value;
-        if (!supplier_id) return toast('กรุณาเลือกผู้ขาย', true);
+        let supplier_id = document.getElementById('issue-supplier').value;
+        if (!supplier_id) return toast('กรุณาเลือกผู้ขาย หรือกด "ผู้ขายใหม่" เพื่อกรอกเอง', true);
+        if (supplier_id === 'NEW' && !((document.getElementById('ns-name') || {}).value || '').trim()) return toast('กรุณากรอกชื่อผู้ขายใหม่', true);
         const trs = [...document.querySelectorAll('#iss-items tr')];
         const items = trs.map(tr => ({
           product_name: tr.querySelector('.ii-name').value.trim(),
@@ -4237,6 +4317,12 @@
             return toast(`จำนวนที่สั่ง (${qy}) เกินจำนวนคงเหลือ (${remaining}) ในรายการ "${tr.querySelector('.ii-name').value.trim()}"`, true);
           }
           pr_line_qty.push({ id: tr.dataset.prid, quantity: qy });
+        }
+        if (supplier_id === 'NEW') {
+          supplier_id = await resolveNewIssueSupplier();
+          if (!supplier_id) return;
+          document.getElementById('issue-supplier').value = supplier_id; // retry-safe: don't create twice
+          const nsp = document.getElementById('iss-newsup'); if (nsp) nsp.style.display = 'none';
         }
         const res = await api.issuePO({
           pr_no: _issuePR.pr_no, supplier_id, items, pr_item_ids, pr_line_qty,
