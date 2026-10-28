@@ -193,12 +193,12 @@ export default function(pool) {
       let requesterUserId = req.user?.id || null;
       let rqRow = null;
       if (source_rq_no) {
-        if (!['Admin', 'Purchase Manager'].includes(req.user?.role)) { await client.query('ROLLBACK'); return res.status(403).json({ error: 'เฉพาะฝ่ายจัดซื้อ (Purchase Manager) ออก PR จากใบเสนอราคาได้' }); }
+        if (!['Admin', 'Purchase Manager'].includes(req.user?.role)) { await client.query('ROLLBACK'); return res.status(403).json({ error: 'เฉพาะฝ่ายจัดซื้อ (Purchase Manager) ออก PR จากขอใบเสนอราคาได้' }); }
         const rq = await client.query('SELECT * FROM purchase_requisitions WHERE rq_no = $1 FOR UPDATE', [source_rq_no]);
         rqRow = rq.rows[0];
-        if (!rqRow) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'ไม่พบใบเสนอราคา ' + source_rq_no }); }
-        if (rqRow.status === 'converted') { await client.query('ROLLBACK'); return res.status(400).json({ error: `ใบเสนอราคา ${source_rq_no} ออก PR ไปแล้ว (${rqRow.pr_no || '-'})` }); }
-        if (rqRow.status !== 'approved') { await client.query('ROLLBACK'); return res.status(400).json({ error: `ใบเสนอราคา ${source_rq_no} ยังไม่ได้รับการอนุมัติจาก Purchase Manager` }); }
+        if (!rqRow) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'ไม่พบขอใบเสนอราคา ' + source_rq_no }); }
+        if (rqRow.status === 'converted') { await client.query('ROLLBACK'); return res.status(400).json({ error: `ขอใบเสนอราคา ${source_rq_no} ออก PR ไปแล้ว (${rqRow.pr_no || '-'})` }); }
+        if (rqRow.status !== 'approved') { await client.query('ROLLBACK'); return res.status(400).json({ error: `ขอใบเสนอราคา ${source_rq_no} ยังไม่ได้รับการอนุมัติจาก Purchase Manager` }); }
         if (rqRow.department_id) department_id = rqRow.department_id;
         if (!requester_name && rqRow.requester_name) requester_name = rqRow.requester_name;
         if (!requester_phone && rqRow.requester_phone) requester_phone = rqRow.requester_phone;
