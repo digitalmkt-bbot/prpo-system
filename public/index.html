@@ -2352,8 +2352,10 @@
       const btn = document.getElementById('modal-save-btn');
       if (!window._modalSave) return;
       btn.disabled = true;
+      const label = btn.textContent; btn.textContent = 'กำลังบันทึก...';
       try { await window._modalSave(); }
-      finally { btn.disabled = false; }
+      catch (e) { toast('บันทึกไม่สำเร็จ: ' + (e && e.message ? e.message : e), true); }
+      finally { btn.disabled = false; btn.textContent = label; }
     }
     window.closeModal = closeModal;
     window.modalSave = modalSave;
