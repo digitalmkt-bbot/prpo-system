@@ -728,6 +728,10 @@
     .rv-actions button { border:0; border-radius:10px; padding:9px 16px; font-weight:700; cursor:pointer; font-size:13px; }
     .rv-hist { margin:10px 0 0; padding:0; list-style:none; font-size:12px; color:#475569; }
     .rv-hist li { padding:3px 0 3px 14px; border-left:2px solid #cbd5e1; margin-left:4px; }
+    .pr-extra { margin-top:18px; border:1px dashed #cbd5e1; border-radius:12px; padding:10px 14px; background:#f8fafc; }
+    .pr-extra > summary { cursor:pointer; font-weight:700; font-size:13px; color:#334155; }
+    .pr-extra[open] > summary { margin-bottom:6px; }
+    @media print { .pr-extra { display:none !important; } }
     .spec-line { font-size:11.5px; color:#475569; margin-top:3px; line-height:1.5; }
   </style>
 </head>
@@ -2068,7 +2072,7 @@
             <td style="text-align:center">${idx + 1}</td>
             <td style="color:#64748b">${nz(it.code)}</td>
             <td class="no-i18n">${nz(it.product_name)}</td>
-            <td><span class="no-i18n">${nz(it.description)}</span>${specText(it) ? `<div class="spec-line no-i18n">${specText(it).replace(/</g, '&lt;')}</div>` : ''}${it.already_done ? '<div><span class="tag approved" style="font-size:10px;background:#fef3c7;color:#92400e">ดำเนินการไปแล้ว · มีหลักฐานแนบ</span></div>' : ''}</td>
+            <td class="no-i18n">${[it.description, specText(it)].filter(v => v && String(v).trim()).map(v => String(v).replace(/</g, '&lt;')).join(' — ') || '-'}${it.already_done ? '<div><span class="tag approved" style="font-size:10px;background:#fef3c7;color:#92400e">ดำเนินการไปแล้ว · มีหลักฐานแนบ</span></div>' : ''}</td>
             <td style="color:#64748b">${nz(it.category)}</td>
             <td style="text-align:center">${it.quantity}</td>
             <td>${nz(it.unit)}</td>
@@ -2141,15 +2145,18 @@
             <div style="grid-column:1/-1"><div class="k">วัตถุประสงค์</div>${nz(pr.purpose)}</div>
           </div>
           <table class="pr-items">
-            <thead><tr><th style="width:30px">#</th><th style="width:100px">รหัส</th><th>รายการ</th><th>รายละเอียด</th><th style="width:120px">หมวดหมู่</th><th style="text-align:center">จำนวน</th><th>หน่วย</th><th style="text-align:right">ราคา/หน่วย</th><th style="text-align:right">รวม</th><th style="text-align:center">${canApprove ? 'อนุมัติ' : 'สถานะ'}</th></tr></thead>
+            <thead><tr><th style="width:30px">#</th><th style="width:100px">รหัส</th><th style="min-width:140px">รายการ</th><th style="min-width:150px">รายละเอียด</th><th style="width:120px">หมวดหมู่</th><th style="text-align:center">จำนวน</th><th>หน่วย</th><th style="text-align:right">ราคา/หน่วย</th><th style="text-align:right">รวม</th><th style="text-align:center">${canApprove ? 'อนุมัติ' : 'สถานะ'}</th></tr></thead>
             <tbody>${rows || '<tr><td colspan="8" class="dash-empty">ไม่มีรายการ</td></tr>'}</tbody>
           </table>
           <div style="text-align:right;margin-top:14px;font-size:16px;font-weight:700">ยอดรวม${canApprove ? ' (เฉพาะที่อนุมัติ)' : ''}: ฿<span id="pr-appr-total">${Number(pr.total_amount || 0).toLocaleString()}</span></div>
           ${canApprove ? '<div style="text-align:right;font-size:12px;color:var(--muted)">ติ๊กออกเพื่อปฏิเสธรายการนั้น — รายการที่ปฏิเสธจะถูกตัดออกจากยอดและไม่ส่งต่อไป PO</div>' : ''}
           ${posHtml}
-          <div id="pr-rq-box" data-pr="${pr.pr_no}"></div>
-          <div id="pr-att-box" data-pr="${pr.pr_no}"></div>
           ${chain}
+          <details id="pr-extra" class="pr-extra po-print-hide" style="display:none">
+            <summary>📎 ข้อมูลประกอบการอนุมัติ <span id="pr-extra-sum" class="no-i18n"></span> <span style="color:#2563eb;font-weight:500">— กดเพื่อดู</span></summary>
+            <div id="pr-rq-box" data-pr="${pr.pr_no}"></div>
+            <div id="pr-att-box" data-pr="${pr.pr_no}"></div>
+          </details>
           <div class="detail-actions" style="margin-top:20px;text-align:right">
             ${canApprove ? `<button class="btn secondary" style="border-color:#e11d48;color:#e11d48" onclick="rejectPR('${pr.pr_no}');closePRDetail()">✕ ปฏิเสธทั้งใบ</button>
             <button class="btn" onclick="submitPRApprove('${pr.pr_no}')">✓ อนุมัติตามรายการ</button>` : ''}
@@ -3953,12 +3960,24 @@
       if (!box || box.dataset.pr !== prNo) return;
       let list = [];
       try { list = await api.getPrAttachments(prNo); } catch { return; }
-      if (!list.length) { box.innerHTML = ''; return; }
+      if (!list.length) { box.innerHTML = ''; box.dataset.count = ''; updatePrExtra(); return; }
+      box.dataset.count = list.length;
       const nameOf = seq => { const it = (items || []).find(x => Number(x.item_seq) === Number(seq)); return it ? it.product_name : (seq != null ? 'รายการ ' + (Number(seq) + 1) : 'ทั้งใบ'); };
+      setTimeout(updatePrExtra, 0);
       box.innerHTML = `<div style="margin-top:16px"><b>📎 หลักฐาน / ไฟล์แนบ (${list.length})</b><ul style="font-size:13px;margin:8px 0 0 18px;line-height:1.8">${list.map(a =>
         `<li><a href="#" onclick="downloadPrAtt('${prNo}','${a.id}');return false;" style="color:var(--brand);font-weight:600" class="no-i18n">${String(a.filename).replace(/</g, '&lt;')}</a> <span style="color:var(--muted)">— <span class="no-i18n">${String(nameOf(a.item_seq) || '').replace(/</g, '&lt;')}</span> · ${Math.max(1, Math.round((a.size || 0) / 1024))} KB${a.uploaded_by ? ' · ' + String(a.uploaded_by).replace(/</g, '&lt;') : ''}</span></li>`).join('')}</ul></div>`;
     }
     window.loadPrAttBox = loadPrAttBox;
+    function updatePrExtra() {
+      const ex = document.getElementById('pr-extra'); if (!ex) return;
+      const rq = document.getElementById('pr-rq-box'), at = document.getElementById('pr-att-box');
+      const parts = [];
+      if (rq && rq.dataset.sum) parts.push(rq.dataset.sum);
+      if (at && at.dataset.count) parts.push(`ไฟล์แนบ ${at.dataset.count} ไฟล์`);
+      ex.style.display = parts.length ? '' : 'none';
+      const sum = document.getElementById('pr-extra-sum'); if (sum) sum.textContent = parts.length ? '· ' + parts.join(' · ') : '';
+    }
+    window.updatePrExtra = updatePrExtra;
     async function downloadPrAtt(prNo, id) {
       try {
         const f = await api.downloadPrAttachment(prNo, id);
@@ -4018,6 +4037,15 @@
         return `<td style="text-align:right;font-weight:700;${best ? 'background:#dcfce7;color:#166534;' : (sel ? 'background:#eff6ff;' : '')}">${fmt(t.sum)}${full ? '' : `<div style="font-size:10.5px;color:#b45309;font-weight:400">เสนอ ${t.quoted}/${items.length} รายการ</div>`}</td>`;
       }).join('');
       let verdict = '';
+      {
+        let v = `ตารางเปรียบเทียบราคา ${rqNo} (${sups.length} ผู้ขาย)`;
+        if (selIdx >= 0 && fullQuoted[selIdx] && minTotal != null) {
+          const selSum = totals[selIdx].sum;
+          v += selSum > minTotal + 0.005 ? ` · ⚠️ เลือกเจ้าที่แพงกว่าราคาต่ำสุด ฿${fmt(selSum - minTotal)}` : ' · ✅ เลือกเจ้าที่ราคารวมต่ำสุด';
+        }
+        box.dataset.sum = v;
+        setTimeout(updatePrExtra, 0);
+      }
       if (selIdx >= 0) {
         const selFull = fullQuoted[selIdx], selSum = totals[selIdx].sum;
         if (selFull && minTotal != null && selSum > minTotal + 0.005)
