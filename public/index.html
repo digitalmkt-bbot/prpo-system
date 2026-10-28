@@ -722,6 +722,12 @@
     .cmp-best { display:inline-block; background:#16a34a; color:#fff; border-radius:999px; padding:1px 8px; font-size:11px; font-weight:700; }
     .cmp-diff { color:#b91c1c; font-weight:700; }
     .cmp-box { border-radius:10px; padding:10px 14px; font-size:13px; line-height:1.7; }
+    .rv-card { border-radius:14px; padding:14px 16px; margin-bottom:14px; border:1px solid; }
+    .rv-card h4 { margin:0 0 4px; font-size:14px; }
+    .rv-actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+    .rv-actions button { border:0; border-radius:10px; padding:9px 16px; font-weight:700; cursor:pointer; font-size:13px; }
+    .rv-hist { margin:10px 0 0; padding:0; list-style:none; font-size:12px; color:#475569; }
+    .rv-hist li { padding:3px 0 3px 14px; border-left:2px solid #cbd5e1; margin-left:4px; }
     .spec-line { font-size:11.5px; color:#475569; margin-top:3px; line-height:1.5; }
   </style>
 </head>
@@ -991,6 +997,7 @@
             <h1 id="req-form-title">สร้างใบคำขอจัดซื้อ</h1>
             <div class="po-docboxes"><div class="po-docbox"><div class="lbl">เลขที่</div><div class="docno" id="req-docno">ออกอัตโนมัติเมื่อบันทึก</div></div></div>
           </div>
+          <div id="req-review-box"></div>
           <div class="pr-card">
             <div class="pr-card-head"><div class="pr-card-title"><span class="dot"></span> ข้อมูลทั่วไป</div></div>
             <div class="pr-card-body"><div class="pr-grid">
@@ -3128,9 +3135,12 @@
     async function refreshRqBadge(list) {
       const b = document.getElementById('nav-rq-badge');
       if (!b) return;
-      if (!canQuoteRQ()) { b.style.display = 'none'; return; }
       try { list = list || await api.getRequisitions(); } catch { return; }
-      const n = (list || []).filter(r => r.status !== 'converted').length;
+      const me = String(currentUser && currentUser.email || '').toLowerCase();
+      // PM: waiting review + approved waiting PR · requester: own requests sent back for fixing
+      const n = canQuoteRQ() ? (list || []).filter(r => ['open', 'approved'].includes(r.status)).length
+        : (list || []).filter(r => r.status === 'returned' && String(r.requested_by || '').toLowerCase() === me).length;
+      b.title = canQuoteRQ() ? 'ใบคำขอที่รอตรวจ / รอออก PR' : 'ใบคำขอที่ถูกตีกลับให้แก้ไข';
       b.textContent = n; b.style.display = n ? '' : 'none';
     }
     window.refreshRqBadge = refreshRqBadge;
@@ -3169,8 +3179,10 @@
       empty.style.display = 'none';
       const pill = (bg, fg, t) => `<span style="background:${bg};color:${fg};padding:2px 8px;border-radius:10px;font-size:12px;white-space:nowrap">${t}</span>`;
       const badge = (r) => r.status === 'converted' ? pill('#dcfce7', '#166534', 'ออก PR แล้ว')
-        : rqHasQuotes(r) ? pill('#dbeafe', '#1e40af', 'เทียบราคาแล้ว · รอออก PR')
-        : pill('#fef3c7', '#92400e', 'รอจัดซื้อเทียบราคา');
+        : r.status === 'rejected' ? pill('#fee2e2', '#991b1b', '❌ ไม่อนุมัติ')
+        : r.status === 'returned' ? pill('#ffedd5', '#9a3412', '↩️ ตีกลับให้แก้ไข')
+        : r.status === 'approved' ? pill('#dbeafe', '#1e40af', rqHasQuotes(r) ? '✅ อนุมัติแล้ว · เทียบราคาแล้ว' : '✅ อนุมัติแล้ว · รอเทียบราคา')
+        : pill('#fef3c7', '#92400e', '⏳ รอ Purchase Manager ตรวจ');
       tb.innerHTML = rows.map(r => `<tr>
         <td><a href="#" onclick="openRequisition('${r.rq_no}');return false;" style="color:#2563eb;font-weight:600">${r.rq_no}</a>${r.pr_no ? `<div style="font-size:11px;color:var(--muted)">→ ${r.pr_no}</div>` : ''}</td>
         <td>${r.date ? new Date(r.date).toLocaleDateString('th-TH') : '-'}</td>
@@ -3233,7 +3245,8 @@
           suppliers: Array.isArray(d.suppliers) && d.suppliers.length ? d.suppliers : (canQuoteRQ() && d.status !== 'converted' ? [{ name: '' }] : []),
           prices: d.prices || {}, selected: null, attachments: [],
           department_id: d.department_id, selected_supplier_name: d.selected_supplier_name,
-          pr_no: d.pr_no, requested_by: d.requested_by
+          pr_no: d.pr_no, requested_by: d.requested_by,
+          review_note: d.review_note, reviewed_by: d.reviewed_by, reviewed_at: d.reviewed_at, history: Array.isArray(d.history) ? d.history : []
         };
         // find selected supplier index by name
         if (d.selected_supplier_name) {
@@ -3332,8 +3345,8 @@
         const hd = document.querySelectorAll('#req-matrix-head .rq-sup-name')[_req.selected];
         const nm = (hd && hd.value.trim()) || _req.suppliers[_req.selected].name || ('ผู้ขาย ' + (_req.selected + 1));
         note.innerHTML = '✅ เลือกผู้ขาย: <b class="no-i18n">' + String(nm).replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</b> — บันทึกแล้วกด "สร้าง PR จากใบนี้"';
-        btn.style.display = (_req.rq_no && _req.status !== 'converted') ? '' : (_req.rq_no ? 'none' : '');
-        btn.style.display = (_req.rq_no && _req.status === 'converted') ? 'none' : '';
+        btn.style.display = (_req.rq_no && _req.status === 'approved') ? '' : 'none';
+        if (_req.status !== 'approved' && _req.status !== 'converted') note.innerHTML += ' <span style="color:#b45309">· ต้องกด "อนุมัติ" ใบคำขอก่อน จึงสร้าง PR ได้</span>';
       } else {
         note.innerHTML = 'ℹ️ กด "เลือก" บนหัวคอลัมน์ Supplier ที่ต้องการ เพื่อใช้สร้าง PR';
         btn.style.display = 'none';
@@ -3389,7 +3402,7 @@
       foot.innerHTML = sups.length ? `<tr><td colspan="6" style="text-align:right;font-weight:700">รวมทั้งสิ้น <span style="font-weight:400;color:var(--muted);font-size:11px">(จำนวน × ราคา/หน่วย)</span></td>${sups.map((_, si) => `<td class="rq-tot" data-s="${si}" style="text-align:right;font-weight:700"></td>`).join('')}<td></td></tr>
         <tr><td colspan="6" style="text-align:right;font-weight:600;color:#475569">เทียบกับราคารวมต่ำสุด</td>${sups.map((_, si) => `<td class="rq-diff" data-s="${si}" style="text-align:right"></td>`).join('')}<td></td></tr>` : '';
       recalcReqHighlight();
-      if (_req.status === 'converted') applyReqMode();
+      if (['converted', 'rejected'].includes(_req.status) || (!canQuoteRQ() && _req.status === 'approved')) applyReqMode();
     }
 
     // ===== Per-item files (many per item) =====
@@ -3457,21 +3470,79 @@
       return n;
     }
 
+    // ===== Purchase Manager review of a requisition (approve / return / reject) =====
+    function renderReqReview() {
+      const box = document.getElementById('req-review-box');
+      if (!box || !_req) return;
+      if (!_req.rq_no) { box.innerHTML = ''; return; }
+      const esc = v => String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+      const fmtT = t => { try { return new Date(t).toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short' }); } catch { return ''; } };
+      const st = _req.status || 'open', q = canQuoteRQ();
+      const S = {
+        open: ['#fffbeb', '#f59e0b', '#92400e', '⏳ รอ Purchase Manager ตรวจและอนุมัติ'],
+        approved: ['#eff6ff', '#3b82f6', '#1e3a8a', '✅ Purchase Manager อนุมัติใบคำขอแล้ว'],
+        returned: ['#fff7ed', '#f97316', '#9a3412', '↩️ ตีกลับให้ผู้ขอแก้ไข'],
+        rejected: ['#fef2f2', '#ef4444', '#991b1b', '❌ ไม่อนุมัติ'],
+        converted: ['#f0fdf4', '#22c55e', '#166534', '✅ ออกใบขอซื้อ (PR) แล้ว'],
+      }[st] || ['#f8fafc', '#cbd5e1', '#334155', st];
+      const ACT = { submit: '📨 ส่งคำขอ', resubmit: '📨 แก้ไขแล้วส่งกลับ', approve: '✅ อนุมัติ', return: '↩️ ตีกลับ', reject: '❌ ไม่อนุมัติ' };
+      const hist = (_req.history || []).slice().reverse();
+      const reason = (st === 'returned' || st === 'rejected') && _req.review_note
+        ? `<div style="margin-top:6px;padding:8px 12px;background:#fff;border-radius:8px;border:1px dashed ${S[1]}"><b>เหตุผล:</b> <span class="no-i18n">${esc(_req.review_note)}</span>${_req.reviewed_by ? `<div style="font-size:11.5px;color:#64748b;margin-top:2px">โดย <span class="no-i18n">${esc(_req.reviewed_by)}</span>${_req.reviewed_at ? ' · ' + fmtT(_req.reviewed_at) : ''}</div>` : ''}</div>` : '';
+      const canReview = q && ['open', 'approved'].includes(st);
+      const actions = canReview ? `
+        <div style="margin-top:10px"><textarea id="rv-reason" rows="2" placeholder="เหตุผล / ความเห็น (จำเป็นเมื่อ ตีกลับ หรือ ไม่อนุมัติ)" style="width:100%;border:1.5px solid #e2e8f0;border-radius:10px;padding:8px 10px;font-size:13px;font-family:inherit"></textarea></div>
+        <div class="rv-actions">
+          ${st === 'open' ? '<button style="background:#16a34a;color:#fff" onclick="reviewReq(\'approve\')">✅ อนุมัติ</button>' : ''}
+          <button style="background:#f97316;color:#fff" onclick="reviewReq('return')">↩️ ตีกลับให้แก้ไข</button>
+          <button style="background:#fff;color:#dc2626;border:1.5px solid #fca5a5" onclick="reviewReq('reject')">❌ ไม่อนุมัติ</button>
+        </div>` : '';
+      box.innerHTML = `<div class="rv-card" style="background:${S[0]};border-color:${S[1]};color:${S[2]}">
+        <h4>${S[3]}</h4>
+        ${st === 'open' && q ? '<div style="font-size:12.5px">ตรวจรายการ สเปก และไฟล์แนบ — ถ้าไม่เรียบร้อยให้ "ตีกลับ" พร้อมเหตุผล ผู้ขอจะแก้แล้วส่งกลับมาใหม่</div>' : ''}
+        ${st === 'approved' && q ? '<div style="font-size:12.5px">ขั้นต่อไป: ใส่ราคาเปรียบเทียบ เลือกผู้ขาย แล้วกด "สร้าง PR จากใบนี้"</div>' : ''}
+        ${reason}${actions}
+        ${hist.length ? `<ul class="rv-hist">${hist.map(h => `<li><b>${ACT[h.action] || esc(h.action)}</b> · <span class="no-i18n">${esc(h.by || '')}</span> · ${fmtT(h.at)}${h.reason ? ` — <span class="no-i18n">${esc(h.reason)}</span>` : ''}</li>`).join('')}</ul>` : ''}
+      </div>`;
+    }
+    window.renderReqReview = renderReqReview;
+    async function reviewReq(action) {
+      if (!_req || !_req.rq_no) return;
+      const reason = ((document.getElementById('rv-reason') || {}).value || '').trim();
+      if (action !== 'approve' && !reason) { toast(action === 'return' ? 'กรุณาระบุเหตุผลที่ตีกลับ' : 'กรุณาระบุเหตุผลที่ไม่อนุมัติ', true); const r = document.getElementById('rv-reason'); if (r) r.focus(); return; }
+      const label = { approve: 'อนุมัติ', return: 'ตีกลับให้ผู้ขอแก้ไข', reject: 'ไม่อนุมัติ (ปิดใบนี้)' }[action];
+      if (!confirm(`ยืนยัน "${label}" ใบคำขอ ${_req.rq_no}?`)) return;
+      try {
+        if (action === 'approve') { gatherReqFromDOM(); } // keep any edits PM made before approving
+        await api.reviewRequisition(_req.rq_no, action, reason);
+        toast({ approve: '✅ อนุมัติใบคำขอแล้ว — ใส่ราคาเปรียบเทียบแล้วสร้าง PR ได้', return: '↩️ ตีกลับให้ผู้ขอแก้ไขแล้ว', reject: '❌ ไม่อนุมัติใบคำขอแล้ว' }[action]);
+        await openRequisition(_req.rq_no);
+        refreshRqBadge();
+      } catch (e) { toast('ดำเนินการไม่สำเร็จ: ' + e.message, true); }
+    }
+    window.reviewReq = reviewReq;
+
     function applyReqMode() {
       if (!_req) return;
-      const q = canQuoteRQ(), conv = _req.status === 'converted';
+      const q = canQuoteRQ(), st = _req.status || 'open';
       const isNew = !_req.rq_no;
+      // read-only: PR issued or rejected (everyone) · requester after PM approved
+      const conv = st === 'converted' || st === 'rejected' || (!q && st === 'approved');
       const $ = id => document.getElementById(id);
+      renderReqReview();
       $('req-items-title').textContent = q ? 'รายการสินค้า + เปรียบเทียบราคา' : 'รายการที่ต้องการซื้อ';
       $('req-addsup-btn').style.display = (q && !conv) ? '' : 'none';
       $('req-additem-btn').style.display = conv ? 'none' : '';
       $('req-save-btn').style.display = conv ? 'none' : '';
-      $('req-save-btn').textContent = q ? '💾 บันทึกใบคำขอ / ราคา' : (isNew ? '📨 ส่งคำขอให้ฝ่ายจัดซื้อ' : '💾 บันทึกการแก้ไข');
+      $('req-save-btn').textContent = q ? '💾 บันทึกใบคำขอ / ราคา' : (isNew ? '📨 ส่งคำขอให้ฝ่ายจัดซื้อ' : st === 'returned' ? '📨 แก้ไขแล้ว ส่งกลับให้ฝ่ายจัดซื้อ' : '💾 บันทึกการแก้ไข');
       const note = $('req-selected-note');
-      if (conv) note.innerHTML = `✅ ใบคำขอนี้ออกใบขอซื้อแล้ว: <a href="#" onclick="showPRDetail('${_req.pr_no || ''}');return false;" style="color:#2563eb;font-weight:600">${_req.pr_no || '-'}</a>`;
-      else if (!q) note.innerHTML = (_req.suppliers || []).some(sp => (sp.name || '').trim())
-        ? 'ℹ️ ฝ่ายจัดซื้อเทียบราคาแล้ว — รอฝ่ายจัดซื้อออกใบขอซื้อ (PR) ในนามของคุณ'
-        : 'ℹ️ กรอกรายการและสเปกให้ครบ แล้วกด "ส่งคำขอให้ฝ่ายจัดซื้อ" — Purchase Manager จะหาใบเสนอราคาเปรียบเทียบและออก PR ให้';
+      if (st === 'rejected') note.innerHTML = '❌ ใบคำขอนี้ไม่ได้รับการอนุมัติ (ปิดแล้ว)';
+      else if (!q && st === 'approved') note.innerHTML = (_req.suppliers || []).some(sp => (sp.name || '').trim()) ? '✅ Purchase Manager อนุมัติแล้ว และเทียบราคาแล้ว — รอออกใบขอซื้อ (PR) ในนามของคุณ' : '✅ Purchase Manager อนุมัติแล้ว — กำลังหาใบเสนอราคาเปรียบเทียบ';
+      else if (!q && st === 'returned') note.innerHTML = '↩️ ใบคำขอถูกตีกลับ — แก้ไขตามเหตุผลด้านบน แล้วกด "แก้ไขแล้ว ส่งกลับให้ฝ่ายจัดซื้อ"';
+      else if (st === 'converted') note.innerHTML = `✅ ใบคำขอนี้ออกใบขอซื้อแล้ว: <a href="#" onclick="showPRDetail('${_req.pr_no || ''}');return false;" style="color:#2563eb;font-weight:600">${_req.pr_no || '-'}</a>`;
+      else if (!q) note.innerHTML = isNew
+        ? 'ℹ️ กรอกรายการและสเปกให้ครบ แล้วกด "ส่งคำขอให้ฝ่ายจัดซื้อ" — Purchase Manager จะตรวจ/อนุมัติ เทียบราคา และออก PR ให้'
+        : '⏳ รอ Purchase Manager ตรวจใบคำขอ — ระหว่างนี้ยังแก้ไขได้';
       // converted → everything read-only
       document.querySelectorAll('#req-form-view input, #req-form-view textarea, #req-form-view select').forEach(el => { if (el.id !== 'req-file-input') el.disabled = conv || el.disabled && el.classList.contains('rq-price'); });
       document.querySelectorAll('#req-matrix-body button').forEach(b => b.style.display = conv ? 'none' : '');
@@ -3589,7 +3660,8 @@
         if (!canQuoteRQ() && specMiss) { alert('กรุณากรอกรายละเอียด/สเปกให้ครบก่อนส่งให้ฝ่ายจัดซื้อ (ไม่มีให้ใส่ "-")\n\n' + specProbs.join('\n')); return; }
         if (!canQuoteRQ()) { delete payload.suppliers; delete payload.prices; delete payload.selected_supplier_name; }
         if (_req.rq_no) {
-          await api.updateRequisition(_req.rq_no, payload);
+          const up = await api.updateRequisition(_req.rq_no, payload);
+          if (!canQuoteRQ() && _req.status === 'returned' && up && up.status === 'open') { toast('📨 ส่งใบคำขอ ' + _req.rq_no + ' กลับให้ฝ่ายจัดซื้อตรวจอีกครั้งแล้ว'); closeReqForm(); return; }
           toast('บันทึกใบคำขอ ' + _req.rq_no + ' แล้ว' + (specMiss ? ` — ยังขาดรายละเอียด/สเปก ${specMiss} รายการ (ต้องครบก่อนสร้าง PR)` : ''), !!specMiss);
         } else {
           const res = await api.createRequisition(payload);
@@ -3640,6 +3712,7 @@
     let __rqSource = null; // rq_no to mark converted after PR submit
     async function createPRfromRQ() {
       if (!_req || !_req.rq_no) return toast('กรุณาบันทึกใบคำขอก่อน', true);
+      if (_req.status !== 'approved') return toast('ต้องอนุมัติใบคำขอก่อน จึงสร้าง PR ได้', true);
       if (_req.selected == null) return toast('กรุณาเลือก Supplier ที่ชนะก่อน', true);
       gatherReqFromDOM();
       {

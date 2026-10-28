@@ -110,6 +110,7 @@ class PROPOApi {
   async createRequisition(rq) { return this.request('POST', '/requisitions', rq); }
   async updateRequisition(rqNo, rq) { return this.request('PUT', `/requisitions/${rqNo}`, rq); }
   async deleteRequisition(rqNo) { return this.request('DELETE', `/requisitions/${rqNo}`); }
+  async reviewRequisition(rqNo, action, reason) { return this.request('POST', `/requisitions/${rqNo}/review`, { action, reason }); }
   async convertRequisition(rqNo, pr_no) { return this.request('POST', `/requisitions/${rqNo}/convert`, { pr_no }); }
   async getRqAttachments(rqNo) { return this.request('GET', `/requisitions/${rqNo}/attachments`); }
   async addRqAttachment(rqNo, att) { return this.request('POST', `/requisitions/${rqNo}/attachments`, att); }
